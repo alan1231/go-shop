@@ -1,13 +1,16 @@
 <template>
   <div id="layout">
     <nav v-if="showHeader">
-      <router-link to="/" class="logo"><i class="fas fa-store"></i> SHOP</router-link>
-      <div class="nav-links">
-        <router-link to="/"><i class="fas fa-home"></i> 首頁</router-link>
-        <router-link to="/cart"><i class="fas fa-shopping-cart"></i> 購物車 ({{ cartCount }})</router-link>
-        <router-link v-if="user" to="/orders"><i class="fas fa-file-invoice"></i> 訂單</router-link>
-        <router-link v-if="!user" to="/login"><i class="fas fa-sign-in-alt"></i> 登入</router-link>
-        <a v-else href="#" @click.prevent="handleLogout"><i class="fas fa-sign-out-alt"></i> 登出</a>
+      <div class="inner">
+        <router-link to="/" class="logo"><i class="fas fa-store"></i> SHOP</router-link>
+        <div class="nav-links">
+          <router-link to="/"><i class="fas fa-home"></i> 首頁</router-link>
+          <router-link to="/cart"><i class="fas fa-shopping-cart"></i> 購物車 ({{ cartCount }})</router-link>
+          <router-link v-if="user" to="/orders"><i class="fas fa-file-invoice"></i> 訂單</router-link>
+          <span v-if="user" class="user-info"><i class="fas fa-user"></i> {{ user.username }}</span>
+          <router-link v-if="!user" to="/login"><i class="fas fa-sign-in-alt"></i> 登入</router-link>
+          <a v-else href="#" @click.prevent="handleLogout"><i class="fas fa-sign-out-alt"></i> 登出</a>
+        </div>
       </div>
     </nav>
     <div class="marquee" v-if="showHeader && marqueeText">
@@ -24,12 +27,12 @@
 
 <script>
 import { api } from './api/index.js'
+import { cartStore } from './store/cart.js'
 
 export default {
   data() {
     return {
       user: null,
-      cart: JSON.parse(localStorage.getItem('cart') || '[]'),
       marqueeText: '',
     }
   },
@@ -38,7 +41,7 @@ export default {
       return this.$route.name !== 'login' && this.$route.name !== 'register'
     },
     cartCount() {
-      return this.cart.reduce((s, i) => s + i.quantity, 0)
+      return cartStore.count
     },
   },
   methods: {
@@ -51,16 +54,11 @@ export default {
       if (res.success) this.marqueeText = res.data.content
     },
     addToCart(product) {
-      const exist = this.cart.find(i => i.product_id === product.id)
-      if (exist) {
-        exist.quantity++
-      } else {
-        this.cart.push({ product_id: product.id, name: product.name, price: product.price, quantity: 1 })
-      }
-      localStorage.setItem('cart', JSON.stringify(this.cart))
+      cartStore.add(product)
     },
     async handleLogout() {
       await api.logout()
+      localStorage.removeItem('token')
       this.user = null
       this.$router.push('/')
     },
@@ -78,12 +76,14 @@ export default {
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #333; }
 #layout { display: flex; flex-direction: column; min-height: 100vh; }
 
-nav { position: sticky; top: 0; z-index: 100; background: #1a1d29; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 14px 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
+nav { position: sticky; top: 0; z-index: 100; background: #1a1d29; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 14px 40px; }
+nav .inner { width: 100%; display: flex; align-items: center; justify-content: space-between; }
 nav .logo { font-size: 20px; font-weight: 700; color: #fff; text-decoration: none; }
 nav .logo i { color: #4CAF50; margin-right: 8px; }
 .nav-links { display: flex; gap: 20px; align-items: center; }
 .nav-links a { color: #b0b3c5; text-decoration: none; font-size: 14px; transition: color 0.2s; }
 .nav-links a:hover, .nav-links a.router-link-exact-active { color: #fff; }
+.user-info { color: #4CAF50; font-size: 14px; font-weight: 600; }
 
 .marquee { background: #4CAF50; color: #fff; overflow: hidden; padding: 7px 0; font-size: 13px; }
 .marquee span { display: inline-block; white-space: nowrap; animation: marquee-scroll 20s linear infinite; }

@@ -41,4 +41,27 @@ class ApiOrderController extends ApiController {
 
         $this->success($order);
     }
+
+    // POST /api/orders/{id}/pay — 模擬付款（待付款 → 已付款）
+    public function pay(int $id): void {
+        $user = $this->requireAuth();
+        $order = $this->orderService->getWithItems($id);
+
+        if (!$order || (int)$order['user_id'] !== (int)$user['id']) {
+            $this->error('訂單不存在', 404);
+            return;
+        }
+        if ($order['status'] !== 'pending') {
+            $this->error('此訂單無法付款');
+            return;
+        }
+
+        $error = $this->orderService->updateStatus($id, 'paid');
+        if ($error) {
+            $this->error($error);
+            return;
+        }
+
+        $this->success(null, '付款成功');
+    }
 }

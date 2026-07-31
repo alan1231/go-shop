@@ -1,12 +1,12 @@
 <?php
-// 前台認證 API：註冊、登入、登入
+// 前台認證 API：註冊、登入、登出（Token 認證，與後台 session 分離）
 class ApiAuthController extends ApiController {
-    private AuthService $authService;
     private UserService $userService;
+    private UserRepository $userRepo;
 
     public function __construct() {
-        $this->authService = new AuthService();
         $this->userService = new UserService();
+        $this->userRepo    = new UserRepository();
     }
 
     private function jsonBody(): array {
@@ -28,36 +28,37 @@ class ApiAuthController extends ApiController {
         $this->success(null, $result['message']);
     }
 
-    // POST /api/auth/login
+    // POST /api/auth/login — 登入成功回傳 token
     public function login(): void {
-        Auth::start();
         $body = $this->jsonBody();
         $username = trim($body['username'] ?? '');
         $password = $body['password'] ?? '';
 
-        $result = $this->authService->customerLogin($username, $password);
-        if (!$result['success']) {
-            $this->error($result['message']);
+        $user = $this->userRepo->findForAuth($username);
+        if (!$user || !password_verify($password, $user['password'])) {
+            $this->error('帳號或密碼錯誤');
             return;
         }
-        $this->success($result['user'] ?? null, '登入成功');
+
+        $token = bin2hex(random_bytes(32));
+        $this->userRepo->setToken((int)$user['id'], $token);
+
+        $this->success([
+            'token'    => $token,
+            'user'     => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email']],
+        ], '登入成功');
     }
 
-    // POST /api/auth/logout
+    // POST /api/auth/logout — 清除 token
     public function logout(): void {
-        Auth::start();
-        session_destroy();
+        $user = $this->requireAuth();
+        $this->userRepo->setToken((int)$user['id'], null);
         $this->success(null, '已登出');
     }
 
-    // GET /api/auth/me（取得目前登入使用者資訊）
+    // GET /api/auth/me — 取得目前登入使用者資訊
     public function me(): void {
-        Auth::start();
-        $user = Auth::user();
-        if (!$user) {
-            $this->error('未登入', 401);
-            return;
-        }
-        $this->success($user);
+        $user = $this->requireAuth();
+        $this->success(['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email']]);
     }
 }

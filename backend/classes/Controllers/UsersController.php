@@ -47,31 +47,12 @@ class UsersController extends Controller {
             return;
         }
 
-        // 禁止編輯其他管理員
-        $current = Auth::user();
-        $error = $this->userService->canEdit((int)$current['id'], $user);
-        if ($error) {
-            $this->forbidden($error);
-            return;
-        }
-
         $message = '';
         $message_type = '';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if ($user['role'] === 'user') {
-                // 一般會員：只能改密碼
-                $result = $this->userService->updatePassword($id, $_POST['password'] ?? '');
-            } else {
-                // 管理員（自己）：可改帳號/Email/密碼
-                $username = trim($_POST['username'] ?? '');
-                $email    = trim($_POST['email'] ?? '');
-                $password = $_POST['password'] ?? '';
-                $result = $this->userService->updateProfile($id, $username, $email, $password ?: null);
-                if ($result['success'] && isset($result['username'])) {
-                    $user = array_merge($user, ['username' => $result['username'], 'email' => $result['email']]);
-                }
-            }
+            // 會員只能改密碼
+            $result = $this->userService->updatePassword($id, $_POST['password'] ?? '');
             $message = $result['message'];
             $message_type = $result['success'] ? 'success' : 'error';
         }
@@ -79,11 +60,9 @@ class UsersController extends Controller {
         $this->render('admin-user-form', compact('user', 'message', 'message_type') + ['page_title' => '編輯會員']);
     }
 
-    // 刪除會員（禁止刪除自己或管理員）
+    // 刪除會員
     public function delete(int $id): void {
-        $loginUser = Auth::user();
-
-        $error = $this->userService->canDelete((int)$loginUser['id'], $id);
+        $error = $this->userService->canDelete($id);
         if ($error) {
             $this->badRequest($error);
             return;

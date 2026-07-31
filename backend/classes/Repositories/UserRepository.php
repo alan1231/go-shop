@@ -16,9 +16,29 @@ class UserRepository {
                 email VARCHAR(255) NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 role VARCHAR(50) DEFAULT \'user\',
+                token VARCHAR(64) DEFAULT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )'
         );
+        // 舊表補 token 欄位
+        $cols = $this->pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('token', $cols)) {
+            $this->pdo->exec('ALTER TABLE users ADD COLUMN token VARCHAR(64) DEFAULT NULL');
+        }
+    }
+
+    // 依 token 查詢使用者（前端 API 驗證用）
+    public function findByToken(string $token): ?array {
+        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE token = :token LIMIT 1');
+        $stmt->execute([':token' => $token]);
+        $user = $stmt->fetch();
+        return $user ?: null;
+    }
+
+    // 設定使用者 token（登入/登出用）
+    public function setToken(int $id, ?string $token): void {
+        $stmt = $this->pdo->prepare('UPDATE users SET token = :token WHERE id = :id');
+        $stmt->execute([':token' => $token, ':id' => $id]);
     }
 
     // 依角色列出會員（僅 id, username, email, created_at）

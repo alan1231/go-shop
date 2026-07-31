@@ -1,9 +1,17 @@
 const BASE = '/api'
 
+function getToken() {
+  return localStorage.getItem('token')
+}
+
 async function request(url, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...options.headers }
+  const token = getToken()
+  if (token) headers['Authorization'] = 'Bearer ' + token
+
   const res = await fetch(BASE + url, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers,
     ...options,
   })
   return res.json()
@@ -17,11 +25,15 @@ export const api = {
       body: JSON.stringify({ username, email, password }),
     })
   },
-  login(username, password) {
-    return request('/auth/login', {
+  async login(username, password) {
+    const res = await request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     })
+    if (res.success && res.data.token) {
+      localStorage.setItem('token', res.data.token)
+    }
+    return res
   },
   logout() {
     return request('/auth/logout', { method: 'POST' })
@@ -50,6 +62,9 @@ export const api = {
   },
   order(id) {
     return request(`/orders/${id}`)
+  },
+  payOrder(id) {
+    return request(`/orders/${id}/pay`, { method: 'POST' })
   },
 
   // Marquee

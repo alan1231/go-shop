@@ -18,14 +18,34 @@ class ApiController {
         $this->json(['success' => false, 'message' => $message], $code);
     }
 
-    // 檢查是否已登入，未登入回傳 401
+    // 檢查是否已登入（Bearer token），未登入回傳 401
     protected function requireAuth(): array {
-        Auth::start();
-        $user = Auth::user();
+        $auth = '';
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            $auth = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+        }
+        if (!$auth) {
+            $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        }
+        $token = preg_replace('/^Bearer\s+/i', '', trim($auth));
+
+        if (!$token) {
+            $this->error('請先登入', 401);
+            exit;
+        }
+
+        $repo = new UserRepository();
+        $user = $repo->findByToken($token);
         if (!$user) {
             $this->error('請先登入', 401);
             exit;
         }
-        return $user;
+
+        return [
+            'id'       => (int)$user['id'],
+            'username' => $user['username'],
+            'email'    => $user['email'],
+        ];
     }
 }

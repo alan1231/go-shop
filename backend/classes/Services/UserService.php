@@ -48,30 +48,15 @@ class UserService {
     }
 
     // 檢查是否能刪除，字串 = 錯誤訊息，null = 允許
-    public function canDelete(int $currentId, int $targetId): ?string {
-        if ($currentId === $targetId) {
-            return '無法刪除自己';
-        }
-        $role = $this->repo->getRole($targetId);
-        if ($role === null) {
+    public function canDelete(int $targetId): ?string {
+        if ($this->repo->findById($targetId) === null) {
             return '使用者不存在';
-        }
-        if ($role === 'admin') {
-            return '無法刪除管理員帳號';
         }
         return null;
     }
 
     public function delete(int $id): void {
         $this->repo->delete($id);
-    }
-
-    // 檢查是否能編輯，僅擋掉編輯其他管理員
-    public function canEdit(int $currentId, array $targetUser): ?string {
-        if ($targetUser['role'] === 'admin' && $currentId !== (int)$targetUser['id']) {
-            return '無法編輯其他管理員帳號';
-        }
-        return null;
     }
 
     public function countMembers(): int {

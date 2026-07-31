@@ -52,5 +52,6 @@ $router->get('/api/products/{id}',   [ApiProductController::class, 'show']);
 $router->post('/api/orders',         [ApiOrderController::class, 'create']);
 $router->get('/api/orders',          [ApiOrderController::class, 'index']);
 $router->get('/api/orders/{id}',     [ApiOrderController::class, 'show']);
+$router->post('/api/orders/{id}/pay', [ApiOrderController::class, 'pay']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

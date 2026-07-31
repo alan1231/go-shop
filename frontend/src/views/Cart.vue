@@ -36,26 +36,20 @@
 
 <script>
 import { api } from '../api/index.js'
+import { cartStore } from '../store/cart.js'
 export default {
   data() { return { ordering: false } },
   computed: {
-    cart() { return JSON.parse(localStorage.getItem('cart') || '[]') },
-    totalItems() { return this.cart.reduce((s, i) => s + i.quantity, 0) },
-    totalPrice() { return this.cart.reduce((s, i) => s + i.price * i.quantity, 0) },
+    cart() { return cartStore.items },
+    totalItems() { return cartStore.count },
+    totalPrice() { return cartStore.items.reduce((s, i) => s + i.price * i.quantity, 0) },
   },
   methods: {
-    save(cart) { localStorage.setItem('cart', JSON.stringify(cart)) },
     changeQty(i, delta) {
-      const cart = this.cart
-      cart[i].quantity = Math.max(1, cart[i].quantity + delta)
-      this.save(cart)
-      this.$forceUpdate()
+      cartStore.changeQty(i, delta)
     },
     removeItem(i) {
-      const cart = this.cart
-      cart.splice(i, 1)
-      this.save(cart)
-      this.$forceUpdate()
+      cartStore.remove(i)
     },
     async checkout() {
       const userRes = await api.me()
@@ -64,10 +58,10 @@ export default {
         return
       }
       this.ordering = true
-      const items = this.cart.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
+      const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
       const res = await api.createOrder(items)
       if (res.success) {
-        localStorage.removeItem('cart')
+        cartStore.clear()
         this.$router.push(`/orders/${res.data.order_id}`)
       } else {
         alert(res.message)

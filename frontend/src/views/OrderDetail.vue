@@ -20,6 +20,9 @@
         <span>{{ order.created_at }}</span>
       </div>
     </div>
+    <button v-if="order.status === 'pending'" class="btn btn-primary" style="margin-bottom:20px;" @click="pay" :disabled="paying">
+      <i class="fas fa-credit-card"></i> {{ paying ? '付款中...' : '模擬付款' }}
+    </button>
     <div class="card">
       <h3 style="margin-bottom:16px;">商品明細</h3>
       <table>
@@ -45,11 +48,21 @@
 <script>
 import { api } from '../api/index.js'
 export default {
-  data() { return { order: null, loading: true } },
+  data() { return { order: null, loading: true, paying: false } },
   methods: {
     statusLabel(s) {
       const map = { pending: '待付款', paid: '已付款', shipped: '出貨中', completed: '已完成', cancelled: '已取消' }
       return map[s] || s
+    },
+    async pay() {
+      this.paying = true
+      const res = await api.payOrder(this.order.id)
+      if (res.success) {
+        this.order.status = 'paid'
+      } else {
+        alert(res.message)
+      }
+      this.paying = false
     },
   },
   async created() {
