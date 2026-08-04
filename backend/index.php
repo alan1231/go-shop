@@ -45,6 +45,7 @@ $router->post('/admin/marquee', [MarqueeController::class, 'edit']);
 $router->get('/api/marquee',       [ApiMarqueeController::class, 'index']);
 $router->post('/api/auth/register',  [ApiAuthController::class, 'register']);
 $router->post('/api/auth/login',     [ApiAuthController::class, 'login']);
+$router->post('/api/auth/oauth',     [ApiAuthController::class, 'oauth']);
 $router->post('/api/auth/logout',    [ApiAuthController::class, 'logout']);
 $router->get('/api/auth/me',         [ApiAuthController::class, 'me']);
 $router->get('/api/products',        [ApiProductController::class, 'index']);

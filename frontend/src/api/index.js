@@ -35,6 +35,16 @@ export const api = {
     }
     return res
   },
+  async oauthLogin(provider, code) {
+    const res = await request('/auth/oauth', {
+      method: 'POST',
+      body: JSON.stringify({ provider, code }),
+    })
+    if (res.success && res.data.token) {
+      localStorage.setItem('token', res.data.token)
+    }
+    return res
+  },
   logout() {
     return request('/auth/logout', { method: 'POST' })
   },

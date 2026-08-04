@@ -1,12 +1,14 @@
 <?php
-// 前台認證 API：註冊、登入、登出（Token 認證，與後台 session 分離）
+// 前台認證 API：註冊、登入、登出、三方登入（Token 認證，與後台 session 分離）
 class ApiAuthController extends ApiController {
     private UserService $userService;
     private UserRepository $userRepo;
+    private OAuthService $oauthService;
 
     public function __construct() {
-        $this->userService = new UserService();
-        $this->userRepo    = new UserRepository();
+        $this->userService  = new UserService();
+        $this->userRepo     = new UserRepository();
+        $this->oauthService = new OAuthService();
     }
 
     private function jsonBody(): array {
@@ -46,6 +48,48 @@ class ApiAuthController extends ApiController {
         $this->success([
             'token'    => $token,
             'user'     => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email']],
+        ], '登入成功');
+    }
+
+    // POST /api/auth/oauth — 三方登入（Google / LINE）
+    public function oauth(): void {
+        $body = $this->jsonBody();
+        $provider = strtolower(trim($body['provider'] ?? ''));
+        $code     = trim($body['code'] ?? '');
+
+        if (!in_array($provider, ['google', 'line']) || !$code) {
+            $this->error('無效的三方登入請求');
+            return;
+        }
+
+        $info = $this->oauthService->getUserInfo($provider, $code);
+        if (!$info) {
+            $this->error('三方登入驗證失敗', 401);
+            return;
+        }
+
+        // 查詢是否已綁定此三方帳號
+        $user = $this->userRepo->findByProvider($provider, $info['provider_id']);
+        if (!$user) {
+            $name = $info['name'] ?: $info['email'] ?: $provider . '_' . substr($info['provider_id'], -6);
+            $email = $info['email'] ?: '';
+            $user = $this->userRepo->findByEmail($email);
+            if ($user) {
+                // email 已存在的一般帳號 → 綁定三方 provider
+                $this->userRepo->setProvider((int)$user['id'], $provider, $info['provider_id']);
+            } else {
+                // 全新會員
+                $id = $this->userRepo->createOAuthUser($name, $email, $provider, $info['provider_id']);
+                $user = $this->userRepo->findById($id);
+            }
+        }
+
+        $token = bin2hex(random_bytes(32));
+        $this->userRepo->setToken((int)$user['id'], $token);
+
+        $this->success([
+            'token' => $token,
+            'user'  => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email']],
         ], '登入成功');
     }
 

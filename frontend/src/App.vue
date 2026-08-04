@@ -38,7 +38,7 @@ export default {
   },
   computed: {
     showHeader() {
-      return this.$route.name !== 'login' && this.$route.name !== 'register'
+      return !['login', 'register', 'oauth-callback'].includes(this.$route.name)
     },
     cartCount() {
       return cartStore.count

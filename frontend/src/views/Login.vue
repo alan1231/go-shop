@@ -4,6 +4,11 @@
       <h1><i class="fas fa-store" style="color:#4CAF50;"></i> SHOP</h1>
       <p class="subtitle">會員登入</p>
       <div v-if="error" class="error-msg"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+      <div class="oauth-buttons">
+        <a :href="googleUrl" class="btn btn-google"><i class="fab fa-google"></i> 使用 Google 登入</a>
+        <a :href="lineUrl" class="btn btn-line"><i class="fab fa-line"></i> 使用 LINE 登入</a>
+      </div>
+      <div class="divider"><span>或使用帳號登入</span></div>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
           <label>帳號或 Email</label>
@@ -24,8 +29,13 @@
 
 <script>
 import { api } from '../api/index.js'
+import { buildOAuthUrl } from '../api/oauth.js'
 export default {
   data() { return { username: '', password: '', error: '', loading: false } },
+  computed: {
+    googleUrl() { return buildOAuthUrl('google') },
+    lineUrl() { return buildOAuthUrl('line') },
+  },
   methods: {
     async handleLogin() {
       this.loading = true; this.error = ''
@@ -53,4 +63,11 @@ export default {
 .form-group input:focus { border-color: #4CAF50; }
 .auth-link { margin-top: 18px; font-size: 13px; color: #888; }
 .auth-link a { color: #4CAF50; text-decoration: none; font-weight: 600; }
+.oauth-buttons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.btn-google { background: #fff; color: #444; border: 1px solid #ddd; justify-content: center; }
+.btn-google:hover { background: #f8f8f8; }
+.btn-line { background: #06C755; color: #fff; justify-content: center; }
+.btn-line:hover { background: #05b44c; }
+.divider { display: flex; align-items: center; gap: 12px; color: #aaa; font-size: 12px; margin-bottom: 20px; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #eee; }
 </style>

@@ -17,14 +17,70 @@ class UserRepository {
                 password VARCHAR(255) NOT NULL,
                 role VARCHAR(50) DEFAULT \'user\',
                 token VARCHAR(64) DEFAULT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                provider VARCHAR(20) DEFAULT NULL,
+                provider_id VARCHAR(100) DEFAULT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY idx_provider (provider, provider_id)
             )'
         );
-        // 舊表補 token 欄位
+        // 舊表補欄位
         $cols = $this->pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('token', $cols)) {
             $this->pdo->exec('ALTER TABLE users ADD COLUMN token VARCHAR(64) DEFAULT NULL');
         }
+        if (!in_array('provider', $cols)) {
+            $this->pdo->exec('ALTER TABLE users ADD COLUMN provider VARCHAR(20) DEFAULT NULL');
+        }
+        if (!in_array('provider_id', $cols)) {
+            $this->pdo->exec('ALTER TABLE users ADD COLUMN provider_id VARCHAR(100) DEFAULT NULL');
+        }
+        $indexes = $this->pdo->query('SHOW INDEX FROM users')->fetchAll(PDO::FETCH_ASSOC);
+        $hasIdx = false;
+        foreach ($indexes as $idx) {
+            if (($idx['Key_name'] ?? '') === 'idx_provider') { $hasIdx = true; break; }
+        }
+        if (!$hasIdx) {
+            $this->pdo->exec('CREATE UNIQUE INDEX idx_provider ON users (provider, provider_id)');
+        }
+    }
+
+    // 依 provider + provider_id 查詢（三方登入用）
+    public function findByProvider(string $provider, string $providerId): ?array {
+        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE provider = :provider AND provider_id = :pid LIMIT 1');
+        $stmt->execute([':provider' => $provider, ':pid' => $providerId]);
+        $user = $stmt->fetch();
+        return $user ?: null;
+    }
+
+    // 依 email 查詢（三方登入自動建立用）
+    public function findByEmail(string $email): ?array {
+        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE email = :email LIMIT 1');
+        $stmt->execute([':email' => $email]);
+        $user = $stmt->fetch();
+        return $user ?: null;
+    }
+
+    // 綁定三方 provider 到既有帳號
+    public function setProvider(int $id, string $provider, string $providerId): void {
+        $stmt = $this->pdo->prepare('UPDATE users SET provider = :provider, provider_id = :pid WHERE id = :id');
+        $stmt->execute([':provider' => $provider, ':pid' => $providerId, ':id' => $id]);
+    }
+
+    // 建立三方登入會員（無密碼）
+    public function createOAuthUser(string $username, string $email, string $provider, string $providerId): int {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO users (username, email, password, role, provider, provider_id)
+             VALUES (:username, :email, :password, :role, :provider, :pid)'
+        );
+        $stmt->execute([
+            ':username' => $username,
+            ':email'    => $email,
+            ':password' => bin2hex(random_bytes(16)), // 無效密碼，僅能三方登入
+            ':role'     => 'user',
+            ':provider' => $provider,
+            ':pid'      => $providerId,
+        ]);
+        return (int)$this->pdo->lastInsertId();
     }
 
     // 依 token 查詢使用者（前端 API 驗證用）

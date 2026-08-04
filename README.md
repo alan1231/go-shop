@@ -86,6 +86,32 @@
 
 後台網址：`http://localhost/php/shop/admin`
 
+### 三方登入（Google / LINE）設定
+
+clone 後需填入自己的 OAuth 憑證（**secret 不會進 git**）：
+
+```bash
+# 1. 產生設定檔（在專案根目錄）
+cp .env.example .env
+
+# 2. 編輯 .env，填入下列憑證
+```
+
+`.env` 需要填入的位置：
+
+| 欄位 | 說明 | 去哪申請 |
+|------|------|----------|
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | [Google Cloud Console](https://console.cloud.google.com) → 憑證 → OAuth 用戶端 ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | 同上（產生時才會顯示） |
+| `LINE_CHANNEL_ID` | LINE Login Channel ID | [LINE Developers](https://developers.line.biz/console/) → Channel → Basic settings |
+| `LINE_CHANNEL_SECRET` | LINE Login Channel Secret | 同上 |
+| `OAUTH_REDIRECT_URI` | 授權回調網址 | 預設 `http://localhost:5173/auth/callback`，通常不用改 |
+
+同時要在各平台後台設定回調網址：
+
+- **Google**：Authorized redirect URIs 加入 `http://localhost:5173/auth/callback`
+- **LINE**：LINE Login → Callback URL 加入 `http://localhost:5173/auth/callback`
+
 ### 前端
 
 ```bash
