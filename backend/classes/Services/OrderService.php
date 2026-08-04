@@ -78,4 +78,13 @@ class OrderService {
         $this->repo->updateStatus($id, $status);
         return null;
     }
+
+    // 更新備註
+    public function updateRemark(int $id, string $remark): ?string {
+        if (!$this->repo->findById($id)) {
+            return '訂單不存在';
+        }
+        $this->repo->updateRemark($id, trim($remark));
+        return null;
+    }
 }

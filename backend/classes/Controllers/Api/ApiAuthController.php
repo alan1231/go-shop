@@ -47,7 +47,7 @@ class ApiAuthController extends ApiController {
 
         $this->success([
             'token'    => $token,
-            'user'     => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address']],
+            'user'     => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address'], 'avatar' => $user['avatar']],
         ], '登入成功');
     }
 
@@ -77,11 +77,18 @@ class ApiAuthController extends ApiController {
             if ($user) {
                 // email 已存在的一般帳號 → 綁定三方 provider
                 $this->userRepo->setProvider((int)$user['id'], $provider, $info['provider_id']);
+                if ($info['avatar']) {
+                    $this->userRepo->updateAvatar((int)$user['id'], $info['avatar']);
+                }
             } else {
                 // 全新會員
-                $id = $this->userRepo->createOAuthUser($name, $email, $provider, $info['provider_id']);
+                $id = $this->userRepo->createOAuthUser($name, $email, $provider, $info['provider_id'], $info['avatar'] ?: null);
                 $user = $this->userRepo->findById($id);
             }
+        } elseif ($info['avatar'] && $user['avatar'] !== $info['avatar']) {
+            // 每次登入刷新頭像
+            $this->userRepo->updateAvatar((int)$user['id'], $info['avatar']);
+            $user['avatar'] = $info['avatar'];
         }
 
         $token = bin2hex(random_bytes(32));
@@ -89,7 +96,7 @@ class ApiAuthController extends ApiController {
 
         $this->success([
             'token' => $token,
-            'user'  => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address']],
+            'user'  => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address'], 'avatar' => $user['avatar']],
         ], '登入成功');
     }
 
@@ -103,7 +110,7 @@ class ApiAuthController extends ApiController {
     // GET /api/auth/me — 取得目前登入使用者資訊
     public function me(): void {
         $user = $this->requireAuth();
-        $this->success(['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address']]);
+        $this->success(['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address'], 'avatar' => $user['avatar']]);
     }
 
     // POST /api/auth/update — 更新聯絡資料（手機、住址）

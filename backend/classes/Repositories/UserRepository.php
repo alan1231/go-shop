@@ -21,6 +21,7 @@ class UserRepository {
                 provider_id VARCHAR(100) DEFAULT NULL,
                 phone VARCHAR(20) DEFAULT NULL,
                 address VARCHAR(255) DEFAULT NULL,
+                avatar VARCHAR(500) DEFAULT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY idx_provider (provider, provider_id)
             )'
@@ -41,6 +42,9 @@ class UserRepository {
         }
         if (!in_array('address', $cols)) {
             $this->pdo->exec('ALTER TABLE users ADD COLUMN address VARCHAR(255) DEFAULT NULL');
+        }
+        if (!in_array('avatar', $cols)) {
+            $this->pdo->exec('ALTER TABLE users ADD COLUMN avatar VARCHAR(500) DEFAULT NULL');
         }
         $indexes = $this->pdo->query('SHOW INDEX FROM users')->fetchAll(PDO::FETCH_ASSOC);
         $hasIdx = false;
@@ -75,10 +79,10 @@ class UserRepository {
     }
 
     // 建立三方登入會員（無密碼）
-    public function createOAuthUser(string $username, string $email, string $provider, string $providerId): int {
+    public function createOAuthUser(string $username, string $email, string $provider, string $providerId, ?string $avatar = null): int {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO users (username, email, password, role, provider, provider_id)
-             VALUES (:username, :email, :password, :role, :provider, :pid)'
+            'INSERT INTO users (username, email, password, role, provider, provider_id, avatar)
+             VALUES (:username, :email, :password, :role, :provider, :pid, :avatar)'
         );
         $stmt->execute([
             ':username' => $username,
@@ -87,6 +91,7 @@ class UserRepository {
             ':role'     => 'user',
             ':provider' => $provider,
             ':pid'      => $providerId,
+            ':avatar'   => $avatar,
         ]);
         return (int)$this->pdo->lastInsertId();
     }
@@ -105,9 +110,9 @@ class UserRepository {
         $stmt->execute([':token' => $token, ':id' => $id]);
     }
 
-    // 依角色列出會員（僅 id, username, email, provider, created_at）
+    // 依角色列出會員（僅 id, username, email, provider, avatar, created_at）
     public function findAllByRole(string $role): array {
-        $stmt = $this->pdo->prepare('SELECT id, username, email, provider, created_at FROM users WHERE role = :role ORDER BY created_at DESC');
+        $stmt = $this->pdo->prepare('SELECT id, username, email, provider, avatar, created_at FROM users WHERE role = :role ORDER BY created_at DESC');
         $stmt->execute([':role' => $role]);
         return $stmt->fetchAll();
     }
@@ -189,6 +194,12 @@ class UserRepository {
     public function updateContact(int $id, string $phone, string $address): void {
         $stmt = $this->pdo->prepare('UPDATE users SET phone = :phone, address = :address WHERE id = :id');
         $stmt->execute([':phone' => $phone, ':address' => $address, ':id' => $id]);
+    }
+
+    // 更新會員頭像
+    public function updateAvatar(int $id, string $avatar): void {
+        $stmt = $this->pdo->prepare('UPDATE users SET avatar = :avatar WHERE id = :id');
+        $stmt->execute([':avatar' => $avatar, ':id' => $id]);
     }
 
     // 刪除會員

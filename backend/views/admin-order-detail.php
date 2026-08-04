@@ -13,6 +13,10 @@ $backUrl = BASE_URL . '/admin/orders' . ($backStatus ? '?status=' . urlencode($b
     <div style="background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;padding:12px 16px;border-radius:6px;margin-bottom:20px;font-size:14px;">
         <i class="fas fa-check-circle"></i> 訂單狀態已更新！
     </div>
+<?php elseif (isset($_GET['remark_updated'])): ?>
+    <div style="background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;padding:12px 16px;border-radius:6px;margin-bottom:20px;font-size:14px;">
+        <i class="fas fa-check-circle"></i> 備註已更新！
+    </div>
 <?php endif; ?>
 <div class="page-header">
     <h1><i class="fas fa-file-invoice"></i> 訂單 #<?= $order['id'] ?></h1>
@@ -39,7 +43,7 @@ $backUrl = BASE_URL . '/admin/orders' . ($backStatus ? '?status=' . urlencode($b
                 <i class="fas fa-lock"></i> 訂單已完成，狀態不可再變更
             </p>
         <?php else: ?>
-        <form method="POST" action="<?= BASE_URL ?>/admin/orders/<?= $order['id'] ?>/status">
+        <form method="POST" action="<?= BASE_URL ?>/admin/orders/<?= $order['id'] ?>/status" style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #f0f0f0;">
             <input type="hidden" name="back_status" value="<?= htmlspecialchars($backStatus) ?>">
             <select name="status" style="padding:8px 12px;border:1px solid #d0d5dd;border-radius:6px;font-size:14px;margin-bottom:12px;width:100%;max-width:200px;<?= $order['status'] === 'completed' ? 'background:#eee;color:#999;cursor:not-allowed;' : '' ?>" <?= $order['status'] === 'completed' ? 'disabled' : '' ?>>
                 <?php foreach ($statusLabels as $key => $label): ?>
@@ -49,6 +53,13 @@ $backUrl = BASE_URL . '/admin/orders' . ($backStatus ? '?status=' . urlencode($b
             <button type="submit" class="btn btn-primary" style="padding:8px 20px;font-size:13px;<?= $order['status'] === 'completed' ? 'background:#ccc;cursor:not-allowed;' : '' ?>" <?= $order['status'] === 'completed' ? 'disabled' : '' ?>>更新狀態</button>
         </form>
         <?php endif; ?>
+
+        <h3 style="font-size:15px;margin-bottom:12px;">備註</h3>
+        <form method="POST" action="<?= BASE_URL ?>/admin/orders/<?= $order['id'] ?>/remark">
+            <input type="hidden" name="back_status" value="<?= htmlspecialchars($backStatus) ?>">
+            <textarea name="remark" placeholder="輸入備註（例如出貨注意事項、內部說明）" style="width:100%;padding:10px 12px;border:1px solid #d0d5dd;border-radius:6px;font-size:14px;resize:vertical;min-height:80px;outline:none;font-family:inherit;box-sizing:border-box;"><?= htmlspecialchars($order['remark'] ?? '') ?></textarea>
+            <button type="submit" class="btn btn-primary" style="padding:8px 20px;font-size:13px;margin-top:12px;"><i class="fas fa-save"></i> 儲存備註</button>
+        </form>
     </div>
 </div>
 

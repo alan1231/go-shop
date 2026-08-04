@@ -34,7 +34,14 @@ function providerBadge(?string $provider): string {
                 <?php foreach ($users as $u): ?>
                     <tr style="border-bottom:1px solid #f0f0f0;">
                         <td style="padding:12px 18px;"><?= $u['id'] ?></td>
-                        <td style="padding:12px 18px;font-weight:600;"><?= htmlspecialchars($u['username']) ?></td>
+                        <td style="padding:12px 18px;font-weight:600;">
+                            <?php if (!empty($u['avatar'])): ?>
+                                <img src="<?= htmlspecialchars($u['avatar']) ?>" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;">
+                            <?php else: ?>
+                                <span style="display:inline-flex;width:28px;height:28px;border-radius:50%;background:#4CAF50;color:#fff;align-items:center;justify-content:center;font-size:13px;vertical-align:middle;margin-right:8px;"><?= htmlspecialchars(mb_substr($u['username'], 0, 1, 'UTF-8')) ?></span>
+                            <?php endif; ?>
+                            <?= htmlspecialchars($u['username']) ?>
+                        </td>
                         <td style="padding:12px 18px;"><?= htmlspecialchars($u['email']) ?></td>
                         <td style="padding:12px 18px;"><?= providerBadge($u['provider'] ?? null) ?></td>
                         <td style="padding:12px 18px;color:#888;"><?= $u['created_at'] ?></td>

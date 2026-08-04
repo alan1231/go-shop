@@ -13,7 +13,8 @@
           </span>
           <div v-if="userMenuOpen" class="user-card" @click.stop>
             <div class="uc-header">
-              <div class="uc-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+              <img v-if="user.avatar" :src="user.avatar" class="uc-avatar" alt="avatar" />
+              <div v-else class="uc-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
               <div class="uc-meta">
                 <div class="uc-name">{{ user.username }}</div>
                 <div class="uc-provider" :class="'p-' + (user.provider || 'local')">
@@ -176,7 +177,7 @@ nav .logo i { color: #4CAF50; margin-right: 8px; }
 .user-card { position: absolute; top: 52px; right: 40px; width: 280px; background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); z-index: 200; overflow: hidden; animation: fade-in 0.15s ease; }
 @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 .uc-header { display: flex; align-items: center; gap: 12px; padding: 18px; background: #1a1d29; }
-.uc-avatar { width: 44px; height: 44px; border-radius: 50%; background: #4CAF50; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; }
+.uc-avatar { width: 44px; height: 44px; border-radius: 50%; background: #4CAF50; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; object-fit: cover; }
 .uc-name { color: #fff; font-weight: 700; font-size: 15px; }
 .uc-provider { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; margin-top: 3px; padding: 2px 8px; border-radius: 999px; }
 .uc-provider.p-local { background: rgba(255,255,255,0.12); color: #ccc; }

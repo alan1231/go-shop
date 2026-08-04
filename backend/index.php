@@ -28,6 +28,7 @@ $router->post('/admin/edit/{id}', [ProductController::class, 'edit']);
 $router->get('/admin/orders',             [OrdersController::class, 'index']);
 $router->get('/admin/orders/{id}',        [OrdersController::class, 'show']);
 $router->post('/admin/orders/{id}/status', [OrdersController::class, 'updateStatus']);
+$router->post('/admin/orders/{id}/remark', [OrdersController::class, 'updateRemark']);
 
 // 會員
 $router->get('/admin/users',             [UsersController::class, 'index']);

@@ -15,9 +15,15 @@ class OrderRepository {
                 user_id INT NOT NULL,
                 total_amount DECIMAL(10,2) NOT NULL,
                 status VARCHAR(50) DEFAULT \'pending\',
+                remark TEXT DEFAULT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )'
         );
+        // 舊表補欄位
+        $cols = $this->pdo->query('SHOW COLUMNS FROM orders')->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('remark', $cols)) {
+            $this->pdo->exec('ALTER TABLE orders ADD COLUMN remark TEXT DEFAULT NULL');
+        }
         $this->pdo->exec(
             'CREATE TABLE IF NOT EXISTS order_items (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -68,9 +74,67 @@ class OrderRepository {
         $stmt->execute([':status' => $status, ':id' => $id]);
     }
 
+    // 更新訂單備註
+    public function updateRemark(int $id, string $remark): void {
+        $stmt = $this->pdo->prepare('UPDATE orders SET remark = :remark WHERE id = :id');
+        $stmt->execute([':remark' => $remark, ':id' => $id]);
+    }
+
     // 訂單總數
     public function count(): int {
         return (int)$this->pdo->query('SELECT COUNT(*) FROM orders')->fetchColumn();
+    }
+
+    // 各狀態訂單數量（圓餅圖）
+    public function countByStatus(): array {
+        $rows = $this->pdo->query("SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status")->fetchAll();
+        $result = ['pending' => 0, 'paid' => 0, 'shipped' => 0, 'completed' => 0, 'cancelled' => 0];
+        foreach ($rows as $row) {
+            if (isset($result[$row['status']])) {
+                $result[$row['status']] = (int)$row['cnt'];
+            }
+        }
+        return $result;
+    }
+
+    // 近 N 天每日訂單數與營收（折線圖，含 0 天）；營收只計已付款/出貨中/已完成
+    public function getDailyStats(int $days = 7): array {
+        $rows = $this->pdo->query(
+            "SELECT DATE(created_at) AS day, COUNT(*) AS orders, SUM(total_amount) AS revenue
+             FROM orders
+             WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL " . ($days - 1) . " DAY)
+               AND status IN ('paid', 'shipped', 'completed')
+             GROUP BY DATE(created_at)"
+        )->fetchAll();
+
+        $byDay = [];
+        foreach ($rows as $row) {
+            $byDay[$row['day']] = $row;
+        }
+
+        $result = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $day = date('Y-m-d', strtotime("-{$i} day"));
+            $result[] = [
+                'day'     => date('m/d', strtotime($day)),
+                'orders'  => isset($byDay[$day]) ? (int)$byDay[$day]['orders'] : 0,
+                'revenue' => isset($byDay[$day]) ? (float)$byDay[$day]['revenue'] : 0,
+            ];
+        }
+        return $result;
+    }
+
+    // 熱銷商品 Top N（依銷售數量排序）
+    public function getTopProducts(int $limit = 5): array {
+        $stmt = $this->pdo->query(
+            "SELECT p.name, SUM(oi.quantity) AS sold, SUM(oi.quantity * oi.price) AS revenue
+             FROM order_items oi
+             JOIN products p ON oi.product_id = p.id
+             GROUP BY oi.product_id, p.name
+             ORDER BY sold DESC
+             LIMIT " . $limit
+        );
+        return $stmt->fetchAll();
     }
 
     // 已完成訂單的總金額

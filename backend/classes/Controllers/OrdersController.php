@@ -44,4 +44,22 @@ class OrdersController extends Controller {
         header('Location: ' . BASE_URL . '/admin/orders/' . $id . $qs);
         exit;
     }
+
+    // 更新訂單備註（POST）
+    public function updateRemark(int $id): void {
+        $remark = $_POST['remark'] ?? '';
+        $error = $this->orderService->updateRemark($id, $remark);
+        if ($error) {
+            $this->badRequest($error);
+            return;
+        }
+        $qs = '';
+        $backStatus = $_POST['back_status'] ?? '';
+        if ($backStatus) {
+            $qs .= '?status=' . urlencode($backStatus);
+        }
+        $qs .= ($qs ? '&' : '?') . 'remark_updated=1';
+        header('Location: ' . BASE_URL . '/admin/orders/' . $id . $qs);
+        exit;
+    }
 }

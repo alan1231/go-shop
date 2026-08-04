@@ -19,6 +19,9 @@ class DashboardService {
             'totalUsers'    => $this->userRepo->countByRole('user'),
             'revenue'       => $this->orderRepo->getCompletedRevenue(),
             'recentOrders'  => $this->orderRepo->getRecent(),
+            'statusCounts'  => $this->orderRepo->countByStatus(),
+            'dailyStats'    => $this->orderRepo->getDailyStats(7),
+            'topProducts'   => $this->orderRepo->getTopProducts(5),
         ];
     }
 }

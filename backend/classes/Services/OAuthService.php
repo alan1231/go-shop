@@ -35,6 +35,7 @@ class OAuthService {
             'provider_id' => (string)$info['id'],
             'email'       => $info['email'] ?? '',
             'name'        => $info['name'] ?? '',
+            'avatar'      => $info['picture'] ?? '',
         ];
     }
 
@@ -57,6 +58,7 @@ class OAuthService {
             'provider_id' => (string)$info['userId'],
             'email'       => $info['email'] ?? '',
             'name'        => $info['displayName'] ?? '',
+            'avatar'      => $info['pictureUrl'] ?? '',
         ];
     }
 
