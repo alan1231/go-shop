@@ -60,4 +60,8 @@ export default {
 .form-group input:focus { border-color: #4CAF50; }
 .auth-link { margin-top: 18px; font-size: 13px; color: #888; }
 .auth-link a { color: #4CAF50; text-decoration: none; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .auth-box { width: 100%; max-width: 380px; padding: 28px 20px; }
+}
 </style>

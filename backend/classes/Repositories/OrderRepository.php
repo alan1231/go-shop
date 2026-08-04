@@ -16,6 +16,10 @@ class OrderRepository {
                 total_amount DECIMAL(10,2) NOT NULL,
                 status VARCHAR(50) DEFAULT \'pending\',
                 remark TEXT DEFAULT NULL,
+                member_remark TEXT DEFAULT NULL,
+                receiver_name VARCHAR(100) DEFAULT NULL,
+                receiver_phone VARCHAR(20) DEFAULT NULL,
+                receiver_address VARCHAR(255) DEFAULT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )'
         );
@@ -23,6 +27,18 @@ class OrderRepository {
         $cols = $this->pdo->query('SHOW COLUMNS FROM orders')->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('remark', $cols)) {
             $this->pdo->exec('ALTER TABLE orders ADD COLUMN remark TEXT DEFAULT NULL');
+        }
+        if (!in_array('member_remark', $cols)) {
+            $this->pdo->exec('ALTER TABLE orders ADD COLUMN member_remark TEXT DEFAULT NULL');
+        }
+        if (!in_array('receiver_name', $cols)) {
+            $this->pdo->exec('ALTER TABLE orders ADD COLUMN receiver_name VARCHAR(100) DEFAULT NULL');
+        }
+        if (!in_array('receiver_phone', $cols)) {
+            $this->pdo->exec('ALTER TABLE orders ADD COLUMN receiver_phone VARCHAR(20) DEFAULT NULL');
+        }
+        if (!in_array('receiver_address', $cols)) {
+            $this->pdo->exec('ALTER TABLE orders ADD COLUMN receiver_address VARCHAR(255) DEFAULT NULL');
         }
         $this->pdo->exec(
             'CREATE TABLE IF NOT EXISTS order_items (
@@ -150,9 +166,20 @@ class OrderRepository {
     }
 
     // 新增訂單，回傳 insert id
-    public function createOrder(int $userId, float $total): int {
-        $stmt = $this->pdo->prepare('INSERT INTO orders (user_id, total_amount, status) VALUES (:uid, :total, :status)');
-        $stmt->execute([':uid' => $userId, ':total' => $total, ':status' => 'pending']);
+    public function createOrder(int $userId, float $total, array $receiver = [], ?string $remark = null): int {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO orders (user_id, total_amount, status, receiver_name, receiver_phone, receiver_address, member_remark)
+             VALUES (:uid, :total, :status, :rname, :rphone, :raddress, :mremark)'
+        );
+        $stmt->execute([
+            ':uid'      => $userId,
+            ':total'    => $total,
+            ':status'   => 'pending',
+            ':rname'    => $receiver['name'] ?? null,
+            ':rphone'   => $receiver['phone'] ?? null,
+            ':raddress' => $receiver['address'] ?? null,
+            ':mremark'  => $remark,
+        ]);
         return (int)$this->pdo->lastInsertId();
     }
 

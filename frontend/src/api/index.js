@@ -4,17 +4,51 @@ function getToken() {
   return localStorage.getItem('token')
 }
 
+function clearAuth() {
+  localStorage.removeItem('token')
+  if (!window.__authRedirecting) {
+    window.__authRedirecting = true
+    const { pathname, search } = window.location
+    const isAuthPage = ['/login', '/register', '/auth/callback'].some(p => pathname.startsWith(p))
+    if (!isAuthPage) {
+      window.location.href = '/login?redirect=' + encodeURIComponent(pathname + search)
+    }
+    setTimeout(() => { window.__authRedirecting = false }, 500)
+  }
+}
+
 async function request(url, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers }
   const token = getToken()
   if (token) headers['Authorization'] = 'Bearer ' + token
 
-  const res = await fetch(BASE + url, {
-    credentials: 'include',
-    headers,
-    ...options,
-  })
-  return res.json()
+  let res
+  try {
+    res = await fetch(BASE + url, {
+      credentials: 'include',
+      headers,
+      ...options,
+    })
+  } catch (e) {
+    return { success: false, message: '網路連線失敗，請稍後再試' }
+  }
+
+  if (res.status === 401) {
+    clearAuth()
+  }
+
+  let data
+  try {
+    data = await res.json()
+  } catch (e) {
+    return { success: false, message: '伺服器回應異常，請稍後再試' }
+  }
+
+  if (!res.ok && !data.success) {
+    return { success: false, message: data.message || '請求失敗，請稍後再試' }
+  }
+
+  return data
 }
 
 export const api = {
@@ -57,20 +91,33 @@ export const api = {
       body: JSON.stringify({ phone, address }),
     })
   },
+  changePassword(oldPassword, newPassword) {
+    return request('/auth/password', {
+      method: 'POST',
+      body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+    })
+  },
 
   // Products
-  products() {
-    return request('/products')
+  products(params = {}) {
+    const qs = new URLSearchParams()
+    if (params.q) qs.set('q', params.q)
+    if (params.category) qs.set('category', params.category)
+    const s = qs.toString()
+    return request('/products' + (s ? '?' + s : ''))
+  },
+  categories() {
+    return request('/categories')
   },
   product(id) {
     return request(`/products/${id}`)
   },
 
   // Orders
-  createOrder(items) {
+  createOrder(items, receiver = {}, remark = '') {
     return request('/orders', {
       method: 'POST',
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, receiver, remark }),
     })
   },
   orders() {

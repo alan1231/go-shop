@@ -133,6 +133,14 @@ class UserRepository {
         return $user ?: null;
     }
 
+    // 依 id 查詢（含 password，更改密碼用）
+    public function findForAuthById(int $id): ?array {
+        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        $user = $stmt->fetch();
+        return $user ?: null;
+    }
+
     // 檢查帳號或 Email 是否已存在，可排除指定 id（編輯時用）
     public function existsByUsernameOrEmail(string $username, string $email, ?int $excludeId = null): bool {
         $sql = 'SELECT COUNT(*) FROM users WHERE (username = :username OR email = :email)';

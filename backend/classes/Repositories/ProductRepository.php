@@ -15,6 +15,7 @@ class ProductRepository {
                 name VARCHAR(255) NOT NULL,
                 image VARCHAR(255) DEFAULT NULL,
                 description TEXT,
+                category VARCHAR(100) DEFAULT NULL,
                 price DECIMAL(10,2) NOT NULL,
                 list_price DECIMAL(10,2) DEFAULT NULL,
                 stock INT DEFAULT 0,
@@ -23,6 +24,10 @@ class ProductRepository {
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )'
         );
+        $cols = $this->pdo->query('SHOW COLUMNS FROM products')->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('category', $cols)) {
+            $this->pdo->exec('ALTER TABLE products ADD COLUMN category VARCHAR(100) DEFAULT NULL');
+        }
     }
 
     // 全部商品，依建立時間降冪
@@ -44,15 +49,16 @@ class ProductRepository {
     }
 
     // 新增商品
-    public function create(string $name, ?string $image, string $description, float $price, ?float $listPrice, int $stock, int $listedStock, string $status): void {
+    public function create(string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, int $stock, int $listedStock, string $status): void {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO products (name, image, description, price, list_price, stock, listed_stock, status)
-             VALUES (:name, :image, :description, :price, :list_price, :stock, :listed_stock, :status)'
+            'INSERT INTO products (name, image, description, category, price, list_price, stock, listed_stock, status)
+             VALUES (:name, :image, :description, :category, :price, :list_price, :stock, :listed_stock, :status)'
         );
         $stmt->execute([
             ':name'         => $name,
             ':image'        => $image,
             ':description'  => $description,
+            ':category'     => $category,
             ':price'        => $price,
             ':list_price'   => $listPrice,
             ':stock'        => $stock,
@@ -61,13 +67,30 @@ class ProductRepository {
         ]);
     }
 
-    // 僅列出上架中且有上架庫存的商品（前台用）
-    public function findActive(): array {
-        return $this->pdo->query(
-            "SELECT id, name, image, description, price, list_price, listed_stock AS stock, status, created_at
-             FROM products WHERE status = 'active' AND listed_stock > 0
-             ORDER BY created_at DESC"
-        )->fetchAll();
+    // 僅列出上架中且有上架庫存的商品（前台用），可依關鍵字與分類篩選
+    public function findActive(?string $keyword = null, ?string $category = null): array {
+        $sql = "SELECT id, name, image, description, category, price, list_price, listed_stock AS stock, status, created_at
+                FROM products WHERE status = 'active' AND listed_stock > 0";
+        $params = [];
+        if ($keyword !== null && $keyword !== '') {
+            $sql .= ' AND (name LIKE :kw OR description LIKE :kwd)';
+            $params[':kw'] = '%' . $keyword . '%';
+            $params[':kwd'] = '%' . $keyword . '%';
+        }
+        if ($category !== null && $category !== '') {
+            $sql .= ' AND category = :cat';
+            $params[':cat'] = $category;
+        }
+        $sql .= ' ORDER BY created_at DESC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    // 商品分類清單（前台篩選用）
+    public function getCategories(): array {
+        $rows = $this->pdo->query("SELECT DISTINCT category FROM products WHERE status = 'active' AND category IS NOT NULL AND category != '' ORDER BY category")->fetchAll(PDO::FETCH_COLUMN);
+        return $rows;
     }
 
     // 扣減庫存（下單時用）
@@ -77,9 +100,9 @@ class ProductRepository {
     }
 
     // 更新商品
-    public function update(int $id, string $name, ?string $image, string $description, float $price, ?float $listPrice, int $stock, int $listedStock, string $status): void {
+    public function update(int $id, string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, int $stock, int $listedStock, string $status): void {
         $stmt = $this->pdo->prepare(
-            'UPDATE products SET name = :name, image = :image, description = :description,
+            'UPDATE products SET name = :name, image = :image, description = :description, category = :category,
              price = :price, list_price = :list_price, stock = :stock,
              listed_stock = :listed_stock, status = :status WHERE id = :id'
         );
@@ -88,6 +111,7 @@ class ProductRepository {
             ':name'         => $name,
             ':image'        => $image,
             ':description'  => $description,
+            ':category'     => $category,
             ':price'        => $price,
             ':list_price'   => $listPrice,
             ':stock'        => $stock,

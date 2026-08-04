@@ -3,7 +3,10 @@
     <nav v-if="showHeader">
       <div class="inner">
         <router-link to="/" class="logo"><i class="fas fa-store"></i> SHOP</router-link>
-        <div class="nav-links">
+        <button class="nav-toggle" @click.stop="mobileOpen = !mobileOpen" aria-label="選單">
+          <i class="fas" :class="mobileOpen ? 'fa-times' : 'fa-bars'"></i>
+        </button>
+        <div class="nav-links" :class="{ open: mobileOpen }">
           <router-link to="/"><i class="fas fa-home"></i> 首頁</router-link>
           <router-link to="/cart"><i class="fas fa-shopping-cart"></i> 購物車 ({{ cartCount }})</router-link>
           <router-link v-if="user" to="/orders"><i class="fas fa-file-invoice"></i> 訂單</router-link>
@@ -13,7 +16,7 @@
           </span>
           <div v-if="userMenuOpen" class="user-card" @click.stop>
             <div class="uc-header">
-              <img v-if="user.avatar" :src="user.avatar" class="uc-avatar" alt="avatar" />
+              <img v-if="user.avatar" :src="user.avatar" class="uc-avatar" alt="avatar" @error="avatarError" />
               <div v-else class="uc-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
               <div class="uc-meta">
                 <div class="uc-name">{{ user.username }}</div>
@@ -42,7 +45,17 @@
                 <button class="btn btn-primary btn-sm" @click="saveEdit" :disabled="saving">{{ saving ? '儲存中...' : '儲存' }}</button>
                 <button class="btn btn-default btn-sm" style="margin-left:8px;" @click="cancelEdit">取消</button>
               </template>
+              <button v-if="!editing" class="btn btn-default btn-sm" style="margin-left:8px;" @click="togglePwEdit"><i class="fas fa-key"></i> 更改密碼</button>
               <button v-if="!editing" class="btn btn-danger btn-sm" style="margin-left:8px;" @click="handleLogout"><i class="fas fa-sign-out-alt"></i> 登出</button>
+            </div>
+            <div v-if="pwEdit" class="uc-pw">
+              <div class="uc-row uc-edit"><i class="fas fa-lock"></i><input v-model="pwOld" type="password" placeholder="原密碼（OAuth 會員可留空）" /></div>
+              <div class="uc-row uc-edit"><i class="fas fa-lock"></i><input v-model="pwNew" type="password" placeholder="新密碼（至少 6 碼）" /></div>
+              <div class="uc-row uc-edit"><i class="fas fa-lock"></i><input v-model="pwConfirm" type="password" placeholder="確認新密碼" /></div>
+              <div class="uc-pw-actions">
+                <button class="btn btn-primary btn-sm" @click="savePassword" :disabled="pwSaving">{{ pwSaving ? '儲存中...' : '確認更改' }}</button>
+                <button class="btn btn-default btn-sm" style="margin-left:8px;" @click="togglePwEdit">取消</button>
+              </div>
             </div>
           </div>
           <router-link v-if="!user" to="/login"><i class="fas fa-sign-in-alt"></i> 登入</router-link>
@@ -59,6 +72,7 @@
     <footer v-if="showHeader">
       <p>&copy; 2026 SHOP</p>
     </footer>
+    <Toast />
   </div>
 </template>
 
@@ -66,16 +80,25 @@
 import { api } from './api/index.js'
 import { cartStore } from './store/cart.js'
 import { userStore } from './store/user.js'
+import { toastStore } from './store/toast.js'
+import Toast from './components/Toast.vue'
 
 export default {
+  components: { Toast },
   data() {
     return {
       marqueeText: '',
       userMenuOpen: false,
+      mobileOpen: false,
       editing: false,
       saving: false,
       editPhone: '',
       editAddress: '',
+      pwEdit: false,
+      pwSaving: false,
+      pwOld: '',
+      pwNew: '',
+      pwConfirm: '',
     }
   },
   computed: {
@@ -106,12 +129,19 @@ export default {
       return isNaN(d) ? '' : d.toLocaleDateString('zh-TW')
     },
   },
+  watch: {
+    $route() {
+      this.userMenuOpen = false
+      this.mobileOpen = false
+    },
+  },
   methods: {
     toggleUserMenu() {
       this.userMenuOpen = !this.userMenuOpen
     },
     closeUserMenu() {
       this.userMenuOpen = false
+      this.mobileOpen = false
     },
     async fetchUser() {
       await userStore.fetch()
@@ -121,7 +151,18 @@ export default {
       if (res.success) this.marqueeText = res.data.content
     },
     addToCart(product) {
-      cartStore.add(product)
+      const r = cartStore.add(product)
+      if (r.ok) toastStore.success(r.message)
+      else toastStore.error(r.message)
+    },
+    startMarqueePoll() {
+      if (this.marqueeTimer) clearInterval(this.marqueeTimer)
+      this.marqueeTimer = setInterval(() => {
+        if (this.showHeader) this.fetchMarquee()
+      }, 30000)
+    },
+    avatarError() {
+      if (this.user) this.user.avatar = null
     },
     startEdit() {
       this.editPhone = this.user.phone || ''
@@ -130,6 +171,33 @@ export default {
     },
     cancelEdit() {
       this.editing = false
+    },
+    togglePwEdit() {
+      this.pwEdit = !this.pwEdit
+      if (!this.pwEdit) {
+        this.pwOld = ''
+        this.pwNew = ''
+        this.pwConfirm = ''
+      }
+    },
+    async savePassword() {
+      if (this.pwNew.length < 6) {
+        toastStore.error('新密碼至少需 6 個字元')
+        return
+      }
+      if (this.pwNew !== this.pwConfirm) {
+        toastStore.error('兩次輸入的新密碼不一致')
+        return
+      }
+      this.pwSaving = true
+      const res = await api.changePassword(this.pwOld, this.pwNew)
+      if (res.success) {
+        toastStore.success(res.message)
+        this.togglePwEdit()
+      } else {
+        toastStore.error(res.message)
+      }
+      this.pwSaving = false
     },
     async saveEdit() {
       this.saving = true
@@ -151,10 +219,11 @@ export default {
   async created() {
     await this.fetchMarquee()
     await this.fetchUser()
-    setInterval(() => this.fetchMarquee(), 30000)
+    this.startMarqueePoll()
     document.addEventListener('click', this.closeUserMenu)
   },
   beforeUnmount() {
+    if (this.marqueeTimer) clearInterval(this.marqueeTimer)
     document.removeEventListener('click', this.closeUserMenu)
   },
 }
@@ -174,6 +243,7 @@ nav .logo i { color: #4CAF50; margin-right: 8px; }
 .nav-links a:hover, .nav-links a.router-link-exact-active { color: #fff; }
 .user-info { color: #4CAF50; font-size: 14px; font-weight: 600; cursor: pointer; user-select: none; }
 .nav-links { position: relative; }
+.nav-toggle { display: none; background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 4px 6px; }
 .user-card { position: absolute; top: 52px; right: 40px; width: 280px; background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); z-index: 200; overflow: hidden; animation: fade-in 0.15s ease; }
 @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 .uc-header { display: flex; align-items: center; gap: 12px; padding: 18px; background: #1a1d29; }
@@ -191,6 +261,8 @@ nav .logo i { color: #4CAF50; margin-right: 8px; }
 .uc-edit input { flex: 1; padding: 6px 10px; border: 1px solid #d0d5dd; border-radius: 6px; font-size: 13px; outline: none; }
 .uc-edit input:focus { border-color: #4CAF50; }
 .uc-footer { padding: 12px 18px 16px; border-top: 1px solid #eee; }
+.uc-pw { padding: 12px 18px; border-top: 1px solid #eee; background: #fafafa; }
+.uc-pw-actions { margin-top: 10px; }
 .btn-sm { padding: 8px 16px; font-size: 13px; }
 
 .marquee { background: #4CAF50; color: #fff; overflow: hidden; padding: 7px 0; font-size: 13px; }
@@ -213,4 +285,36 @@ footer { background: #1a1d29; color: #888; text-align: center; padding: 20px; fo
 .btn-danger:hover { background: #d32f2f; }
 
 .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 20px; }
+
+@media (max-width: 768px) {
+  nav { padding: 12px 16px; }
+  nav .logo { font-size: 18px; }
+  .nav-toggle { display: block; }
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    background: #1a1d29;
+    padding: 6px 16px 16px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+  }
+  .nav-links:not(.open) { display: none; }
+  .nav-links a, .nav-links .user-info {
+    padding: 14px 4px;
+    font-size: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-links a:last-child, .nav-links .user-info:last-child { border-bottom: none; }
+  .nav-links a i, .nav-links .user-info i:first-child { width: 20px; text-align: center; }
+  .nav-links .user-info { color: #4CAF50; }
+  .user-card { position: static; width: 100%; margin-top: 6px; border-radius: 10px; box-shadow: none; }
+  main { padding: 20px 16px; }
+}
 </style>

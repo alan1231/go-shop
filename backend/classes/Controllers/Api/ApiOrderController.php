@@ -13,8 +13,14 @@ class ApiOrderController extends ApiController {
 
         $body = json_decode(file_get_contents('php://input'), true) ?: $_POST;
         $items = $body['items'] ?? [];
+        $receiver = [
+            'name'    => trim($body['receiver']['name'] ?? ''),
+            'phone'   => trim($body['receiver']['phone'] ?? ''),
+            'address' => trim($body['receiver']['address'] ?? ''),
+        ];
+        $remark = trim($body['remark'] ?? '');
 
-        $result = $this->orderService->createOrder((int)$user['id'], $items);
+        $result = $this->orderService->createOrder((int)$user['id'], $items, $receiver, $remark ?: null);
         if (!$result['success']) {
             $this->error($result['message']);
             return;

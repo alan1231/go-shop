@@ -15,7 +15,7 @@
         </div>
         <div class="order-body">
           <span>NT$ {{ Number(o.total_amount).toLocaleString() }}</span>
-          <span class="order-date">{{ o.created_at }}</span>
+          <span class="order-date">{{ formatDate(o.created_at) }}</span>
         </div>
       </div>
     </div>
@@ -30,6 +30,13 @@ export default {
     statusLabel(s) {
       const map = { pending: '待付款', paid: '已付款', shipped: '出貨中', completed: '已完成', cancelled: '已取消' }
       return map[s] || s
+    },
+    formatDate(v) {
+      if (!v) return ''
+      const d = new Date(v.replace(' ', 'T'))
+      if (isNaN(d)) return v
+      const pad = n => String(n).padStart(2, '0')
+      return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
     },
   },
   async created() {

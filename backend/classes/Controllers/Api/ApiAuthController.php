@@ -127,4 +127,19 @@ class ApiAuthController extends ApiController {
         }
         $this->success(null, $result['message']);
     }
+
+    // POST /api/auth/password — 更改密碼
+    public function changePassword(): void {
+        $user = $this->requireAuth();
+        $body = $this->jsonBody();
+        $oldPassword = $body['old_password'] ?? '';
+        $newPassword = $body['new_password'] ?? '';
+
+        $result = $this->userService->changePassword((int)$user['id'], $oldPassword, $newPassword);
+        if (!$result['success']) {
+            $this->error($result['message']);
+            return;
+        }
+        $this->success(null, $result['message']);
+    }
 }

@@ -8,19 +8,22 @@
 <script>
 import { api } from '../api/index.js'
 import { userStore } from '../store/user.js'
+import { toastStore } from '../store/toast.js'
+import { verifyOAuthState } from '../api/oauth.js'
 
 export default {
   async created() {
     const code = this.$route.query.code
     const state = this.$route.query.state
-    if (code && state) {
-      const res = await api.oauthLogin(state, code)
+    if (code && state && verifyOAuthState(state)) {
+      const provider = state.split('-')[0]
+      const res = await api.oauthLogin(provider, code)
       if (res.success) {
         userStore.set(res.data.user)
-        this.$router.push('/')
+        this.$router.push(this.$route.query.redirect || '/')
         return
       }
-      alert(res.message)
+      toastStore.error(res.message)
     }
     this.$router.push('/login')
   },

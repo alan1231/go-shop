@@ -15,6 +15,10 @@
             <input type="text" name="name" value="<?= htmlspecialchars($p['name']) ?>" required>
         </div>
         <div class="form-group">
+            <label>商品分類</label>
+            <input type="text" name="category" value="<?= htmlspecialchars($p['category'] ?? '') ?>" placeholder="例如：手機、水果、服飾">
+        </div>
+        <div class="form-group">
             <label>目前圖片</label>
             <div>
                 <?php if ($p['image']): ?>

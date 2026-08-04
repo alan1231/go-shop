@@ -40,6 +40,31 @@ class UserService {
         return ['success' => true, 'message' => '聯絡資料已更新'];
     }
 
+    // 前台更改密碼：驗證舊密碼後更新
+    public function changePassword(int $id, string $oldPassword, string $newPassword): array {
+        $user = $this->repo->findForAuthById($id);
+        if (!$user) {
+            return ['success' => false, 'message' => '使用者不存在'];
+        }
+        // 三方登入會員若從未設定密碼，允許不帶舊密碼直接設定
+        $isOAuthAccount = !empty($user['provider']);
+        if ($isOAuthAccount && empty($oldPassword)) {
+            $oldValid = true;
+        } elseif (!password_verify($oldPassword, $user['password'])) {
+            $oldValid = false;
+        } else {
+            $oldValid = true;
+        }
+        if (!$oldValid) {
+            return ['success' => false, 'message' => '原密碼錯誤'];
+        }
+        if (strlen($newPassword) < 6) {
+            return ['success' => false, 'message' => '新密碼至少需 6 個字元'];
+        }
+        $this->repo->updatePassword($id, password_hash($newPassword, PASSWORD_DEFAULT));
+        return ['success' => true, 'message' => '密碼已更新'];
+    }
+
     // 更新完整資料（用於管理員編輯自己）
     public function updateProfile(int $id, string $username, string $email, ?string $password = null): array {
         if (!$username || !$email) {

@@ -12,6 +12,12 @@ export const oauthConfig = {
   },
 }
 
+function genState(provider) {
+  const s = provider + '-' + crypto.getRandomValues(new Uint32Array(4)).join('')
+  sessionStorage.setItem('oauth_state', s)
+  return s
+}
+
 export function buildOAuthUrl(provider) {
   const cfg = oauthConfig[provider]
   const params = new URLSearchParams({
@@ -19,7 +25,13 @@ export function buildOAuthUrl(provider) {
     client_id: cfg.clientId || cfg.channelId,
     redirect_uri: oauthConfig.redirectUri,
     scope: cfg.scope,
-    state: provider,
+    state: genState(provider),
   })
   return `${cfg.authUrl}?${params.toString()}`
+}
+
+export function verifyOAuthState(state) {
+  const expected = sessionStorage.getItem('oauth_state')
+  sessionStorage.removeItem('oauth_state')
+  return !!expected && state === expected
 }

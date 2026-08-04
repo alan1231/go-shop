@@ -7,9 +7,11 @@ class ApiProductController extends ApiController {
         $this->productService = new ProductService();
     }
 
-    // GET /api/products — 僅回傳上架中商品
+    // GET /api/products — 僅回傳上架中商品，可依 ?q= 與 ?category= 篩選
     public function index(): void {
-        $products = $this->productService->getAll();
+        $keyword  = trim($_GET['q'] ?? '');
+        $category = trim($_GET['category'] ?? '');
+        $products = $this->productService->getAll($keyword, $category);
         // 過濾只回傳前台需要的欄位
         $result = array_map(function ($p) {
             return [
@@ -17,17 +19,20 @@ class ApiProductController extends ApiController {
                 'name'        => $p['name'],
                 'image'       => $p['image'] ? BASE_URL . '/uploads/' . $p['image'] : null,
                 'description' => $p['description'],
+                'category'    => $p['category'],
                 'price'       => (float)$p['price'],
                 'list_price'  => $p['list_price'] ? (float)$p['list_price'] : null,
-                'stock'       => (int)$p['listed_stock'],
+                'stock'       => (int)$p['stock'],
                 'status'      => $p['status'],
             ];
         }, $products);
 
-        // 只回傳上架中且有庫存的
-        $result = array_values(array_filter($result, fn($p) => $p['status'] === 'active' && $p['stock'] > 0));
-
         $this->success($result);
+    }
+
+    // GET /api/categories — 分類清單
+    public function categories(): void {
+        $this->success($this->productService->getCategories());
     }
 
     // GET /api/products/{id}

@@ -20,6 +20,7 @@
                 <tr style="background:#f8f9fa;text-align:left;">
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;width:60px;">圖片</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">商品名稱</th>
+                    <th style="padding:14px 18px;border-bottom:2px solid #eee;">分類</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">定價 / 售價</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">庫存 / 上架</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">狀態</th>
@@ -38,6 +39,7 @@
                             <?php endif; ?>
                         </td>
                         <td style="padding:12px 18px;font-weight:600;"><?= htmlspecialchars($p['name']) ?></td>
+                        <td style="padding:12px 18px;"><?= $p['category'] ? '<span style="background:#f0f0f0;padding:2px 8px;border-radius:10px;font-size:12px;color:#666;">' . htmlspecialchars($p['category']) . '</span>' : '<span style="color:#bbb;">—</span>' ?></td>
                         <td style="padding:12px 18px;">
                             <?php if ($hasDiscount): ?>
                                 <span style="text-decoration:line-through;color:#aaa;font-size:12px;">NT$ <?= number_format($p['list_price'], 0) ?></span><br>

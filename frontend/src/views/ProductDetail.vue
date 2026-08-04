@@ -20,7 +20,7 @@
       <button class="btn btn-primary" @click="$emit('add-to-cart', p)" :disabled="!p.stock">
         <i class="fas fa-cart-plus"></i> 加入購物車
       </button>
-      <router-link to="/" class="btn btn-default" style="margin-left:10px;">返回</router-link>
+      <router-link to="/" class="btn btn-default" style="margin-left:10px;" @click.prevent="goBack"><i class="fas fa-arrow-left"></i> 返回</router-link>
     </div>
   </div>
 </template>
@@ -29,6 +29,12 @@
 import { api } from '../api/index.js'
 export default {
   data() { return { p: null, loading: true } },
+  methods: {
+    goBack() {
+      if (window.history.length > 1) this.$router.back()
+      else this.$router.push('/')
+    },
+  },
   async created() {
     const id = parseInt(this.$route.params.id)
     const res = await api.product(id)
@@ -51,4 +57,9 @@ export default {
 .stock.in { color: #2e7d32; }
 .stock.out { color: #c62828; }
 .desc { color: #666; line-height: 1.7; margin-bottom: 24px; }
+
+@media (max-width: 768px) {
+  .detail { grid-template-columns: 1fr; gap: 24px; }
+  .detail-img { min-height: 260px; }
+}
 </style>

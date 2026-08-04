@@ -51,7 +51,7 @@ export default {
       const res = await api.login(this.username, this.password)
       if (res.success) {
         userStore.set(res.data.user)
-        this.$router.push('/')
+        this.$router.push(this.$route.query.redirect || '/')
       } else {
         this.error = res.message
       }
@@ -80,4 +80,8 @@ export default {
 .btn-line:hover { background: #05b44c; }
 .divider { display: flex; align-items: center; gap: 12px; color: #aaa; font-size: 12px; margin-bottom: 20px; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #eee; }
+
+@media (max-width: 768px) {
+  .auth-box { width: 100%; max-width: 380px; padding: 28px 20px; }
+}
 </style>

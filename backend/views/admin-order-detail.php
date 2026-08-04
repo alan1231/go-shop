@@ -29,9 +29,12 @@ $backUrl = BASE_URL . '/admin/orders' . ($backStatus ? '?status=' . urlencode($b
         <table style="font-size:14px;width:100%;">
             <tr><td style="padding:6px 0;color:#888;">訂單編號</td><td style="padding:6px 0;font-weight:600;">#<?= $order['id'] ?></td></tr>
             <tr><td style="padding:6px 0;color:#888;">會員名稱</td><td style="padding:6px 0;"><?= htmlspecialchars($order['username']) ?></td></tr>
-            <tr><td style="padding:6px 0;color:#888;">Email</td><td style="padding:6px 0;"><?= htmlspecialchars($order['email'] ?? '') ?></td></tr>
-            <tr><td style="padding:6px 0;color:#888;">手機號碼</td><td style="padding:6px 0;"><?= htmlspecialchars($order['phone'] ?? '未提供') ?></td></tr>
-            <tr><td style="padding:6px 0;color:#888;">住址</td><td style="padding:6px 0;"><?= htmlspecialchars($order['address'] ?? '未提供') ?></td></tr>
+            <tr><td style="padding:6px 0;color:#888;">收件人</td><td style="padding:6px 0;"><?= htmlspecialchars($order['receiver_name'] ?? '未提供') ?></td></tr>
+            <tr><td style="padding:6px 0;color:#888;">收件手機</td><td style="padding:6px 0;"><?= htmlspecialchars($order['receiver_phone'] ?? '未提供') ?></td></tr>
+            <tr><td style="padding:6px 0;color:#888;">收件住址</td><td style="padding:6px 0;"><?= htmlspecialchars($order['receiver_address'] ?? '未提供') ?></td></tr>
+            <?php if (!empty($order['member_remark'])): ?>
+                <tr><td style="padding:6px 0;color:#888;vertical-align:top;">會員備註</td><td style="padding:6px 0;color:#555;white-space:pre-wrap;line-height:1.6;"><?= htmlspecialchars($order['member_remark']) ?></td></tr>
+            <?php endif; ?>
             <tr><td style="padding:6px 0;color:#888;">總金額</td><td style="padding:6px 0;font-weight:700;font-size:18px;color:#e44d26;">NT$ <?= number_format($order['total_amount'], 0) ?></td></tr>
             <tr><td style="padding:6px 0;color:#888;">建立時間</td><td style="padding:6px 0;"><?= $order['created_at'] ?></td></tr>
         </table>

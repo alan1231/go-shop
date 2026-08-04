@@ -7,8 +7,12 @@ class ProductService {
         $this->repo = new ProductRepository();
     }
 
-    public function getAll(): array {
-        return $this->repo->getAll();
+    public function getAll(?string $keyword = null, ?string $category = null): array {
+        return $this->repo->findActive($keyword, $category);
+    }
+
+    public function getCategories(): array {
+        return $this->repo->getCategories();
     }
 
     public function getById(int $id): ?array {
@@ -19,6 +23,7 @@ class ProductService {
     public function create(array $data, ?array $file): array {
         $name        = $data['name'] ?? '';
         $description = $data['description'] ?? '';
+        $category    = $data['category'] ?? null;
         $price       = (float)($data['price'] ?? 0);
         $listPrice   = $data['list_price'] !== '' ? (float)$data['list_price'] : null;
         $stock       = (int)($data['stock'] ?? 0);
@@ -34,7 +39,7 @@ class ProductService {
             return $imageResult;
         }
 
-        $this->repo->create($name, $imageResult['name'], $description, $price, $listPrice, $stock, $listedStock, $status);
+        $this->repo->create($name, $imageResult['name'], $description, $category, $price, $listPrice, $stock, $listedStock, $status);
         return ['success' => true, 'message' => "商品「{$name}」新增成功！"];
     }
 
@@ -47,6 +52,7 @@ class ProductService {
 
         $name        = $data['name'] ?? '';
         $description = $data['description'] ?? '';
+        $category    = $data['category'] ?? null;
         $price       = (float)($data['price'] ?? 0);
         $listPrice   = $data['list_price'] !== '' ? (float)$data['list_price'] : null;
         $stock       = (int)($data['stock'] ?? 0);
@@ -69,7 +75,7 @@ class ProductService {
             $imageName = $result['name'];
         }
 
-        $this->repo->update($id, $name, $imageName, $description, $price, $listPrice, $stock, $listedStock, $status);
+        $this->repo->update($id, $name, $imageName, $description, $category, $price, $listPrice, $stock, $listedStock, $status);
         return ['success' => true, 'message' => "商品「{$name}」修改成功！"];
     }
 

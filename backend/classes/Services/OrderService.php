@@ -27,8 +27,8 @@ class OrderService {
         return $this->repo->findByUserId($userId);
     }
 
-    // 前台下單：items = [[product_id, quantity], ...]
-    public function createOrder(int $userId, array $items): array {
+    // 前台下單：items = [[product_id, quantity], ...]，receiver = [name, phone, address]，remark = 會員備註
+    public function createOrder(int $userId, array $items, array $receiver = [], ?string $remark = null): array {
         if (empty($items)) {
             return ['success' => false, 'message' => '訂單不得為空'];
         }
@@ -54,7 +54,7 @@ class OrderService {
             return ['success' => false, 'message' => '商品不存在或庫存不足'];
         }
 
-        $orderId = $this->repo->createOrder($userId, $total);
+        $orderId = $this->repo->createOrder($userId, $total, $receiver, $remark);
         foreach ($orderItems as $oi) {
             $this->repo->createItem($orderId, $oi['product']['id'], $oi['product']['price'], $oi['quantity']);
             $productRepo->decreaseStock($oi['product']['id'], $oi['quantity']);
