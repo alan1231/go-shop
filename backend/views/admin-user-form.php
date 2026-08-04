@@ -22,10 +22,17 @@ $isEdit = isset($user);
                 <label>Email</label>
                 <input type="email" value="<?= htmlspecialchars($user['email']) ?>" disabled>
             </div>
+            <?php if (!empty($user['provider'])): ?>
+                <div class="msg msg-success" style="margin-bottom:16px;">
+                    <i class="fab fa-<?= $user['provider'] === 'line' ? 'line' : 'google' ?>" style="color:<?= $user['provider'] === 'line' ? '#06C755' : '#4285F4' ?>;"></i>
+                    此會員透過 <?= $user['provider'] === 'line' ? 'LINE' : 'Google' ?> 登入，無密碼，無法修改。
+                </div>
+            <?php else: ?>
             <div class="form-group">
                 <label>新密碼</label>
                 <input type="password" name="password" required>
             </div>
+            <?php endif; ?>
         <?php else: ?>
             <!-- 新增會員 -->
             <div class="form-group">

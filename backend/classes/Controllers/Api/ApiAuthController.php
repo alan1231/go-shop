@@ -47,7 +47,7 @@ class ApiAuthController extends ApiController {
 
         $this->success([
             'token'    => $token,
-            'user'     => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email']],
+            'user'     => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address']],
         ], '登入成功');
     }
 
@@ -89,7 +89,7 @@ class ApiAuthController extends ApiController {
 
         $this->success([
             'token' => $token,
-            'user'  => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email']],
+            'user'  => ['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address']],
         ], '登入成功');
     }
 
@@ -103,6 +103,21 @@ class ApiAuthController extends ApiController {
     // GET /api/auth/me — 取得目前登入使用者資訊
     public function me(): void {
         $user = $this->requireAuth();
-        $this->success(['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email']]);
+        $this->success(['id' => (int)$user['id'], 'username' => $user['username'], 'email' => $user['email'], 'provider' => $user['provider'], 'created_at' => $user['created_at'], 'phone' => $user['phone'], 'address' => $user['address']]);
+    }
+
+    // POST /api/auth/update — 更新聯絡資料（手機、住址）
+    public function updateContact(): void {
+        $user = $this->requireAuth();
+        $body = $this->jsonBody();
+        $phone   = trim($body['phone'] ?? '');
+        $address = trim($body['address'] ?? '');
+
+        $result = $this->userService->updateContact((int)$user['id'], $phone, $address);
+        if (!$result['success']) {
+            $this->error($result['message']);
+            return;
+        }
+        $this->success(null, $result['message']);
     }
 }

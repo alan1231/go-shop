@@ -51,6 +51,12 @@ export const api = {
   me() {
     return request('/auth/me')
   },
+  updateContact(phone, address) {
+    return request('/auth/update', {
+      method: 'POST',
+      body: JSON.stringify({ phone, address }),
+    })
+  },
 
   // Products
   products() {

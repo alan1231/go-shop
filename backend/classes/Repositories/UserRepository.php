@@ -19,6 +19,8 @@ class UserRepository {
                 token VARCHAR(64) DEFAULT NULL,
                 provider VARCHAR(20) DEFAULT NULL,
                 provider_id VARCHAR(100) DEFAULT NULL,
+                phone VARCHAR(20) DEFAULT NULL,
+                address VARCHAR(255) DEFAULT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY idx_provider (provider, provider_id)
             )'
@@ -33,6 +35,12 @@ class UserRepository {
         }
         if (!in_array('provider_id', $cols)) {
             $this->pdo->exec('ALTER TABLE users ADD COLUMN provider_id VARCHAR(100) DEFAULT NULL');
+        }
+        if (!in_array('phone', $cols)) {
+            $this->pdo->exec('ALTER TABLE users ADD COLUMN phone VARCHAR(20) DEFAULT NULL');
+        }
+        if (!in_array('address', $cols)) {
+            $this->pdo->exec('ALTER TABLE users ADD COLUMN address VARCHAR(255) DEFAULT NULL');
         }
         $indexes = $this->pdo->query('SHOW INDEX FROM users')->fetchAll(PDO::FETCH_ASSOC);
         $hasIdx = false;
@@ -97,9 +105,9 @@ class UserRepository {
         $stmt->execute([':token' => $token, ':id' => $id]);
     }
 
-    // 依角色列出會員（僅 id, username, email, created_at）
+    // 依角色列出會員（僅 id, username, email, provider, created_at）
     public function findAllByRole(string $role): array {
-        $stmt = $this->pdo->prepare('SELECT id, username, email, created_at FROM users WHERE role = :role ORDER BY created_at DESC');
+        $stmt = $this->pdo->prepare('SELECT id, username, email, provider, created_at FROM users WHERE role = :role ORDER BY created_at DESC');
         $stmt->execute([':role' => $role]);
         return $stmt->fetchAll();
     }
@@ -175,6 +183,12 @@ class UserRepository {
     public function updatePassword(int $id, string $passwordHash): void {
         $stmt = $this->pdo->prepare('UPDATE users SET password = :password WHERE id = :id');
         $stmt->execute([':password' => $passwordHash, ':id' => $id]);
+    }
+
+    // 更新會員聯絡資料（手機、住址）
+    public function updateContact(int $id, string $phone, string $address): void {
+        $stmt = $this->pdo->prepare('UPDATE users SET phone = :phone, address = :address WHERE id = :id');
+        $stmt->execute([':phone' => $phone, ':address' => $address, ':id' => $id]);
     }
 
     // 刪除會員

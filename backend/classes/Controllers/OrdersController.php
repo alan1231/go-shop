@@ -35,7 +35,13 @@ class OrdersController extends Controller {
             $this->badRequest($error);
             return;
         }
-        header('Location: ' . BASE_URL . '/admin/orders/' . $id);
+        $qs = '';
+        $backStatus = $_POST['back_status'] ?? '';
+        if ($backStatus) {
+            $qs .= '?status=' . urlencode($backStatus);
+        }
+        $qs .= ($qs ? '&' : '?') . 'updated=1';
+        header('Location: ' . BASE_URL . '/admin/orders/' . $id . $qs);
         exit;
     }
 }

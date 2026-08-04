@@ -34,6 +34,12 @@ class UserService {
         return ['success' => true, 'message' => '密碼已更新'];
     }
 
+    // 更新會員聯絡資料（手機、住址）
+    public function updateContact(int $id, string $phone, string $address): array {
+        $this->repo->updateContact($id, trim($phone), trim($address));
+        return ['success' => true, 'message' => '聯絡資料已更新'];
+    }
+
     // 更新完整資料（用於管理員編輯自己）
     public function updateProfile(int $id, string $username, string $email, ?string $password = null): array {
         if (!$username || !$email) {

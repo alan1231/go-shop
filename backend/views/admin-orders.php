@@ -47,7 +47,7 @@ $currentStatus = $_GET['status'] ?? '';
                         </td>
                         <td style="padding:12px 18px;color:#888;font-size:13px;"><?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></td>
                         <td style="padding:12px 18px;text-align:center;">
-                            <a href="<?= BASE_URL ?>/admin/orders/<?= $order['id'] ?>" style="color:#4CAF50;text-decoration:none;font-size:16px;" title="檢視"><i class="fas fa-eye"></i></a>
+                            <a href="<?= BASE_URL ?>/admin/orders/<?= $order['id'] ?><?= $currentStatus ? '?status=' . urlencode($currentStatus) : '' ?>" style="color:#4CAF50;text-decoration:none;font-size:16px;" title="檢視"><i class="fas fa-eye"></i></a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

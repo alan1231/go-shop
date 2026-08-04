@@ -48,6 +48,7 @@ $router->post('/api/auth/login',     [ApiAuthController::class, 'login']);
 $router->post('/api/auth/oauth',     [ApiAuthController::class, 'oauth']);
 $router->post('/api/auth/logout',    [ApiAuthController::class, 'logout']);
 $router->get('/api/auth/me',         [ApiAuthController::class, 'me']);
+$router->post('/api/auth/update',    [ApiAuthController::class, 'updateContact']);
 $router->get('/api/products',        [ApiProductController::class, 'index']);
 $router->get('/api/products/{id}',   [ApiProductController::class, 'show']);
 $router->post('/api/orders',         [ApiOrderController::class, 'create']);

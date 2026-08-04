@@ -51,10 +51,15 @@ class UsersController extends Controller {
         $message_type = '';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // 會員只能改密碼
-            $result = $this->userService->updatePassword($id, $_POST['password'] ?? '');
-            $message = $result['message'];
-            $message_type = $result['success'] ? 'success' : 'error';
+            // 三方登入會員無密碼，無法修改
+            if (!empty($user['provider'])) {
+                $message = '此會員為三方登入，無密碼可修改';
+                $message_type = 'error';
+            } else {
+                $result = $this->userService->updatePassword($id, $_POST['password'] ?? '');
+                $message = $result['message'];
+                $message_type = $result['success'] ? 'success' : 'error';
+            }
         }
 
         $this->render('admin-user-form', compact('user', 'message', 'message_type') + ['page_title' => '編輯會員']);

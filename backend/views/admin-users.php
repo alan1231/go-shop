@@ -1,4 +1,15 @@
-<?php /** @var array $users */ ?>
+<?php
+/** @var array $users */
+function providerBadge(?string $provider): string {
+    if ($provider === 'google') {
+        return '<i class="fab fa-google" style="color:#4285F4;"></i> Google';
+    }
+    if ($provider === 'line') {
+        return '<i class="fab fa-line" style="color:#06C755;"></i> LINE';
+    }
+    return '<i class="fas fa-user" style="color:#999;"></i> 帳號';
+}
+?>
 <div class="page-header">
     <h1><i class="fas fa-users"></i> 會員管理</h1>
     <a href="<?= BASE_URL ?>/admin/users/add" class="btn btn-primary"><i class="fas fa-plus"></i> 新增會員</a>
@@ -14,6 +25,7 @@
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">ID</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">帳號</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">Email</th>
+                    <th style="padding:14px 18px;border-bottom:2px solid #eee;">登入方式</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">註冊日期</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;text-align:center;">操作</th>
                 </tr>
@@ -24,6 +36,7 @@
                         <td style="padding:12px 18px;"><?= $u['id'] ?></td>
                         <td style="padding:12px 18px;font-weight:600;"><?= htmlspecialchars($u['username']) ?></td>
                         <td style="padding:12px 18px;"><?= htmlspecialchars($u['email']) ?></td>
+                        <td style="padding:12px 18px;"><?= providerBadge($u['provider'] ?? null) ?></td>
                         <td style="padding:12px 18px;color:#888;"><?= $u['created_at'] ?></td>
                         <td style="padding:12px 18px;text-align:center;">
                             <a href="<?= BASE_URL ?>/admin/users/edit/<?= $u['id'] ?>" style="color:#4CAF50;text-decoration:none;font-size:16px;margin-right:8px;" title="編輯"><i class="fas fa-edit"></i></a>

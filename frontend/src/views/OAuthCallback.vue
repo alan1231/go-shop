@@ -7,6 +7,7 @@
 
 <script>
 import { api } from '../api/index.js'
+import { userStore } from '../store/user.js'
 
 export default {
   async created() {
@@ -15,6 +16,7 @@ export default {
     if (code && state) {
       const res = await api.oauthLogin(state, code)
       if (res.success) {
+        userStore.set(res.data.user)
         this.$router.push('/')
         return
       }

@@ -43,9 +43,9 @@ class OrderRepository {
         return $stmt->fetchAll();
     }
 
-    // 單筆訂單（含會員名稱）
+    // 單筆訂單（含會員名稱與聯絡資料）
     public function findById(int $id): ?array {
-        $stmt = $this->pdo->prepare('SELECT o.*, u.username FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = :id');
+        $stmt = $this->pdo->prepare('SELECT o.*, u.username, u.email, u.phone, u.address FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = :id');
         $stmt->execute([':id' => $id]);
         $order = $stmt->fetch();
         return $order ?: null;

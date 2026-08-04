@@ -68,6 +68,13 @@ class OrderService {
         if (!in_array($status, $this->validStatuses)) {
             return '無效的狀態';
         }
+        $order = $this->repo->findById($id);
+        if (!$order) {
+            return '訂單不存在';
+        }
+        if ($order['status'] === 'completed') {
+            return '訂單已完成，狀態不可再變更';
+        }
         $this->repo->updateStatus($id, $status);
         return null;
     }

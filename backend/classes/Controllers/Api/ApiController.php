@@ -42,10 +42,6 @@ class ApiController {
             exit;
         }
 
-        return [
-            'id'       => (int)$user['id'],
-            'username' => $user['username'],
-            'email'    => $user['email'],
-        ];
+        return $user;
     }
 }

@@ -16,7 +16,7 @@ export function buildOAuthUrl(provider) {
   const cfg = oauthConfig[provider]
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: cfg.clientId,
+    client_id: cfg.clientId || cfg.channelId,
     redirect_uri: oauthConfig.redirectUri,
     scope: cfg.scope,
     state: provider,
