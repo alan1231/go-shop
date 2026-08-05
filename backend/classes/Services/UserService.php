@@ -7,9 +7,9 @@ class UserService {
         $this->repo = new UserRepository();
     }
 
-    // 取得所有一般會員（role = 'user'）
-    public function getAllMembers(): array {
-        return $this->repo->findAllByRole('user');
+    // 取得所有一般會員（role = 'user'），可選關鍵字搜尋
+    public function getAllMembers(?string $q = null): array {
+        return $this->repo->findAllByRole('user', $q);
     }
 
     public function getById(int $id): ?array {

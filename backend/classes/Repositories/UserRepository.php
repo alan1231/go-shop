@@ -110,10 +110,16 @@ class UserRepository {
         $stmt->execute([':token' => $token, ':id' => $id]);
     }
 
-    // 依角色列出會員（僅 id, username, email, provider, avatar, created_at）
-    public function findAllByRole(string $role): array {
-        $stmt = $this->pdo->prepare('SELECT id, username, email, provider, avatar, created_at FROM users WHERE role = :role ORDER BY created_at DESC');
-        $stmt->execute([':role' => $role]);
+    // 依角色列出會員（僅 id, username, email, provider, avatar, created_at），可選關鍵字搜尋
+    public function findAllByRole(string $role, ?string $q = null): array {
+        if ($q !== null && $q !== '') {
+            $stmt = $this->pdo->prepare('SELECT id, username, email, provider, avatar, created_at FROM users WHERE role = :role AND (username LIKE :like1 OR email LIKE :like2) ORDER BY created_at DESC');
+            $like = '%' . $q . '%';
+            $stmt->execute([':role' => $role, ':like1' => $like, ':like2' => $like]);
+        } else {
+            $stmt = $this->pdo->prepare('SELECT id, username, email, provider, avatar, created_at FROM users WHERE role = :role ORDER BY created_at DESC');
+            $stmt->execute([':role' => $role]);
+        }
         return $stmt->fetchAll();
     }
 

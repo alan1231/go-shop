@@ -1,5 +1,6 @@
 <?php
 /** @var array $users */
+/** @var string $q */
 function providerBadge(?string $provider): string {
     if ($provider === 'google') {
         return '<i class="fab fa-google" style="color:#4285F4;"></i> Google';
@@ -12,12 +13,21 @@ function providerBadge(?string $provider): string {
 ?>
 <div class="page-header">
     <h1><i class="fas fa-users"></i> 會員管理</h1>
-    <a href="<?= BASE_URL ?>/admin/users/add" class="btn btn-primary"><i class="fas fa-plus"></i> 新增會員</a>
+    <div style="display:flex;align-items:center;gap:10px;">
+        <form method="get" action="<?= BASE_URL ?>/admin/users" style="display:flex;gap:8px;align-items:center;">
+            <input type="text" name="q" value="<?= htmlspecialchars($q ?? '') ?>" placeholder="搜尋帳號 / Email" style="padding:10px 14px;border:1px solid #d0d5dd;border-radius:8px;font-size:14px;outline:none;width:240px;">
+            <button type="submit" class="btn btn-default" style="padding:10px 16px;"><i class="fas fa-search"></i> 搜尋</button>
+            <?php if (!empty($q)): ?>
+                <a href="<?= BASE_URL ?>/admin/users" class="btn btn-default" style="padding:10px 16px;"><i class="fas fa-times"></i> 清除</a>
+            <?php endif; ?>
+            <a href="<?= BASE_URL ?>/admin/users/add" class="btn btn-primary"><i class="fas fa-plus"></i> 新增會員</a>
+        </form>
+    </div>
 </div>
 
 <div class="card" style="padding:0;overflow:hidden;">
     <?php if (empty($users)): ?>
-        <p style="text-align:center;padding:48px;color:#888;">尚無會員</p>
+        <p style="text-align:center;padding:48px;color:#888;"><?= !empty($q) ? '查無符合的會員' : '尚無會員' ?></p>
     <?php else: ?>
         <table style="width:100%;border-collapse:collapse;font-size:14px;vertical-align:middle;">
             <thead>

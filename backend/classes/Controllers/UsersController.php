@@ -11,8 +11,9 @@ class UsersController extends Controller {
 
     // 僅列出 role = 'user' 的一般會員
     public function index(): void {
-        $users = $this->userService->getAllMembers();
-        $this->render('admin-users', ['users' => $users, 'page_title' => '會員管理']);
+        $q = trim($_GET['q'] ?? '');
+        $users = $this->userService->getAllMembers($q !== '' ? $q : null);
+        $this->render('admin-users', compact('users', 'q') + ['page_title' => '會員管理']);
     }
 
     // 新增會員
