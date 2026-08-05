@@ -12,9 +12,18 @@ class ProductService {
         return $this->repo->getAll();
     }
 
-    // 後台：篩選商品（含未上架），依關鍵字/分類
-    public function getFiltered(?string $keyword, ?string $category): array {
-        return $this->repo->search($keyword, $category);
+    // 後台：篩選商品（含未上架），依關鍵字/分類，可加分頁
+    public function getFilteredPage(?string $keyword, ?string $category, int $page, int $perPage): array {
+        $total  = $this->repo->countSearch($keyword, $category);
+        $offset = ($page - 1) * $perPage;
+        $items  = $this->repo->search($keyword, $category, $perPage, $offset);
+        return [
+            'items'       => $items,
+            'total'       => $total,
+            'page'        => $page,
+            'per_page'    => $perPage,
+            'total_pages' => max(1, (int)ceil($total / $perPage)),
+        ];
     }
 
     // 後台：全部分類清單（含未上架）
@@ -22,9 +31,18 @@ class ProductService {
         return $this->repo->getAllCategories();
     }
 
-    // 前台：僅上架且有庫存，可依關鍵字/分類篩選
-    public function getActive(?string $keyword = null, ?string $category = null): array {
-        return $this->repo->findActive($keyword, $category);
+    // 前台：僅上架且有庫存，可依關鍵字/分類篩選並分頁
+    public function getActivePage(?string $keyword, ?string $category, int $page, int $perPage): array {
+        $total  = $this->repo->countActive($keyword, $category);
+        $offset = ($page - 1) * $perPage;
+        $items  = $this->repo->findActive($keyword, $category, $perPage, $offset);
+        return [
+            'items'       => $items,
+            'total'       => $total,
+            'page'        => $page,
+            'per_page'    => $perPage,
+            'total_pages' => max(1, (int)ceil($total / $perPage)),
+        ];
     }
 
     public function getCategories(): array {

@@ -21,7 +21,8 @@
     <?php endif; ?>
 </form>
 
-<?php if (empty($products)): ?>
+<?php $items = $result['items']; $totalPages = $result['total_pages']; $total = $result['total']; ?>
+<?php if (empty($items)): ?>
     <div class="card" style="text-align:center;padding:60px 20px;color:#888;">
         <i class="fas fa-box-open" style="font-size:48px;margin-bottom:16px;color:#ccc;"></i>
         <p style="font-size:16px;margin-bottom:12px;"><?= (!empty($q) || !empty($category)) ? '沒有符合篩選條件的商品' : '目前沒有任何商品' ?></p>
@@ -42,7 +43,7 @@
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($products as $p): ?>
+                <?php foreach ($items as $p): ?>
                     <?php $hasDiscount = $p['list_price'] && $p['list_price'] > $p['price']; ?>
                     <tr style="border-bottom:1px solid #f0f0f0;<?= $p['status'] === 'inactive' ? 'opacity:0.6' : '' ?>">
                         <td style="padding:12px 18px;">
@@ -82,5 +83,18 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <?php if ($totalPages > 1): ?>
+            <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #eee;">
+                <span style="font-size:13px;color:#888;">共 <?= $total ?> 筆</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <?php $qs = http_build_query(array_filter(['q' => $q, 'category' => $category])); ?>
+                    <a href="<?= BASE_URL ?>/admin/products<?= $page > 1 ? '?' . ($qs ? $qs . '&' : '') . 'page=' . ($page - 1) : '' ?>"
+                       style="padding:7px 14px;border:1px solid #e0e0e0;border-radius:6px;text-decoration:none;color:#4CAF50;font-size:13px;<?= $page <= 1 ? 'pointer-events:none;opacity:0.4;' : '' ?>">上一頁</a>
+                    <span style="font-size:13px;color:#666;"><?= $page ?> / <?= $totalPages ?></span>
+                    <a href="<?= BASE_URL ?>/admin/products?<?= $qs ? ($qs . '&') : '' ?>page=<?= $page + 1 ?>"
+                       style="padding:7px 14px;border:1px solid #e0e0e0;border-radius:6px;text-decoration:none;color:#4CAF50;font-size:13px;<?= $page >= $totalPages ? 'pointer-events:none;opacity:0.4;' : '' ?>">下一頁</a>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 <?php endif; ?>

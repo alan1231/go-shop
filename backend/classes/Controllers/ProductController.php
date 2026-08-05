@@ -13,9 +13,11 @@ class ProductController extends Controller {
     public function index(): void {
         $q = trim($_GET['q'] ?? '');
         $category = trim($_GET['category'] ?? '');
-        $products = $this->productService->getFiltered($q !== '' ? $q : null, $category !== '' ? $category : null);
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = 10;
+        $result = $this->productService->getFilteredPage($q !== '' ? $q : null, $category !== '' ? $category : null, $page, $perPage);
         $categories = $this->productService->getAllCategories();
-        $this->render('admin-index', compact('products', 'categories', 'q', 'category') + ['page_title' => '商品管理']);
+        $this->render('admin-index', compact('result', 'categories', 'q', 'category', 'page', 'perPage') + ['page_title' => '商品管理']);
     }
 
     // 新增商品（GET 顯示表單，POST 處理新增）

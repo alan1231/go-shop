@@ -5,7 +5,7 @@
       <p class="subtitle">會員登入</p>
       <div v-if="error" class="error-msg"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
       <div class="oauth-buttons">
-        <a :href="googleUrl" class="btn btn-google">
+        <a href="#" class="btn btn-google" @click.prevent="startOAuth('google')">
           <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
             <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -14,7 +14,7 @@
           </svg>
           使用 Google 登入
         </a>
-        <a :href="lineUrl" class="btn btn-line"><i class="fab fa-line"></i> 使用 LINE 登入</a>
+        <a href="#" class="btn btn-line" @click.prevent="startOAuth('line')"><i class="fab fa-line"></i> 使用 LINE 登入</a>
       </div>
       <div class="divider"><span>或使用帳號登入</span></div>
       <form @submit.prevent="handleLogin">
@@ -41,11 +41,10 @@ import { buildOAuthUrl } from '../api/oauth.js'
 import { userStore } from '../store/user.js'
 export default {
   data() { return { username: '', password: '', error: '', loading: false } },
-  computed: {
-    googleUrl() { return buildOAuthUrl('google', this.$route.query.redirect) },
-    lineUrl() { return buildOAuthUrl('line', this.$route.query.redirect) },
-  },
   methods: {
+    startOAuth(provider) {
+      window.location.href = buildOAuthUrl(provider, this.$route.query.redirect)
+    },
     async handleLogin() {
       this.loading = true; this.error = ''
       const res = await api.login(this.username, this.password)

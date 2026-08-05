@@ -7,13 +7,15 @@ class ApiProductController extends ApiController {
         $this->productService = new ProductService();
     }
 
-    // GET /api/products — 僅回傳上架中商品，可依 ?q= 與 ?category= 篩選
+    // GET /api/products — 僅回傳上架中商品，可依 ?q=、?category=、?page=、?per_page= 篩選分頁
     public function index(): void {
         $keyword  = trim($_GET['q'] ?? '');
         $category = trim($_GET['category'] ?? '');
-        $products = $this->productService->getActive($keyword, $category);
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = max(1, (int)($_GET['per_page'] ?? 10));
+        $paged = $this->productService->getActivePage($keyword !== '' ? $keyword : null, $category !== '' ? $category : null, $page, $perPage);
         // 過濾只回傳前台需要的欄位
-        $result = array_map(function ($p) {
+        $items = array_map(function ($p) {
             return [
                 'id'          => (int)$p['id'],
                 'name'        => $p['name'],
@@ -25,9 +27,15 @@ class ApiProductController extends ApiController {
                 'stock'       => (int)$p['stock'],
                 'status'      => $p['status'],
             ];
-        }, $products);
+        }, $paged['items']);
 
-        $this->success($result);
+        $this->success([
+            'items'       => $items,
+            'total'       => $paged['total'],
+            'page'        => $paged['page'],
+            'per_page'    => $paged['per_page'],
+            'total_pages' => $paged['total_pages'],
+        ]);
     }
 
     // GET /api/categories — 分類清單

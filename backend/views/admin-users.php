@@ -36,7 +36,8 @@ function providerBadge(?string $provider): string {
                         <td style="padding:12px 18px;"><?= $u['id'] ?></td>
                         <td style="padding:12px 18px;font-weight:600;">
                             <?php if (!empty($u['avatar'])): ?>
-                                <img src="<?= htmlspecialchars($u['avatar']) ?>" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;">
+                                <?php $avatarSrc = (str_starts_with($u['avatar'], 'http://') || str_starts_with($u['avatar'], 'https://')) ? $u['avatar'] : BASE_URL . '/uploads/' . $u['avatar']; ?>
+                                <img src="<?= htmlspecialchars($avatarSrc) ?>" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;">
                             <?php else: ?>
                                 <span style="display:inline-flex;width:28px;height:28px;border-radius:50%;background:#4CAF50;color:#fff;align-items:center;justify-content:center;font-size:13px;vertical-align:middle;margin-right:8px;"><?= htmlspecialchars(mb_substr($u['username'], 0, 1, 'UTF-8')) ?></span>
                             <?php endif; ?>

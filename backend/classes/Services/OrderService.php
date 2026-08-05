@@ -9,9 +9,18 @@ class OrderService {
         $this->repo = new OrderRepository();
     }
 
-    // 取得訂單列表，可依狀態篩選
-    public function getAll(?string $status = null): array {
-        return $this->repo->findAll($status);
+    // 取得訂單列表，可依狀態篩選並分頁
+    public function getAll(?string $status = null, int $page = 1, int $perPage = 10): array {
+        $total  = $this->repo->countFindAll($status);
+        $offset = ($page - 1) * $perPage;
+        $items  = $this->repo->findAll($status, $perPage, $offset);
+        return [
+            'items'       => $items,
+            'total'       => $total,
+            'page'        => $page,
+            'per_page'    => $perPage,
+            'total_pages' => max(1, (int)ceil($total / $perPage)),
+        ];
     }
 
     // 取得訂單 + 商品明細，不存在回傳 null

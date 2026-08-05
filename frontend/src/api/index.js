@@ -103,6 +103,8 @@ export const api = {
     const qs = new URLSearchParams()
     if (params.q) qs.set('q', params.q)
     if (params.category) qs.set('category', params.category)
+    if (params.page) qs.set('page', params.page)
+    if (params.per_page) qs.set('per_page', params.per_page)
     const s = qs.toString()
     return request('/products' + (s ? '?' + s : ''))
   },

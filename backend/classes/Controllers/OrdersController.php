@@ -9,11 +9,13 @@ class OrdersController extends Controller {
         $this->orderService = new OrderService();
     }
 
-    // 列表，支援 status 查詢參數篩選
+    // 列表，支援 status 與 page 查詢參數
     public function index(): void {
         $status = $_GET['status'] ?? '';
-        $orders = $this->orderService->getAll($status);
-        $this->render('admin-orders', ['orders' => $orders, 'page_title' => '訂單管理']);
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = 10;
+        $result = $this->orderService->getAll($status !== '' ? $status : null, $page, $perPage);
+        $this->render('admin-orders', compact('result', 'status', 'page', 'perPage') + ['page_title' => '訂單管理']);
     }
 
     // 訂單明細（含商品項目）

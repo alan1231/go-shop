@@ -7,6 +7,9 @@ $statusMap = [
     'cancelled' => ['label' => '已取消', 'color' => '#ffebee', 'text' => '#c62828'],
 ];
 $currentStatus = $_GET['status'] ?? '';
+$items = $result['items'];
+$totalPages = $result['total_pages'];
+$total = $result['total'];
 ?>
 <div class="page-header">
     <h1><i class="fas fa-shopping-cart"></i> 訂單管理</h1>
@@ -21,7 +24,7 @@ $currentStatus = $_GET['status'] ?? '';
 </div>
 
 <div class="card" style="padding:0;overflow:hidden;">
-    <?php if (empty($orders)): ?>
+    <?php if (empty($items)): ?>
         <p style="text-align:center;padding:48px;color:#888;">尚無訂單</p>
     <?php else: ?>
         <table style="width:100%;border-collapse:collapse;font-size:14px;vertical-align:middle;">
@@ -36,7 +39,7 @@ $currentStatus = $_GET['status'] ?? '';
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($orders as $order): ?>
+                <?php foreach ($items as $order): ?>
                     <?php $s = $statusMap[$order['status']] ?? ['label' => $order['status'], 'color' => '#f5f5f5', 'text' => '#666']; ?>
                     <tr style="border-bottom:1px solid #f0f0f0;">
                         <td style="padding:12px 18px;font-weight:600;">#<?= $order['id'] ?></td>
@@ -53,5 +56,18 @@ $currentStatus = $_GET['status'] ?? '';
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <?php if ($totalPages > 1): ?>
+            <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #eee;">
+                <span style="font-size:13px;color:#888;">共 <?= $total ?> 筆</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <?php $qs = $currentStatus ? 'status=' . urlencode($currentStatus) : ''; ?>
+                    <a href="<?= BASE_URL ?>/admin/orders<?= $page > 1 ? '?' . ($qs ? $qs . '&' : '') . 'page=' . ($page - 1) : '' ?>"
+                       style="padding:7px 14px;border:1px solid #e0e0e0;border-radius:6px;text-decoration:none;color:#4CAF50;font-size:13px;<?= $page <= 1 ? 'pointer-events:none;opacity:0.4;' : '' ?>">上一頁</a>
+                    <span style="font-size:13px;color:#666;"><?= $page ?> / <?= $totalPages ?></span>
+                    <a href="<?= BASE_URL ?>/admin/orders?<?= $qs ? ($qs . '&') : '' ?>page=<?= $page + 1 ?>"
+                       style="padding:7px 14px;border:1px solid #e0e0e0;border-radius:6px;text-decoration:none;color:#4CAF50;font-size:13px;<?= $page >= $totalPages ? 'pointer-events:none;opacity:0.4;' : '' ?>">下一頁</a>
+                </div>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>

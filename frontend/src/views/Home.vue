@@ -10,24 +10,31 @@
     </div>
     <div v-if="loading" style="text-align:center;padding:60px;color:#888;">載入中...</div>
     <div v-else-if="!products.length" style="text-align:center;padding:60px;color:#888;">尚無符合的商品</div>
-    <div v-else class="product-grid">
-      <div v-for="p in products" :key="p.id" class="product-card">
-        <router-link :to="`/products/${p.id}`">
-          <div class="product-img">
-            <img v-if="p.image" :src="p.image" :alt="p.name" />
-            <div v-else class="no-img"><i class="fas fa-box"></i></div>
-          </div>
-          <div class="product-info">
-            <h3>{{ p.name }}</h3>
-            <div class="price">
-              <span v-if="p.list_price" class="old-price">NT$ {{ p.list_price.toLocaleString() }}</span>
-              <span class="sale-price">NT$ {{ p.price.toLocaleString() }}</span>
+    <div v-else>
+      <div class="product-grid">
+        <div v-for="p in products" :key="p.id" class="product-card">
+          <router-link :to="`/products/${p.id}`">
+            <div class="product-img">
+              <img v-if="p.image" :src="p.image" :alt="p.name" />
+              <div v-else class="no-img"><i class="fas fa-box"></i></div>
             </div>
-          </div>
-        </router-link>
-        <button class="btn btn-primary" style="width:100%;border-radius:0 0 10px 10px;" @click="$emit('add-to-cart', p)">
-          <i class="fas fa-cart-plus"></i> 加入購物車
-        </button>
+            <div class="product-info">
+              <h3>{{ p.name }}</h3>
+              <div class="price">
+                <span v-if="p.list_price" class="old-price">NT$ {{ p.list_price.toLocaleString() }}</span>
+                <span class="sale-price">NT$ {{ p.price.toLocaleString() }}</span>
+              </div>
+            </div>
+          </router-link>
+          <button class="btn btn-primary" style="width:100%;border-radius:0 0 10px 10px;" @click="$emit('add-to-cart', p)">
+            <i class="fas fa-cart-plus"></i> 加入購物車
+          </button>
+        </div>
+      </div>
+      <div v-if="totalPages > 1" class="pagination">
+        <button :disabled="page <= 1" @click="goPage(page - 1)"><i class="fas fa-chevron-left"></i></button>
+        <span>{{ page }} / {{ totalPages }}</span>
+        <button :disabled="page >= totalPages" @click="goPage(page + 1)"><i class="fas fa-chevron-right"></i></button>
       </div>
     </div>
   </div>
@@ -36,26 +43,39 @@
 <script>
 import { api } from '../api/index.js'
 export default {
-  data() { return { products: [], categories: [], q: '', category: '', loading: true, searchTimer: null } },
+  data() { return { products: [], categories: [], q: '', category: '', page: 1, totalPages: 1, loading: true, searchTimer: null } },
   methods: {
     onSearch() {
       clearTimeout(this.searchTimer)
-      this.searchTimer = setTimeout(() => this.loadProducts(), 300)
+      this.searchTimer = setTimeout(() => { this.page = 1; this.loadProducts() }, 300)
     },
     selectCategory(c) {
       this.category = c
+      this.page = 1
+      this.loadProducts()
+    },
+    goPage(p) {
+      if (p < 1 || p > this.totalPages) return
+      this.page = p
       this.loadProducts()
     },
     async loadProducts() {
       this.loading = true
-      const res = await api.products({ q: this.q, category: this.category })
-      if (res.success) this.products = res.data
+      const res = await api.products({ q: this.q, category: this.category, page: this.page })
+      if (res.success) {
+        this.products = res.data.items
+        this.page = res.data.page
+        this.totalPages = res.data.total_pages
+      }
       this.loading = false
     },
   },
   async created() {
     const [pRes, cRes] = await Promise.all([api.products(), api.categories()])
-    if (pRes.success) this.products = pRes.data
+    if (pRes.success) {
+      this.products = pRes.data.items
+      this.totalPages = pRes.data.total_pages
+    }
     if (cRes.success) this.categories = cRes.data
     this.loading = false
   },
@@ -82,4 +102,8 @@ export default {
 .price { display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; }
 .old-price { font-size: 13px; color: #aaa; text-decoration: line-through; }
 .sale-price { font-size: 18px; font-weight: 700; color: #e44d26; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 28px; }
+.pagination button { width: 38px; height: 38px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; color: #4CAF50; cursor: pointer; }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination span { font-size: 14px; color: #666; }
 </style>

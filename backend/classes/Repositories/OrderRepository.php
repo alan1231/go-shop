@@ -68,18 +68,33 @@ class OrderRepository {
         );
     }
 
-    // 訂單列表（含會員名稱），可依狀態篩選
-    public function findAll(?string $status = null): array {
+    // 訂單列表（含會員名稱），可依狀態篩選，支援分頁
+    public function findAll(?string $status = null, int $limit = 100, int $offset = 0): array {
         $sql = 'SELECT o.*, u.username FROM orders o JOIN users u ON o.user_id = u.id';
         $params = [];
         if ($status && in_array($status, ['pending', 'paid', 'shipped', 'completed', 'cancelled'])) {
             $sql .= ' WHERE o.status = :status';
             $params[':status'] = $status;
         }
-        $sql .= ' ORDER BY o.created_at DESC';
+        $sql .= ' ORDER BY o.created_at DESC LIMIT :limit OFFSET :offset';
+        $params[':limit'] = $limit;
+        $params[':offset'] = $offset;
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    // 訂單總數，可依狀態篩選
+    public function countFindAll(?string $status = null): int {
+        $sql = 'SELECT COUNT(*) FROM orders';
+        $params = [];
+        if ($status && in_array($status, ['pending', 'paid', 'shipped', 'completed', 'cancelled'])) {
+            $sql .= ' WHERE status = :status';
+            $params[':status'] = $status;
+        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
     }
 
     // 單筆訂單（含會員名稱與聯絡資料）

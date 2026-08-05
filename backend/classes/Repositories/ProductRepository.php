@@ -31,12 +31,19 @@ class ProductRepository {
     }
 
     // 全部商品，依建立時間降冪
-    public function getAll(): array {
-        return $this->pdo->query('SELECT * FROM products ORDER BY created_at DESC')->fetchAll();
+    public function getAll(int $limit = 100, int $offset = 0): array {
+        $stmt = $this->pdo->prepare('SELECT * FROM products ORDER BY created_at DESC LIMIT :limit OFFSET :offset');
+        $stmt->execute([':limit' => $limit, ':offset' => $offset]);
+        return $stmt->fetchAll();
+    }
+
+    // 全部商品總數
+    public function countAll(): int {
+        return (int)$this->pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
     }
 
     // 後台篩選商品（含未上架），可依關鍵字/分類篩選
-    public function search(?string $keyword = null, ?string $category = null): array {
+    public function search(?string $keyword = null, ?string $category = null, int $limit = 100, int $offset = 0): array {
         $sql = 'SELECT * FROM products WHERE 1=1';
         $params = [];
         if ($keyword !== null && $keyword !== '') {
@@ -48,10 +55,30 @@ class ProductRepository {
             $sql .= ' AND category = :cat';
             $params[':cat'] = $category;
         }
-        $sql .= ' ORDER BY created_at DESC';
+        $sql .= ' ORDER BY created_at DESC LIMIT :limit OFFSET :offset';
+        $params[':limit'] = $limit;
+        $params[':offset'] = $offset;
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    // 後台篩選條件下的商品總數
+    public function countSearch(?string $keyword = null, ?string $category = null): int {
+        $sql = 'SELECT COUNT(*) FROM products WHERE 1=1';
+        $params = [];
+        if ($keyword !== null && $keyword !== '') {
+            $sql .= ' AND (name LIKE :kw OR description LIKE :kwd)';
+            $params[':kw'] = '%' . $keyword . '%';
+            $params[':kwd'] = '%' . $keyword . '%';
+        }
+        if ($category !== null && $category !== '') {
+            $sql .= ' AND category = :cat';
+            $params[':cat'] = $category;
+        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
     }
 
     // 全部分類清單（含未上架，後台篩選用）
@@ -93,7 +120,7 @@ class ProductRepository {
     }
 
     // 僅列出上架中且有上架庫存的商品（前台用），可依關鍵字與分類篩選
-    public function findActive(?string $keyword = null, ?string $category = null): array {
+    public function findActive(?string $keyword = null, ?string $category = null, int $limit = 100, int $offset = 0): array {
         $sql = "SELECT id, name, image, description, category, price, list_price, listed_stock AS stock, status, created_at
                 FROM products WHERE status = 'active' AND listed_stock > 0";
         $params = [];
@@ -106,10 +133,30 @@ class ProductRepository {
             $sql .= ' AND category = :cat';
             $params[':cat'] = $category;
         }
-        $sql .= ' ORDER BY created_at DESC';
+        $sql .= ' ORDER BY created_at DESC LIMIT :limit OFFSET :offset';
+        $params[':limit'] = $limit;
+        $params[':offset'] = $offset;
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    // 前台上架商品篩選條件下的總數
+    public function countActive(?string $keyword = null, ?string $category = null): int {
+        $sql = "SELECT COUNT(*) FROM products WHERE status = 'active' AND listed_stock > 0";
+        $params = [];
+        if ($keyword !== null && $keyword !== '') {
+            $sql .= ' AND (name LIKE :kw OR description LIKE :kwd)';
+            $params[':kw'] = '%' . $keyword . '%';
+            $params[':kwd'] = '%' . $keyword . '%';
+        }
+        if ($category !== null && $category !== '') {
+            $sql .= ' AND category = :cat';
+            $params[':cat'] = $category;
+        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
     }
 
     // 商品分類清單（前台篩選用）
