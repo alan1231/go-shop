@@ -120,8 +120,9 @@ export const api = {
       body: JSON.stringify({ items, receiver, remark }),
     })
   },
-  orders() {
-    return request('/orders')
+  orders(status = '') {
+    const s = status ? '?status=' + encodeURIComponent(status) : ''
+    return request('/orders' + s)
   },
   order(id) {
     return request(`/orders/${id}`)

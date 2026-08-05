@@ -65,6 +65,6 @@
             </select>
         </div>
         <button type="submit" class="btn btn-primary">儲存修改</button>
-        <a href="<?= BASE_URL ?>/admin/products" class="btn btn-default" style="margin-left:10px;">取消</a>
+        <a href="<?= BASE_URL ?>/admin/products" class="btn btn-default" style="margin-left:10px;">返回列表</a>
     </form>
 </div>

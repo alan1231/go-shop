@@ -11,8 +11,11 @@ class ProductController extends Controller {
 
     // 商品列表
     public function index(): void {
-        $products = $this->productService->getAll();
-        $this->render('admin-index', ['products' => $products, 'page_title' => '商品管理']);
+        $q = trim($_GET['q'] ?? '');
+        $category = trim($_GET['category'] ?? '');
+        $products = $this->productService->getFiltered($q !== '' ? $q : null, $category !== '' ? $category : null);
+        $categories = $this->productService->getAllCategories();
+        $this->render('admin-index', compact('products', 'categories', 'q', 'category') + ['page_title' => '商品管理']);
     }
 
     // 新增商品（GET 顯示表單，POST 處理新增）

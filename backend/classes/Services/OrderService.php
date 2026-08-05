@@ -22,9 +22,9 @@ class OrderService {
         return $order;
     }
 
-    // 取得指定會員的訂單列表
-    public function getUserOrders(int $userId): array {
-        return $this->repo->findByUserId($userId);
+    // 取得指定會員的訂單列表，可依狀態篩選
+    public function getUserOrders(int $userId, ?string $status = null): array {
+        return $this->repo->findByUserId($userId, $status);
     }
 
     // 前台下單：items = [[product_id, quantity], ...]，receiver = [name, phone, address]，remark = 會員備註
@@ -37,29 +37,39 @@ class OrderService {
         $total = 0;
         $orderItems = [];
 
+        $this->repo->beginTransaction();
+
         foreach ($items as $item) {
             $pid = (int)($item['product_id'] ?? 0);
             $qty = (int)($item['quantity'] ?? 0);
             if ($pid <= 0 || $qty <= 0) continue;
 
             $product = $productRepo->getById($pid);
-            if (!$product || $product['status'] !== 'active' || (int)$product['listed_stock'] < $qty) {
+            if (!$product || $product['status'] !== 'active') {
+                $this->repo->rollBack();
+                return ['success' => false, 'message' => '商品不存在或已下架'];
+            }
+
+            if (!$productRepo->decreaseStockIfAvailable($pid, $qty)) {
+                $this->repo->rollBack();
                 return ['success' => false, 'message' => "商品「{$product['name']}」庫存不足"];
             }
+
             $orderItems[] = ['product' => $product, 'quantity' => $qty];
             $total += (float)$product['price'] * $qty;
         }
 
         if (empty($orderItems)) {
+            $this->repo->rollBack();
             return ['success' => false, 'message' => '商品不存在或庫存不足'];
         }
 
         $orderId = $this->repo->createOrder($userId, $total, $receiver, $remark);
         foreach ($orderItems as $oi) {
             $this->repo->createItem($orderId, $oi['product']['id'], $oi['product']['price'], $oi['quantity']);
-            $productRepo->decreaseStock($oi['product']['id'], $oi['quantity']);
         }
 
+        $this->repo->commit();
         return ['success' => true, 'message' => '訂單已建立', 'order_id' => $orderId];
     }
 

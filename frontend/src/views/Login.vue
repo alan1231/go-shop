@@ -42,8 +42,8 @@ import { userStore } from '../store/user.js'
 export default {
   data() { return { username: '', password: '', error: '', loading: false } },
   computed: {
-    googleUrl() { return buildOAuthUrl('google') },
-    lineUrl() { return buildOAuthUrl('line') },
+    googleUrl() { return buildOAuthUrl('google', this.$route.query.redirect) },
+    lineUrl() { return buildOAuthUrl('line', this.$route.query.redirect) },
   },
   methods: {
     async handleLogin() {

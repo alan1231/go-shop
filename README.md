@@ -9,19 +9,23 @@
 | 功能 | 說明 |
 |------|------|
 | 商品瀏覽 | 列表、明細、庫存狀態、原價/售價顯示 |
-| 會員系統 | 註冊、登入、登出（Token 認證） |
-| 購物車 | 加入、增減、刪除，localStorage 共享狀態即時同步 |
-| 訂單 | 下單、我的訂單、訂單明細 |
+| 首頁搜尋 | `?q=` 關鍵字搜尋 + 分類 tab 篩選 |
+| 會員系統 | 註冊、登入、登出（Token 認證）、Google / LINE 三方登入 |
+| 會員中心 | 個人資料編輯、更改密碼、登出（導覽列下拉） |
+| 購物車 | 加入、增減、刪除，localStorage 共享狀態即時同步，含庫存上限檢查 |
+| 訂單 | 下單（含收件人與結帳備註 `member_remark`）、我的訂單（狀態篩選 tab）、訂單明細 |
+| 訂單時間軸 | 訂單明細顯示 pending → paid → shipped → completed 進度 |
 | 模擬付款 | 待付款 → 已付款 |
 | 跑馬燈 | 每 30 秒自動輪詢更新 |
+| 響應式 | 手機漢堡選單與各頁 RWD（<768px） |
 
 ### 後台（PHP 頁面）
 
 | 功能 | 說明 |
 |------|------|
 | 儀表板 | 統計：商品、會員、訂單數與營收 |
-| 商品管理 | 新增、編輯、刪除、圖片上傳 |
-| 訂單管理 | 列表、明細、狀態更新（待付款/已付款/出貨中/已完成/已取消） |
+| 商品管理 | 新增、編輯、圖片上傳、**列表搜尋/分類篩選** |
+| 訂單管理 | 列表、明細、狀態更新（待付款/已付款/出貨中/已完成/已取消）、備註 |
 | 會員管理 | 新增、刪除、改密碼 |
 | 跑馬燈管理 | 編輯前台公告文字 |
 
@@ -32,10 +36,13 @@
 - **認證分離**
   - 後台：PHP Session + Cookie
   - 前台：隨機 Token，存於 localStorage，透過 `Authorization: Bearer <token>` 傳遞
+  - 三方登入：Google / LINE OAuth，`state` 含隨機碼防 CSRF，並保留登入前 redirect
 - **帳號分離**
   - `admin_users` 表：後台管理員
   - `users` 表：前台會員
-- **資料庫**：所有 Repository 皆自動建立資料表，無需手動 SQL
+- **資料庫**：所有 Repository 皆自動建立資料表，舊表缺欄位自動 `ALTER TABLE` 補上，無需手動 SQL
+- **防超賣**：下單流程包在 DB transaction 中，以 `UPDATE ... WHERE stock >= :qty` 原子扣庫存，失敗即整筆 rollback
+- **路由守衛**：前台未登入導向 `/login?redirect=...`，登入後回到原頁
 
 ## 目錄結構
 
@@ -54,9 +61,9 @@
 │   └── views/             # 後台畫面（PHP 模板）
 ├── frontend/              # Vue 3 前台
 │   ├── src/
-│   │   ├── api/           # API 呼叫封裝
-│   │   ├── router/        # 路由
-│   │   ├── store/         # 共享狀態（購物車）
+│   │   ├── api/           # API 呼叫封裝（fetch）
+│   │   ├── router/        # 路由 + 守衛
+│   │   ├── store/         # 共享狀態（購物車、user、toast）
 │   │   └── views/         # 頁面元件
 │   └── vite.config.js     # Vite + proxy 設定
 └── uploads/               # 商品圖片
@@ -132,12 +139,16 @@ Vite 已設定 proxy：`/api` 與 `/php/shop` 自動轉發至 `http://localhost/
 |--------|----------------------|----------------------|
 | POST   | `/api/auth/register` | 會員註冊             |
 | POST   | `/api/auth/login`    | 登入（回傳 token）   |
+| POST   | `/api/auth/oauth`    | 三方登入（google / line）|
 | POST   | `/api/auth/logout`   | 登出                 |
 | GET    | `/api/auth/me`       | 目前登入使用者       |
-| GET    | `/api/products`      | 商品列表（僅上架中） |
+| POST   | `/api/auth/update`   | 更新聯絡資料（手機、住址）|
+| POST   | `/api/auth/password` | 更改密碼             |
+| GET    | `/api/products`      | 商品列表（僅上架中），可帶 `?q=` 與 `?category=` |
 | GET    | `/api/products/{id}` | 商品明細             |
+| GET    | `/api/categories`    | 商品分類清單         |
 | POST   | `/api/orders`        | 建立訂單             |
-| GET    | `/api/orders`        | 我的訂單列表         |
+| GET    | `/api/orders`        | 我的訂單列表，可帶 `?status=` 篩選 |
 | GET    | `/api/orders/{id}`   | 訂單明細             |
 | POST   | `/api/orders/{id}/pay` | 模擬付款           |
 | GET    | `/api/marquee`       | 跑馬燈內容           |

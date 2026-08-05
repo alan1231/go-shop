@@ -12,6 +12,16 @@ class ProductService {
         return $this->repo->getAll();
     }
 
+    // 後台：篩選商品（含未上架），依關鍵字/分類
+    public function getFiltered(?string $keyword, ?string $category): array {
+        return $this->repo->search($keyword, $category);
+    }
+
+    // 後台：全部分類清單（含未上架）
+    public function getAllCategories(): array {
+        return $this->repo->getAllCategories();
+    }
+
     // 前台：僅上架且有庫存，可依關鍵字/分類篩選
     public function getActive(?string $keyword = null, ?string $category = null): array {
         return $this->repo->findActive($keyword, $category);

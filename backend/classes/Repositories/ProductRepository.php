@@ -35,6 +35,31 @@ class ProductRepository {
         return $this->pdo->query('SELECT * FROM products ORDER BY created_at DESC')->fetchAll();
     }
 
+    // 後台篩選商品（含未上架），可依關鍵字/分類篩選
+    public function search(?string $keyword = null, ?string $category = null): array {
+        $sql = 'SELECT * FROM products WHERE 1=1';
+        $params = [];
+        if ($keyword !== null && $keyword !== '') {
+            $sql .= ' AND (name LIKE :kw OR description LIKE :kwd)';
+            $params[':kw'] = '%' . $keyword . '%';
+            $params[':kwd'] = '%' . $keyword . '%';
+        }
+        if ($category !== null && $category !== '') {
+            $sql .= ' AND category = :cat';
+            $params[':cat'] = $category;
+        }
+        $sql .= ' ORDER BY created_at DESC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    // 全部分類清單（含未上架，後台篩選用）
+    public function getAllCategories(): array {
+        $rows = $this->pdo->query("SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != '' ORDER BY category")->fetchAll(PDO::FETCH_COLUMN);
+        return $rows;
+    }
+
     // 依 id 查詢單一商品
     public function getById(int $id): ?array {
         $stmt = $this->pdo->prepare('SELECT * FROM products WHERE id = :id');
@@ -93,10 +118,21 @@ class ProductRepository {
         return $rows;
     }
 
-    // 扣減庫存（下單時用）
-    public function decreaseStock(int $id, int $quantity): void {
-        $stmt = $this->pdo->prepare('UPDATE products SET stock = stock - :qty1, listed_stock = listed_stock - :qty2 WHERE id = :id');
-        $stmt->execute([':qty1' => $quantity, ':qty2' => $quantity, ':id' => $id]);
+    // 原子扣減庫存，庫存不足時不扣並回傳 false（防超賣）
+    public function decreaseStockIfAvailable(int $id, int $quantity): bool {
+        $stmt = $this->pdo->prepare(
+            'UPDATE products
+             SET stock = stock - :qty1, listed_stock = listed_stock - :qty2
+             WHERE id = :id AND stock >= :qty3 AND listed_stock >= :qty4'
+        );
+        $stmt->execute([
+            ':qty1' => $quantity,
+            ':qty2' => $quantity,
+            ':qty3' => $quantity,
+            ':qty4' => $quantity,
+            ':id'   => $id,
+        ]);
+        return $stmt->rowCount() === 1;
     }
 
     // 更新商品

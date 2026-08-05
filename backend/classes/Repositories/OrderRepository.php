@@ -8,6 +8,23 @@ class OrderRepository {
         $this->ensureTables();
     }
 
+    // 交易控制（下單流程原子化用）
+    public function beginTransaction(): void {
+        $this->pdo->beginTransaction();
+    }
+
+    public function commit(): void {
+        $this->pdo->commit();
+    }
+
+    public function rollBack(): void {
+        $this->pdo->rollBack();
+    }
+
+    public function inTransaction(): bool {
+        return $this->pdo->inTransaction();
+    }
+
     private function ensureTables(): void {
         $this->pdo->exec(
             'CREATE TABLE IF NOT EXISTS orders (
@@ -158,10 +175,17 @@ class OrderRepository {
         return (int)$this->pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status = 'completed'")->fetchColumn();
     }
 
-    // 依會員 id 查詢訂單列表
-    public function findByUserId(int $userId): array {
-        $stmt = $this->pdo->prepare('SELECT * FROM orders WHERE user_id = :uid ORDER BY created_at DESC');
-        $stmt->execute([':uid' => $userId]);
+    // 依會員 id 查詢訂單列表，可依狀態篩選
+    public function findByUserId(int $userId, ?string $status = null): array {
+        $sql = 'SELECT * FROM orders WHERE user_id = :uid';
+        $params = [':uid' => $userId];
+        if ($status && in_array($status, ['pending', 'paid', 'shipped', 'completed', 'cancelled'])) {
+            $sql .= ' AND status = :status';
+            $params[':status'] = $status;
+        }
+        $sql .= ' ORDER BY created_at DESC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 

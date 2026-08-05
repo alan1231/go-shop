@@ -43,10 +43,10 @@
               </template>
               <template v-else>
                 <button class="btn btn-primary btn-sm" @click="saveEdit" :disabled="saving">{{ saving ? '儲存中...' : '儲存' }}</button>
-                <button class="btn btn-default btn-sm" style="margin-left:8px;" @click="cancelEdit">取消</button>
+                <button class="btn btn-default btn-sm" @click="cancelEdit">取消</button>
               </template>
-              <button v-if="!editing" class="btn btn-default btn-sm" style="margin-left:8px;" @click="togglePwEdit"><i class="fas fa-key"></i> 更改密碼</button>
-              <button v-if="!editing" class="btn btn-danger btn-sm" style="margin-left:8px;" @click="handleLogout"><i class="fas fa-sign-out-alt"></i> 登出</button>
+              <button v-if="!editing" class="btn btn-default btn-sm" @click="togglePwEdit"><i class="fas fa-key"></i> 更改密碼</button>
+              <button v-if="!editing" class="btn btn-danger btn-sm" @click="handleLogout"><i class="fas fa-sign-out-alt"></i> 登出</button>
             </div>
             <div v-if="pwEdit" class="uc-pw">
               <div class="uc-row uc-edit"><i class="fas fa-lock"></i><input v-model="pwOld" type="password" placeholder="原密碼（OAuth 會員可留空）" /></div>
@@ -260,7 +260,7 @@ nav .logo i { color: #4CAF50; margin-right: 8px; }
 .uc-row span { word-break: break-all; }
 .uc-edit input { flex: 1; padding: 6px 10px; border: 1px solid #d0d5dd; border-radius: 6px; font-size: 13px; outline: none; }
 .uc-edit input:focus { border-color: #4CAF50; }
-.uc-footer { padding: 12px 18px 16px; border-top: 1px solid #eee; }
+.uc-footer { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 18px 16px; border-top: 1px solid #eee; }
 .uc-pw { padding: 12px 18px; border-top: 1px solid #eee; background: #fafafa; }
 .uc-pw-actions { margin-top: 10px; }
 .btn-sm { padding: 8px 16px; font-size: 13px; }

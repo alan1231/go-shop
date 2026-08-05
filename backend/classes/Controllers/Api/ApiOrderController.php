@@ -28,10 +28,11 @@ class ApiOrderController extends ApiController {
         $this->success(['order_id' => $result['order_id']], $result['message']);
     }
 
-    // GET /api/orders — 我的訂單列表
+    // GET /api/orders — 我的訂單列表（可依狀態篩選）
     public function index(): void {
         $user = $this->requireAuth();
-        $orders = $this->orderService->getUserOrders((int)$user['id']);
+        $status = trim($_GET['status'] ?? '');
+        $orders = $this->orderService->getUserOrders((int)$user['id'], $status !== '' ? $status : null);
         $this->success($orders);
     }
 
