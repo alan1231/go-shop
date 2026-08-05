@@ -36,7 +36,7 @@ $router->get('/admin/users/add',         [UsersController::class, 'add']);
 $router->post('/admin/users/add',        [UsersController::class, 'add']);
 $router->get('/admin/users/edit/{id}',   [UsersController::class, 'edit']);
 $router->post('/admin/users/edit/{id}',  [UsersController::class, 'edit']);
-$router->get('/admin/users/delete/{id}', [UsersController::class, 'delete']);
+$router->post('/admin/users/delete/{id}', [UsersController::class, 'delete']);
 
 // 跑馬燈
 $router->get('/admin/marquee',  [MarqueeController::class, 'edit']);

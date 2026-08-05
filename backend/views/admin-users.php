@@ -58,7 +58,10 @@ function providerBadge(?string $provider): string {
                         <td style="padding:12px 18px;color:#888;"><?= $u['created_at'] ?></td>
                         <td style="padding:12px 18px;text-align:center;">
                             <a href="<?= BASE_URL ?>/admin/users/edit/<?= $u['id'] ?>" style="color:#4CAF50;text-decoration:none;font-size:16px;margin-right:8px;" title="編輯"><i class="fas fa-edit"></i></a>
-                            <a href="<?= BASE_URL ?>/admin/users/delete/<?= $u['id'] ?>" style="color:#f44336;text-decoration:none;font-size:16px;" title="刪除" onclick="return confirm('確定刪除此會員？')"><i class="fas fa-trash"></i></a>
+                            <form method="post" action="<?= BASE_URL ?>/admin/users/delete/<?= $u['id'] ?>" style="display:inline;" onsubmit="return confirm('確定刪除此會員？')">
+                                <input type="hidden" name="csrf_token" value="<?= Auth::csrfToken() ?>">
+                                <button type="submit" style="background:none;border:none;color:#f44336;font-size:16px;cursor:pointer;" title="刪除"><i class="fas fa-trash"></i></button>
+                            </form>
                         </td>
                     </tr>
                 <?php endforeach; ?>

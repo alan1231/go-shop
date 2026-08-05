@@ -40,4 +40,20 @@ class Auth {
         header('Location: ' . $path);
         exit;
     }
+
+    // 產生/回傳 CSRF token（存於 session）
+    public static function csrfToken(): string {
+        self::start();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+
+    // 驗證表單送出的 CSRF token，合法回傳 true
+    public static function csrfCheck(?string $token): bool {
+        self::start();
+        $stored = $_SESSION['csrf_token'] ?? '';
+        return $token !== null && $stored !== '' && hash_equals($stored, $token);
+    }
 }

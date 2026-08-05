@@ -66,8 +66,13 @@ class UsersController extends Controller {
         $this->render('admin-user-form', compact('user', 'message', 'message_type') + ['page_title' => '編輯會員']);
     }
 
-    // 刪除會員
+    // 刪除會員（POST + CSRF）
     public function delete(int $id): void {
+        if (!Auth::csrfCheck($_POST['csrf_token'] ?? null)) {
+            $this->forbidden('CSRF token 驗證失敗');
+            return;
+        }
+
         $error = $this->userService->canDelete($id);
         if ($error) {
             $this->badRequest($error);
