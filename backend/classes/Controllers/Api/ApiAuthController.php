@@ -17,6 +17,13 @@ class ApiAuthController extends ApiController {
 
     // POST /api/auth/register
     public function register(): void {
+        $rateLimit = new RateLimitService();
+        if (!$rateLimit->check('register')['allowed']) {
+            $retry = $rateLimit->check('register')['retry_after'];
+            $this->error('嘗試次數過多，請 ' . ceil($retry / 60) . ' 分鐘後再試', 429);
+            return;
+        }
+
         $body = $this->jsonBody();
         $username = trim($body['username'] ?? '');
         $email    = trim($body['email'] ?? '');
@@ -24,24 +31,35 @@ class ApiAuthController extends ApiController {
 
         $result = $this->userService->register($username, $email, $password);
         if (!$result['success']) {
+            $rateLimit->recordFail('register');
             $this->error($result['message']);
             return;
         }
+        $rateLimit->clear('register');
         $this->success(null, $result['message']);
     }
 
     // POST /api/auth/login — 登入成功回傳 token
     public function login(): void {
+        $rateLimit = new RateLimitService();
+        if (!$rateLimit->check('login')['allowed']) {
+            $retry = $rateLimit->check('login')['retry_after'];
+            $this->error('嘗試次數過多，請 ' . ceil($retry / 60) . ' 分鐘後再試', 429);
+            return;
+        }
+
         $body = $this->jsonBody();
         $username = trim($body['username'] ?? '');
         $password = $body['password'] ?? '';
 
         $user = $this->userRepo->findForAuth($username);
         if (!$user || !password_verify($password, $user['password'])) {
+            $rateLimit->recordFail('login');
             $this->error('帳號或密碼錯誤');
             return;
         }
 
+        $rateLimit->clear('login');
         $token = bin2hex(random_bytes(32));
         $this->userRepo->setToken((int)$user['id'], $token);
 
