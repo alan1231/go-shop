@@ -12,13 +12,16 @@ $adminUser = Auth::user(); // 注意：此變數與 Controller 中的 $user 不�
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { background-color: #f0f2f5; }
         body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; min-height: 100vh; background: #f0f2f5; }
         .sidebar { width: 240px; background: #1a1d29; color: #b0b3c5; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
         .sidebar .logo { padding: 24px 20px; font-size: 20px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.06); letter-spacing: 1px; }
         .sidebar .logo i { margin-right: 10px; color: #4CAF50; }
         .sidebar nav { padding: 16px 12px; flex: 1; }
-        .sidebar nav a { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 8px; color: #b0b3c5; text-decoration: none; font-size: 14px; transition: all 0.2s; margin-bottom: 4px; }
+        .sidebar nav a { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 8px; color: #b0b3c5; text-decoration: none; font-size: 14px; transition: background 0.2s, color 0.2s; margin-bottom: 4px; outline: none; -webkit-tap-highlight-color: transparent; }
         .sidebar nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .sidebar nav a:focus, .sidebar nav a:focus-visible { outline: none; }
+        .sidebar nav a:active { background: #43a047; color: #fff; }
         .sidebar nav a.active { background: #4CAF50; color: #fff; }
         .sidebar nav a i { width: 18px; text-align: center; font-size: 16px; }
         .sidebar .user-section { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 13px; }
