@@ -7,7 +7,13 @@ class ProductService {
         $this->repo = new ProductRepository();
     }
 
-    public function getAll(?string $keyword = null, ?string $category = null): array {
+    // 後台：全部商品（含未上架）
+    public function getAll(): array {
+        return $this->repo->getAll();
+    }
+
+    // 前台：僅上架且有庫存，可依關鍵字/分類篩選
+    public function getActive(?string $keyword = null, ?string $category = null): array {
         return $this->repo->findActive($keyword, $category);
     }
 

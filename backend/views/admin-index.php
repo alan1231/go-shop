@@ -22,7 +22,7 @@
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">商品名稱</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">分類</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">定價 / 售價</th>
-                    <th style="padding:14px 18px;border-bottom:2px solid #eee;">庫存 / 上架</th>
+                    <th style="padding:14px 18px;border-bottom:2px solid #eee;text-align:center;">庫存 / 上架</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;">狀態</th>
                     <th style="padding:14px 18px;border-bottom:2px solid #eee;width:100px;text-align:center;">操作</th>
                 </tr>

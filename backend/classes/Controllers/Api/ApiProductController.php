@@ -11,7 +11,7 @@ class ApiProductController extends ApiController {
     public function index(): void {
         $keyword  = trim($_GET['q'] ?? '');
         $category = trim($_GET['category'] ?? '');
-        $products = $this->productService->getAll($keyword, $category);
+        $products = $this->productService->getActive($keyword, $category);
         // 過濾只回傳前台需要的欄位
         $result = array_map(function ($p) {
             return [
