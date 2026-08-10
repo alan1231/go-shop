@@ -1,0 +1,6 @@
+RewriteEngine On
+
+# 真實檔案（dist 靜態資源、uploads 圖片）由 Apache 直接提供
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
