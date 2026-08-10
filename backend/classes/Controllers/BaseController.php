@@ -79,6 +79,7 @@ class BaseController {
             'name' => $p['name'] ?? '',
             'image' => Support::nullIfEmpty(Support::uploadUrl($p['image'] ?? '')),
             'description' => $p['description'] ?? '',
+            'category' => Support::nullIfEmpty($p['category'] ?? ''),
             'price' => (float)$p['price'],
             'list_price' => $p['list_price'] === null ? null : (float)$p['list_price'],
             'stock' => (int)$p['listed_stock'],

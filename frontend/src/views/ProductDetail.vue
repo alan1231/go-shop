@@ -1,28 +1,67 @@
 <template>
-  <div v-if="loading" style="text-align:center;padding:60px;color:#888;">載入中...</div>
-  <div v-else-if="!p" style="text-align:center;padding:60px;color:#888;">商品不存在</div>
-  <div v-else class="detail">
-    <div class="detail-img">
-      <img v-if="p.image" :src="p.image" :alt="p.name" />
-      <div v-else class="no-img"><i class="fas fa-box"></i></div>
+  <section class="product-page">
+    <div v-if="loading" class="state-card">
+      <span class="loader"></span>
+      <span>載入商品中</span>
     </div>
-    <div class="detail-info">
-      <h1>{{ p.name }}</h1>
-      <div class="price">
-        <span v-if="p.list_price" class="old-price">NT$ {{ p.list_price.toLocaleString() }}</span>
-        <span class="sale-price">NT$ {{ p.price.toLocaleString() }}</span>
-      </div>
-      <p class="stock" :class="p.stock > 0 ? 'in' : 'out'">
-        <i :class="p.stock > 0 ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
-        {{ p.stock > 0 ? '有庫存' : '完售' }}
-      </p>
-      <p class="desc">{{ p.description || '尚無描述' }}</p>
-      <button class="btn btn-primary" @click="$emit('add-to-cart', p)" :disabled="!p.stock">
-        <i class="fas fa-cart-plus"></i> 加入購物車
+
+    <div v-else-if="!p" class="state-card">
+      <span class="material-symbols-outlined state-icon">inventory_2</span>
+      <h1>商品不存在</h1>
+      <router-link to="/" class="secondary-button">返回首頁</router-link>
+    </div>
+
+    <template v-else>
+      <button class="back-button" type="button" @click="goBack">
+        <span class="material-symbols-outlined">arrow_back</span>
+        返回商品列表
       </button>
-      <router-link to="/" class="btn btn-default" style="margin-left:10px;" @click.prevent="goBack"><i class="fas fa-arrow-left"></i> 返回</router-link>
-    </div>
-  </div>
+
+      <div class="product-hero">
+        <div class="image-panel">
+          <img v-if="p.image" :src="p.image" :alt="p.name" />
+          <span v-else class="material-symbols-outlined no-image">inventory_2</span>
+        </div>
+
+        <div class="product-info">
+          <span v-if="p.category" class="category">{{ p.category }}</span>
+          <h1>{{ p.name }}</h1>
+          <div class="price-row">
+            <span class="sale-price">NT$ {{ money(p.price) }}</span>
+            <span v-if="p.list_price" class="list-price">NT$ {{ money(p.list_price) }}</span>
+          </div>
+          <div class="stock" :class="p.stock > 0 ? 'available' : 'sold-out'">
+            <span class="status-dot"></span>
+            {{ p.stock > 0 ? `現貨供應・剩餘 ${p.stock} 件` : '目前完售' }}
+          </div>
+          <div class="quick-description">{{ p.description || '此商品尚未提供詳細說明。' }}</div>
+          <div class="actions">
+            <button class="cart-button" type="button" :disabled="!p.stock" @click="$emit('add-to-cart', p)">
+              <span class="material-symbols-outlined">add_shopping_cart</span>
+              {{ p.stock ? '加入購物車' : '商品已完售' }}
+            </button>
+            <button class="secondary-button" type="button" @click="goBack">繼續購物</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="description-panel">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">PRODUCT DETAILS</span>
+            <h2>產品說明</h2>
+          </div>
+          <span class="material-symbols-outlined">description</span>
+        </div>
+        <p>{{ p.description || '此商品尚未提供詳細說明。' }}</p>
+        <dl class="product-meta">
+          <div><dt>商品編號</dt><dd>#{{ p.id }}</dd></div>
+          <div><dt>商品分類</dt><dd>{{ p.category || '未分類' }}</dd></div>
+          <div><dt>庫存狀態</dt><dd>{{ p.stock > 0 ? '有庫存' : '完售' }}</dd></div>
+        </dl>
+      </section>
+    </template>
+  </section>
 </template>
 
 <script>
@@ -30,6 +69,9 @@ import { api } from '../api/index.js'
 export default {
   data() { return { p: null, loading: true } },
   methods: {
+    money(value) {
+      return Number(value || 0).toLocaleString()
+    },
     goBack() {
       if (window.history.length > 1) this.$router.back()
       else this.$router.push('/')
@@ -45,21 +87,242 @@ export default {
 </script>
 
 <style scoped>
-.detail { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-.detail-img { background: #f9f9f9; border-radius: 10px; display: flex; align-items: center; justify-content: center; min-height: 400px; }
-.detail-img img { width: 100%; max-height: 500px; object-fit: cover; border-radius: 10px; }
-.no-img { font-size: 64px; color: #ccc; }
-.detail-info h1 { font-size: 24px; margin-bottom: 16px; }
-.price { margin-bottom: 12px; }
-.old-price { font-size: 16px; color: #aaa; text-decoration: line-through; margin-right: 10px; }
-.sale-price { font-size: 28px; font-weight: 700; color: #e44d26; }
-.stock { margin-bottom: 16px; font-size: 14px; }
-.stock.in { color: #2e7d32; }
-.stock.out { color: #c62828; }
-.desc { color: #666; line-height: 1.7; margin-bottom: 24px; }
-
-@media (max-width: 768px) {
-  .detail { grid-template-columns: 1fr; gap: 24px; }
-  .detail-img { min-height: 260px; }
+.product-page {
+  position: relative;
+  isolation: isolate;
+  max-width: 1080px;
+  min-height: 65vh;
+  margin: 0 auto;
+  padding-bottom: 48px;
+}
+.product-page::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at top right, var(--shop-surface-high), var(--shop-background) 58%);
+  content: '';
+  pointer-events: none;
+  opacity: .8;
+}
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--shop-text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color .2s;
+}
+.back-button:hover { color: var(--shop-primary); }
+.back-button .material-symbols-outlined { font-size: 19px; }
+.product-hero {
+  display: grid;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+.image-panel,
+.product-info,
+.description-panel,
+.state-card {
+  border: 1px solid var(--shop-border);
+  border-radius: 16px;
+  background: var(--shop-glass-card);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.image-panel {
+  display: grid;
+  min-height: 340px;
+  place-items: center;
+  background: var(--shop-surface-lowest);
+  overflow: hidden;
+}
+.image-panel img {
+  width: 100%;
+  height: 100%;
+  max-height: 580px;
+  object-fit: cover;
+}
+.no-image { color: var(--shop-text-muted); font-size: 70px; }
+.product-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(24px, 5vw, 44px);
+}
+.category {
+  align-self: flex-start;
+  margin-bottom: 14px;
+  padding: 7px 11px;
+  border: 1px solid color-mix(in srgb, var(--shop-primary) 28%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--shop-primary) 9%, transparent);
+  color: var(--shop-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+.product-info h1 {
+  margin: 0 0 20px;
+  color: var(--shop-text);
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(28px, 5vw, 42px);
+  line-height: 1.15;
+  letter-spacing: -.04em;
+}
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sale-price {
+  color: var(--shop-primary);
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(25px, 4vw, 34px);
+  font-weight: 800;
+}
+.list-price {
+  color: var(--shop-outline);
+  font-size: 15px;
+  text-decoration: line-through;
+}
+.stock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: var(--shop-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.stock.available { color: var(--shop-primary); }
+.stock.sold-out { color: var(--shop-error); }
+.quick-description {
+  display: -webkit-box;
+  margin-bottom: 26px;
+  color: var(--shop-text-muted);
+  font-size: 15px;
+  line-height: 1.75;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.actions { display: flex; gap: 10px; }
+.cart-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 11px 18px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .2s, background .2s, color .2s, transform .2s;
+}
+.cart-button {
+  flex: 1;
+  border: 1px solid var(--shop-primary);
+  background: var(--shop-primary);
+  color: var(--shop-on-primary);
+}
+.cart-button:hover:not(:disabled) { background: var(--shop-primary-strong); transform: translateY(-1px); }
+.cart-button:disabled { cursor: not-allowed; opacity: .45; }
+.secondary-button {
+  border: 1px solid var(--shop-border);
+  background: var(--shop-surface-highest);
+  color: var(--shop-text);
+}
+.secondary-button:hover { border-color: var(--shop-primary); color: var(--shop-primary); }
+.description-panel { padding: clamp(24px, 5vw, 40px); }
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--shop-border);
+}
+.eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--shop-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+.section-heading h2 {
+  margin: 0;
+  color: var(--shop-text);
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+}
+.section-heading > .material-symbols-outlined { color: var(--shop-primary); font-size: 34px; }
+.description-panel > p {
+  margin: 0;
+  color: var(--shop-text-muted);
+  font-size: 16px;
+  line-height: 1.9;
+  white-space: pre-line;
+}
+.product-meta {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--shop-border);
+}
+.product-meta > div { display: flex; justify-content: space-between; gap: 16px; }
+.product-meta dt { color: var(--shop-text-muted); font-size: 12px; }
+.product-meta dd { margin: 0; color: var(--shop-text); font-size: 13px; font-weight: 700; }
+.state-card {
+  display: grid;
+  min-height: 300px;
+  padding: 40px 20px;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: var(--shop-text-muted);
+  text-align: center;
+}
+.state-card h1 { margin: 0; color: var(--shop-text); font-size: 22px; }
+.state-icon { color: var(--shop-primary); font-size: 50px; }
+.loader {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--shop-border);
+  border-top-color: var(--shop-primary);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (min-width: 820px) {
+  .product-hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); }
+  .product-meta { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .product-meta > div { display: grid; gap: 5px; }
+}
+@media (max-width: 520px) {
+  .image-panel { min-height: 280px; }
+  .actions { flex-direction: column; }
+  .actions > * { width: 100%; }
 }
 </style>
