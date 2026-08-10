@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type OAuthService struct {
@@ -25,7 +26,7 @@ func NewOAuthService(cfg Config) *OAuthService {
 		LineChannelID:      cfg.LineChannelID,
 		LineChannelSecret:  cfg.LineChannelSecret,
 		OAuthRedirectURI:   cfg.OAuthRedirectURI,
-		HTTP:               &http.Client{Timeout: 15},
+		HTTP:               &http.Client{Timeout: 15 * time.Second},
 	}
 }
 

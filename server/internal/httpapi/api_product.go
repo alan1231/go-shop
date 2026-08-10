@@ -28,7 +28,7 @@ func productShowPayload(p repository.Product) map[string]any {
 		"description": p.Description,
 		"price":       p.Price,
 		"list_price":  p.ListPrice,
-		"stock":       p.Stock,
+		"stock":       p.ListedStock,
 	}
 }
 

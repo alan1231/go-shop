@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type LinePayService struct {
@@ -19,7 +20,7 @@ func NewLinePayService(channelID, channelSecret, sandbox string) *LinePayService
 	if !strings.EqualFold(sandbox, "false") {
 		host = "https://sandbox-api-pay.line.me"
 	}
-	return &LinePayService{ChannelID: channelID, ChannelSecret: channelSecret, Host: host, HTTP: &http.Client{Timeout: 15}}
+	return &LinePayService{ChannelID: channelID, ChannelSecret: channelSecret, Host: host, HTTP: &http.Client{Timeout: 15 * time.Second}}
 }
 
 func (s *LinePayService) IsConfigured() bool {
