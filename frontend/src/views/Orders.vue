@@ -70,6 +70,7 @@ export default {
       orders: [],
       status: '',
       loading: true,
+      requestId: 0,
       tabs: [
         { value: '', label: '全部' },
         { value: 'pending', label: '待付款' },
@@ -80,11 +81,29 @@ export default {
       ],
     }
   },
+  watch: {
+    '$route.query.status'(value) {
+      const next = this.validStatus(value)
+      if (next !== this.status) this.selectStatus(next, false)
+    },
+  },
   methods: {
-    async selectStatus(value) {
-      this.status = value
+    validStatus(value) {
+      return typeof value === 'string' && this.tabs.some(tab => tab.value === value) ? value : ''
+    },
+    async selectStatus(value, syncRoute = true) {
+      const next = this.validStatus(value)
+      const requestId = ++this.requestId
+      this.status = next
       this.loading = true
-      const res = await api.orders(value)
+      if (syncRoute && (this.$route.query.status || '') !== next) {
+        const query = { ...this.$route.query }
+        if (next) query.status = next
+        else delete query.status
+        await this.$router.replace({ query })
+      }
+      const res = await api.orders(next)
+      if (requestId !== this.requestId) return
       if (res.success) this.orders = res.data
       this.loading = false
     },
@@ -115,7 +134,7 @@ export default {
     },
   },
   async created() {
-    await this.selectStatus('')
+    await this.selectStatus(this.validStatus(this.$route.query.status))
   },
 }
 </script>
@@ -123,18 +142,8 @@ export default {
 <style scoped>
 .orders-page {
   position: relative;
-  isolation: isolate;
   min-height: 65vh;
   padding-bottom: 48px;
-}
-.orders-page::before {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(ellipse at top right, var(--shop-surface-high), var(--shop-background) 58%);
-  content: '';
-  pointer-events: none;
-  opacity: .8;
 }
 .orders-heading {
   display: flex;
@@ -220,7 +229,6 @@ export default {
   outline: none;
   transform: translateY(-2px);
 }
-.order-card.completed { opacity: .82; }
 .order-header {
   display: flex;
   align-items: flex-start;
@@ -264,7 +272,8 @@ export default {
 .order-status.pending,
 .order-status.cancelled { color: var(--shop-error); }
 .order-status.paid,
-.order-status.shipped { color: var(--shop-primary); }
+.order-status.shipped,
+.order-status.completed { color: var(--shop-primary); }
 .order-status.pending .status-dot,
 .order-status.shipped .status-dot {
   animation: status-pulse 1.8s ease-in-out infinite;

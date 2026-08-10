@@ -195,20 +195,10 @@ export default {
 <style scoped>
 .detail-page {
   position: relative;
-  isolation: isolate;
   max-width: 960px;
   min-height: 65vh;
   margin: 0 auto;
   padding-bottom: 48px;
-}
-.detail-page::before {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(ellipse at top right, var(--shop-surface-high), var(--shop-background) 58%);
-  content: '';
-  pointer-events: none;
-  opacity: .8;
 }
 .detail-header {
   display: flex;

@@ -1,16 +1,8 @@
 <template>
   <div class="min-h-screen bg-background text-on-background relative overflow-x-hidden">
-    <div v-if="marqueeText" class="md:hidden overflow-hidden whitespace-nowrap bg-surface-container py-2 border-b border-white/5 my-4 mx-margin-mobile rounded-lg px-margin-mobile">
-      <div class="inline-block animate-marquee font-label-sm text-label-sm text-primary tracking-widest uppercase">
-        <span class="mx-4">{{ marqueeText }}</span>
-        <span class="mx-4 text-on-surface-variant">•</span>
-        <span class="mx-4">{{ marqueeText }}</span>
-      </div>
-    </div>
-
     <main class="pt-4 px-margin-mobile max-w-container-max mx-auto">
       <div class="mb-6 mt-2 relative">
-        <div class="glass-card flex items-center px-4 py-3 rounded-xl focus-within:border-primary transition-colors duration-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] focus-within:shadow-[0_0_15px_rgba(117,255,158,0.2)]">
+        <div class="glass-card flex items-center px-4 py-3 rounded-xl focus-within:border-primary transition-colors duration-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] focus-within:shadow-[0_0_15px_rgba(76,175,80,0.25)]">
           <span class="material-symbols-outlined text-on-surface-variant mr-3">search</span>
           <input ref="searchInput" v-model="q" type="text" placeholder="搜尋商品..." class="bg-transparent border-none outline-none flex-grow font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant w-full focus:ring-0" @input="onSearch" />
         </div>
@@ -62,12 +54,12 @@ import { api } from '../api/index.js'
 
 export default {
   data() {
-    return { products: [], categories: [], q: '', category: '', page: 1, totalPages: 1, loading: true, marqueeText: '', searchTimer: null }
+    return { products: [], categories: [], q: '', category: '', page: 1, totalPages: 1, loading: true, searchTimer: null }
   },
   methods: {
     catClass(active) {
       return active
-        ? 'whitespace-nowrap px-4 py-2 rounded-full font-label-sm text-label-sm bg-primary text-on-primary font-bold shadow-[0_0_15px_rgba(117,255,158,0.3)]'
+        ? 'whitespace-nowrap px-4 py-2 rounded-full font-label-sm text-label-sm bg-primary text-on-primary font-bold shadow-[0_0_15px_rgba(76,175,80,0.3)]'
         : 'whitespace-nowrap px-4 py-2 rounded-full font-label-sm text-label-sm glass-card text-on-surface-variant hover:border-primary/50 transition-colors'
     },
     onSearch() {
@@ -96,13 +88,12 @@ export default {
     },
   },
   async created() {
-    const [pRes, cRes, mRes] = await Promise.all([api.products(), api.categories(), api.marquee()])
+    const [pRes, cRes] = await Promise.all([api.products(), api.categories()])
     if (pRes.success) {
       this.products = pRes.data.items
       this.totalPages = pRes.data.total_pages
     }
     if (cRes.success) this.categories = cRes.data
-    if (mRes.success) this.marqueeText = mRes.data.content
     this.loading = false
   },
 }

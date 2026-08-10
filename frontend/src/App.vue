@@ -63,7 +63,7 @@
         </div>
       </div>
     </nav>
-    <div class="marquee" v-if="showHeader && marqueeText">
+    <div class="site-marquee" v-if="showHeader && marqueeText">
       <span>{{ marqueeText }}</span>
     </div>
     <main>
@@ -265,8 +265,8 @@ body { font-family: 'Hanken Grotesk', 'Segoe UI', Arial, sans-serif; background:
 .uc-pw-actions { margin-top: 10px; }
 .btn-sm { padding: 8px 16px; font-size: 13px; }
 
-.marquee { background: var(--shop-primary); color: var(--shop-on-primary); overflow: hidden; padding: 7px 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-.marquee span { display: inline-block; white-space: nowrap; animation: marquee-scroll 20s linear infinite; }
+#layout > .site-marquee { background: var(--shop-primary); color: var(--shop-on-primary); overflow: hidden; padding: 9px 0; border-bottom: 1px solid var(--shop-primary-strong); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+#layout > .site-marquee span { display: inline-block; white-space: nowrap; animation: marquee-scroll 20s linear infinite; }
 @keyframes marquee-scroll {
   0% { transform: translateX(100vw); }
   100% { transform: translateX(-100%); }
@@ -290,7 +290,7 @@ footer { background: var(--shop-background); color: var(--shop-text-muted); text
 @media (max-width: 768px) {
   #layout > nav { padding: 12px 16px; }
   #layout > nav .logo { font-size: 18px; }
-  .page-home > .marquee, .page-home > footer { display: none; }
+  .page-home > footer { display: none; }
   .page-home > main { padding: 0; }
   .nav-toggle { display: block; }
   .nav-links {
