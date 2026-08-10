@@ -6,4 +6,3 @@ frontend/dev.log
 frontend/dev.err.log
 uploads/
 .env
-backend/oauth-config.php
