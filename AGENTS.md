@@ -4,7 +4,7 @@
 
 ## 專案位置
 
-- 專案根目錄：`/Users/yuna/dev/go-shop`
+- 專案根目錄：`/Users/yuna/dev/php-shop`
 - 後端：`backend/`（vanilla PHP 8，無框架，相容 Apache/Laragon）
 - 前台：`frontend/`（Vue 3 + Vite + vue-router，dev 埠 5173）
 - 後台：`frontend-admin/`（Vue 3 + Vite + vue-router + Chart.js，dev 埠 5174）
