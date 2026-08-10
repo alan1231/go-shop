@@ -1,6 +1,7 @@
 node_modules/
 frontend/node_modules/
 frontend/dist/
+frontend-admin/dist/
 frontend/dev.log
 frontend/dev.err.log
 uploads/

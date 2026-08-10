@@ -52,7 +52,7 @@
           <tr v-for="item in order.items" :key="item.id">
             <td>
               <div class="item-cell">
-                <img v-if="item.image" :src="'/php/shop/uploads/' + item.image" class="thumb" />
+                <img v-if="item.image" :src="'/uploads/' + item.image" class="thumb" />
                 {{ item.name }}
               </div>
             </td>

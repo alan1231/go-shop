@@ -1,125 +1,111 @@
-# PHP SHOP
+# GO SHOP
 
-基於 **PHP 8 + MySQL** 與 **Vue 3 + Vite** 的前後端分離購物網站。後台為 PHP Session 認證的傳統頁面，前台為 SPA，兩者帳號與認證機制完全分離。
+基於 **Go + MySQL + Vue 3** 的前後端分離購物網站。前台與後台皆為 Vue 3 SPA，由同一個 Go API 提供資料與 Token 認證。
 
 ## 功能總覽
 
-### 前台（Vue 3 SPA）
+### 前台（Vue 3）
 
 | 功能 | 說明 |
 |------|------|
-| 商品瀏覽 | 列表、明細、庫存狀態、原價/售價顯示 |
-| 首頁搜尋 | `?q=` 關鍵字搜尋 + 分類 tab 篩選 |
-| 會員系統 | 註冊、登入、登出（Token 認證）、Google / LINE 三方登入 |
-| 會員中心 | 個人資料編輯、更改密碼、登出（導覽列下拉） |
-| 購物車 | 加入、增減、刪除，localStorage 共享狀態即時同步，含庫存上限檢查 |
-| 訂單 | 下單（含收件人與結帳備註 `member_remark`）、我的訂單（狀態篩選 tab）、訂單明細 |
-| 訂單時間軸 | 訂單明細顯示 pending → paid → shipped → completed 進度 |
-| 模擬付款 | 待付款 → 已付款 |
-| 跑馬燈 | 每 30 秒自動輪詢更新 |
-| 響應式 | 手機漢堡選單與各頁 RWD（<768px） |
+| 商品瀏覽 | 商品列表、明細、搜尋、分類篩選、庫存與售價顯示 |
+| 會員系統 | 註冊、登入、登出、Google / LINE 三方登入 |
+| 會員中心 | 編輯聯絡資料與更改密碼 |
+| 購物車 | 加入、增減、刪除、localStorage 同步與庫存上限檢查 |
+| 訂單 | 建立訂單、狀態篩選、訂單明細、進度時間軸與模擬付款 |
+| 其他 | 跑馬燈自動更新與響應式版面 |
 
-### 後台（PHP 頁面）
+### 後台（Vue 3）
 
 | 功能 | 說明 |
 |------|------|
-| 儀表板 | 統計：商品、會員、訂單數與營收 |
-| 商品管理 | 新增、編輯、圖片上傳、**列表搜尋/分類篩選** |
-| 訂單管理 | 列表、明細、狀態更新（待付款/已付款/出貨中/已完成/已取消）、備註 |
-| 會員管理 | 新增、刪除、改密碼 |
+| 儀表板 | 商品、會員、訂單與營收統計 |
+| 商品管理 | 新增、編輯、圖片上傳、搜尋、分類篩選與分頁 |
+| 訂單管理 | 訂單列表、明細、狀態與備註更新 |
+| 會員管理 | 搜尋、新增、刪除與重設密碼 |
 | 跑馬燈管理 | 編輯前台公告文字 |
 
 ## 技術架構
 
-- **後端**：原生 PHP 8 + MySQL（PDO），分層架構 `Controller → Service → Repository`
-- **前端**：Vue 3 + Vite + Vue Router，使用原生 fetch（無 Axios）
-- **認證分離**
-  - 後台：PHP Session + Cookie
-  - 前台：隨機 Token，存於 localStorage，透過 `Authorization: Bearer <token>` 傳遞
-  - 三方登入：Google / LINE OAuth，`state` 含隨機碼防 CSRF，並保留登入前 redirect
-- **帳號分離**
-  - `admin_users` 表：後台管理員
-  - `users` 表：前台會員
-- **資料庫**：所有 Repository 皆自動建立資料表，舊表缺欄位自動 `ALTER TABLE` 補上，無需手動 SQL
-- **防超賣**：下單流程包在 DB transaction 中，以 `UPDATE ... WHERE stock >= :qty` 原子扣庫存，失敗即整筆 rollback
-- **路由守衛**：前台未登入導向 `/login?redirect=...`，登入後回到原頁
+- **後端**：Go 標準庫 `net/http`、MySQL、Repository / Service 分層
+- **前台**：Vue 3、Vite、Vue Router、原生 fetch
+- **後台**：Vue 3、Vite、Vue Router、Chart.js、原生 fetch
+- **認證**：前台與後台皆使用 Bearer Token，Token 分別存於 `localStorage.token` 與 `localStorage.admin_token`
+- **帳號分離**：前台會員使用 `users`，後台管理員使用 `admin_users`
+- **資料庫遷移**：Go server 啟動時自動建表並補齊舊表缺少的欄位
+- **防超賣**：下單流程使用 transaction 與條件式庫存更新，失敗時整筆 rollback
+- **靜態檔案**：正式環境由 Go server 提供兩個 SPA 與 `/uploads/` 商品圖片
 
 ## 目錄結構
 
-```
+```text
 .
-├── index.php              # 進入點（載入 backend）
-├── .htaccess              # 路由重寫
-├── backend/
-│   ├── index.php          # 路由定義與分發
-│   ├── db.php             # 自動載入
-│   ├── setup.php          # 初始化資料庫與預設管理員
-│   ├── classes/
-│   │   ├── Controllers/   # 控制器（含 Api/ 前台 API）
-│   │   ├── Services/      # 商業邏輯
-│   │   └── Repositories/  # 資料存取（自動建表）
-│   └── views/             # 後台畫面（PHP 模板）
-├── frontend/              # Vue 3 前台
-│   ├── src/
-│   │   ├── api/           # API 呼叫封裝（fetch）
-│   │   ├── router/        # 路由 + 守衛
-│   │   ├── store/         # 共享狀態（購物車、user、toast）
-│   │   └── views/         # 頁面元件
-│   └── vite.config.js     # Vite + proxy 設定
-└── uploads/               # 商品圖片
+├── server/                  # Go API 與靜態檔案伺服器
+│   ├── cmd/server/          # 程式進入點
+│   └── internal/
+│       ├── config/          # 環境設定
+│       ├── db/              # MySQL 連線與自動遷移
+│       ├── httpapi/         # 前台、後台 API 與路由
+│       ├── repository/      # 資料存取
+│       ├── service/         # 商業邏輯
+│       └── storage/         # 商品圖片處理
+├── frontend/                # Vue 3 前台（開發埠 5173）
+├── frontend-admin/          # Vue 3 後台（開發埠 5174）
+└── uploads/                 # 商品圖片
 ```
 
 ## 安裝與執行
 
 ### 環境需求
 
-- [Laragon](https://laragon.org/)（或任一 Apache + PHP 8 + MySQL 環境）
+- Go 1.26+
 - Node.js 18+
+- MySQL 8+
 
-### 後端
+### 1. 建立資料庫與環境設定
 
-```bash
-# 1. 將專案放入 Laragon 的 www 目錄
-# 2. 建立資料庫 shop（或由 setup 自動建立）
-# 3. 開啟以下網址初始化資料庫與預設管理員
-#    http://localhost/php/shop/setup.php
+先建立 MySQL 資料庫：
+
+```sql
+CREATE DATABASE shop CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-預設管理員帳號：
+複製環境設定：
+
+```bash
+cp .env.example .env
+```
+
+Go server 使用以下資料庫設定；未設定時會採用括號內的預設值：
+
+| 變數 | 預設值 |
+|------|--------|
+| `PORT` | `8080` |
+| `DB_HOST` | `127.0.0.1` |
+| `DB_PORT` | `3306` |
+| `DB_NAME` | `shop` |
+| `DB_USER` | `root` |
+| `DB_PASS` | 空字串 |
+
+`.env` 也可填入 Google、LINE Login 與 LINE Pay 憑證。OAuth 回調網址預設為 `http://localhost:5173/auth/callback`。
+
+### 2. 啟動 Go API
+
+```bash
+cd server
+go mod download
+go run ./cmd/server
+```
+
+啟動時會自動遷移資料表，並在尚無管理員時建立預設帳號：
 
 | 帳號 | 密碼 |
 |------|------|
-| admin | 123456 |
+| `admin` | `123456` |
 
-後台網址：`http://localhost/php/shop/admin`
+API 與圖片服務：`http://localhost:8080`
 
-### 三方登入（Google / LINE）設定
-
-clone 後需填入自己的 OAuth 憑證（**secret 不會進 git**）：
-
-```bash
-# 1. 產生設定檔（在專案根目錄）
-cp .env.example .env
-
-# 2. 編輯 .env，填入下列憑證
-```
-
-`.env` 需要填入的位置：
-
-| 欄位 | 說明 | 去哪申請 |
-|------|------|----------|
-| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | [Google Cloud Console](https://console.cloud.google.com) → 憑證 → OAuth 用戶端 ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | 同上（產生時才會顯示） |
-| `LINE_CHANNEL_ID` | LINE Login Channel ID | [LINE Developers](https://developers.line.biz/console/) → Channel → Basic settings |
-| `LINE_CHANNEL_SECRET` | LINE Login Channel Secret | 同上 |
-| `OAUTH_REDIRECT_URI` | 授權回調網址 | 預設 `http://localhost:5173/auth/callback`，通常不用改 |
-
-同時要在各平台後台設定回調網址：
-
-- **Google**：Authorized redirect URIs 加入 `http://localhost:5173/auth/callback`
-- **LINE**：LINE Login → Callback URL 加入 `http://localhost:5173/auth/callback`
-
-### 前端
+### 3. 啟動 Vue 3 前台
 
 ```bash
 cd frontend
@@ -127,31 +113,64 @@ npm install
 npm run dev
 ```
 
-開發網址：`http://localhost:5173/`
+前台網址：`http://localhost:5173/`
 
-Vite 已設定 proxy：`/api` 與 `/php/shop` 自動轉發至 `http://localhost/php/shop`，前端不需設定 CORS。
+### 4. 啟動 Vue 3 後台
+
+```bash
+cd frontend-admin
+npm install
+npm run dev
+```
+
+後台網址：`http://localhost:5174/admin/`
+
+兩個 Vite dev server 都會將 `/api` 與 `/uploads` 代理至 `http://localhost:8080`。
+
+## 正式環境
+
+先建置兩個 SPA：
+
+```bash
+cd frontend && npm install && npm run build
+cd ../frontend-admin && npm install && npm run build
+cd ../server && go run ./cmd/server
+```
+
+Go server 會提供：
+
+- 前台：`http://localhost:8080/`
+- 後台：`http://localhost:8080/admin/`
+- API：`http://localhost:8080/api/`
+- 商品圖片：`http://localhost:8080/uploads/`
 
 ## API 清單
 
-需登入的 API 需帶 Header：`Authorization: Bearer <token>`
+需登入的 API 必須帶入 `Authorization: Bearer <token>`。
 
-| Method | Endpoint             | 說明                 |
-|--------|----------------------|----------------------|
-| POST   | `/api/auth/register` | 會員註冊             |
-| POST   | `/api/auth/login`    | 登入（回傳 token）   |
-| POST   | `/api/auth/oauth`    | 三方登入（google / line）|
-| POST   | `/api/auth/logout`   | 登出                 |
-| GET    | `/api/auth/me`       | 目前登入使用者       |
-| POST   | `/api/auth/update`   | 更新聯絡資料（手機、住址）|
-| POST   | `/api/auth/password` | 更改密碼             |
-| GET    | `/api/products`      | 商品列表（僅上架中），可帶 `?q=` 與 `?category=` |
-| GET    | `/api/products/{id}` | 商品明細             |
-| GET    | `/api/categories`    | 商品分類清單         |
-| POST   | `/api/orders`        | 建立訂單             |
-| GET    | `/api/orders`        | 我的訂單列表，可帶 `?status=` 篩選 |
-| GET    | `/api/orders/{id}`   | 訂單明細             |
-| POST   | `/api/orders/{id}/pay` | 模擬付款           |
-| GET    | `/api/marquee`       | 跑馬燈內容           |
+### 前台 API
+
+| Method | Endpoint | 說明 |
+|--------|----------|------|
+| POST | `/api/auth/register` | 會員註冊 |
+| POST | `/api/auth/login` | 會員登入 |
+| POST | `/api/auth/oauth` | Google / LINE 登入 |
+| POST | `/api/auth/logout` | 會員登出 |
+| GET | `/api/auth/me` | 目前登入會員 |
+| POST | `/api/auth/update` | 更新會員聯絡資料 |
+| POST | `/api/auth/password` | 更改會員密碼 |
+| GET | `/api/products` | 商品列表與搜尋 |
+| GET | `/api/products/{id}` | 商品明細 |
+| GET | `/api/categories` | 商品分類 |
+| POST | `/api/orders` | 建立訂單 |
+| GET | `/api/orders` | 會員訂單列表 |
+| GET | `/api/orders/{id}` | 訂單明細 |
+| POST | `/api/orders/{id}/pay` | 模擬付款 |
+| GET | `/api/marquee` | 跑馬燈內容 |
+
+### 後台 API
+
+後台 API 以 `/api/admin` 為前綴，包含登入、儀表板統計、商品、訂單、會員與跑馬燈管理。
 
 ## License
 

@@ -1,0 +1,160 @@
+<template>
+  <div>
+    <div class="page-header">
+      <h1><i class="fas fa-shopping-cart"></i> 訂單 #{{ order?.id }}</h1>
+      <router-link to="/orders" class="btn btn-default"><i class="fas fa-arrow-left"></i> 返回列表</router-link>
+    </div>
+
+    <div v-if="loading" class="card" style="text-align:center;color:#888;padding:48px;"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
+    <p v-else-if="!order" style="text-align:center;padding:48px;color:#888;">訂單不存在</p>
+
+    <template v-else>
+      <div v-if="msg" :class="'msg msg-' + msgType">{{ msg }}</div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3><i class="fas fa-user"></i> 會員資訊</h3>
+          <div class="info-row"><span>會員名稱</span><b>{{ order.username || '—' }}</b></div>
+          <div class="info-row"><span>Email</span><b>{{ order.email || '—' }}</b></div>
+          <div class="info-row"><span>電話</span><b>{{ order.phone || '—' }}</b></div>
+          <div class="info-row"><span>地址</span><b>{{ order.address || '—' }}</b></div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-truck"></i> 收件資訊</h3>
+          <div class="info-row"><span>收件人</span><b>{{ order.receiver_name || '—' }}</b></div>
+          <div class="info-row"><span>收件電話</span><b>{{ order.receiver_phone || '—' }}</b></div>
+          <div class="info-row"><span>收件地址</span><b>{{ order.receiver_address || '—' }}</b></div>
+          <div class="info-row"><span>訂單時間</span><b>{{ formatDate(order.created_at) }}</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-box-open"></i> 訂單項目</h3>
+        <table>
+          <thead>
+            <tr><th style="width:60px;">圖片</th><th>商品</th><th style="text-align:center;">單價</th><th style="text-align:center;">數量</th><th style="text-align:center;">小計</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in order.items" :key="item.id">
+              <td>
+                <img v-if="item.image" :src="'/uploads/' + item.image" style="width:50px;height:50px;object-fit:cover;border-radius:6px;" />
+                <div v-else style="width:50px;height:50px;background:#eee;border-radius:6px;"></div>
+              </td>
+              <td style="font-weight:600;">{{ item.name }}</td>
+              <td style="text-align:center;">{{ fmt(item.price) }}</td>
+              <td style="text-align:center;">{{ item.quantity }}</td>
+              <td style="text-align:center;font-weight:600;">{{ fmt(item.price * item.quantity) }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" style="text-align:right;font-weight:700;font-size:15px;">總金額</td>
+              <td style="text-align:center;font-weight:700;font-size:15px;color:#e44d26;">{{ fmt(order.total_amount) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3><i class="fas fa-tasks"></i> 訂單狀態</h3>
+          <p style="margin:10px 0 16px;color:#888;font-size:14px;">目前狀態：<span :class="'badge badge-' + order.status" style="font-size:12px;">{{ STATUS[order.status] || order.status }}</span></p>
+          <div v-if="order.status === 'completed'" class="msg msg-success">訂單已完成，狀態不可再變更。</div>
+          <div v-else class="status-btns">
+            <button v-for="(label, key) in STATUS" :key="key" class="status-btn" :class="{ active: order.status === key }" :disabled="savingStatus" @click="changeStatus(key)">
+              {{ label }}
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-sticky-note"></i> 管理員備註</h3>
+          <textarea v-model="remark" style="width:100%;max-width:100%;padding:10px 12px;border:1px solid #d0d5dd;border-radius:6px;font-size:14px;min-height:80px;resize:vertical;" placeholder="輸入備註"></textarea>
+          <button class="btn btn-primary" style="margin-top:12px;" :disabled="savingRemark" @click="saveRemark">
+            <i class="fas fa-save"></i> 儲存備註
+          </button>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
+
+<script>
+import { api } from '../api/index.js'
+
+export default {
+  name: 'OrderDetailView',
+  data() {
+    return {
+      STATUS: { pending: '待付款', paid: '已付款', shipped: '出貨中', completed: '已完成', cancelled: '已取消' },
+      order: null,
+      loading: true,
+      msg: '',
+      msgType: 'success',
+      remark: '',
+      savingStatus: false,
+      savingRemark: false,
+    }
+  },
+  async created() {
+    await this.load()
+  },
+  methods: {
+    fmt(n) {
+      return 'NT$ ' + Number(n).toLocaleString()
+    },
+    formatDate(s) {
+      if (!s) return '—'
+      return String(s).replace('T', ' ').slice(0, 16)
+    },
+    async load() {
+      this.loading = true
+      const res = await api.order(this.$route.params.id)
+      if (res.success) {
+        this.order = res.data
+        this.remark = res.data.remark || ''
+      } else {
+        this.msgType = 'error'
+        this.msg = res.message
+      }
+      this.loading = false
+    },
+    async changeStatus(status) {
+      this.savingStatus = true
+      const res = await api.updateOrderStatus(this.order.id, status)
+      this.savingStatus = false
+      if (res.success) {
+        this.msgType = 'success'
+        this.msg = res.message
+        this.order.status = status
+      } else {
+        this.msgType = 'error'
+        this.msg = res.message
+      }
+    },
+    async saveRemark() {
+      this.savingRemark = true
+      const res = await api.updateOrderRemark(this.order.id, this.remark)
+      this.savingRemark = false
+      this.msgType = res.success ? 'success' : 'error'
+      this.msg = res.message
+      if (res.success) this.order.remark = this.remark
+    },
+  },
+}
+</script>
+
+<style scoped>
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
+.card h3 { font-size: 15px; margin-bottom: 14px; color: #333; }
+.info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 14px; }
+.info-row span { color: #888; }
+.info-row b { font-weight: 600; }
+.status-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.status-btn {
+  padding: 8px 14px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; font-size: 13px; color: #666; cursor: pointer; transition: all 0.2s;
+}
+.status-btn:hover { border-color: #4CAF50; color: #4CAF50; }
+.status-btn.active { background: #4CAF50; border-color: #4CAF50; color: #fff; }
+.status-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
