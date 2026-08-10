@@ -6,14 +6,10 @@ function getToken() {
 
 function clearAuth() {
   localStorage.removeItem('token')
-  if (!window.__authRedirecting) {
-    window.__authRedirecting = true
-    const { pathname, search } = window.location
-    const isAuthPage = ['/login', '/register', '/auth/callback'].some(p => pathname.startsWith(p))
-    if (!isAuthPage) {
-      window.location.href = '/login?redirect=' + encodeURIComponent(pathname + search)
-    }
-    setTimeout(() => { window.__authRedirecting = false }, 500)
+  const { pathname, search } = window.location
+  const isAuthPage = ['/login', '/register', '/auth/callback'].some(p => pathname.startsWith(p))
+  if (!isAuthPage) {
+    window.location.href = '/login?redirect=' + encodeURIComponent(pathname + search)
   }
 }
 
@@ -24,11 +20,7 @@ async function request(url, options = {}) {
 
   let res
   try {
-    res = await fetch(BASE + url, {
-      credentials: 'include',
-      headers,
-      ...options,
-    })
+    res = await fetch(BASE + url, { headers, ...options })
   } catch (e) {
     return { success: false, message: '網路連線失敗，請稍後再試' }
   }

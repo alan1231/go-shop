@@ -286,6 +286,10 @@ footer { background: var(--shop-background); color: var(--shop-text-muted); text
 
 .card { background: var(--shop-glass); border: 1px solid var(--shop-border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
 .card h3 { color: var(--shop-text); }
+.loader { display: inline-block; width: 28px; height: 28px; border: 2px solid var(--shop-border); border-top-color: var(--shop-primary); border-radius: 50%; animation: spin .8s linear infinite; }
+.loader-sm { width: 16px; height: 16px; }
+.loader-lg { width: 30px; height: 30px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 768px) {
   #layout > nav { padding: 12px 16px; }

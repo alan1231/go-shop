@@ -1,16 +1,5 @@
 <template>
-  <section class="auth-page">
-    <div class="glow glow-left"></div>
-    <div class="glow glow-right"></div>
-
-    <div class="auth-stage">
-      <div class="auth-card">
-        <div class="brand-mark">
-          <span class="material-symbols-outlined">storefront</span>
-        </div>
-        <h1>登入 SHOP</h1>
-        <p class="subtitle">歡迎回來，繼續您的購物之旅</p>
-
+  <AuthShell title="登入 SHOP" subtitle="歡迎回來，繼續您的購物之旅" footer>
         <div v-if="error" class="error-message" role="alert">
           <span class="material-symbols-outlined">error</span>
           {{ error }}
@@ -49,27 +38,22 @@
             </div>
           </div>
           <button type="submit" class="login-button" :disabled="loading">
-            <span v-if="loading" class="loader"></span>
+            <span v-if="loading" class="loader loader-sm"></span>
             {{ loading ? '登入中...' : '立即登入' }}
           </button>
         </form>
 
-        <p class="register-link">還沒有帳號？<router-link to="/register">立即註冊</router-link></p>
-      </div>
-    </div>
-
-    <footer class="auth-footer">
-      <strong>SHOP</strong>
-      <span>© 2026 SHOP 3C RETAILERS</span>
-    </footer>
-  </section>
+    <p class="register-link">還沒有帳號？<router-link to="/register">立即註冊</router-link></p>
+  </AuthShell>
 </template>
 
 <script>
 import { api } from '../api/index.js'
 import { buildOAuthUrl } from '../api/oauth.js'
 import { userStore } from '../store/user.js'
+import AuthShell from '../components/AuthShell.vue'
 export default {
+  components: { AuthShell },
   data() { return { username: '', password: '', error: '', loading: false, showPassword: false } },
   methods: {
     startOAuth(provider) {
@@ -92,80 +76,6 @@ export default {
 </script>
 
 <style scoped>
-.auth-page {
-  position: relative;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  min-height: 100vh;
-  margin: -30px -40px;
-  background: var(--shop-background);
-  overflow: hidden;
-}
-.auth-stage {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 56px 16px;
-}
-.glow {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--shop-primary);
-  filter: blur(120px);
-  pointer-events: none;
-}
-.glow-left {
-  top: 15%;
-  left: 12%;
-  width: 420px;
-  height: 420px;
-  opacity: .08;
-}
-.glow-right {
-  right: 10%;
-  bottom: 18%;
-  width: 340px;
-  height: 340px;
-  opacity: .05;
-}
-.auth-card {
-  width: min(100%, 440px);
-  padding: 38px;
-  border: 1px solid var(--shop-border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--shop-surface-lowest) 68%, transparent);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
-  text-align: center;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-.brand-mark {
-  display: grid;
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 16px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--shop-primary) 28%, transparent);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--shop-primary) 12%, var(--shop-surface-lowest));
-  box-shadow: 0 0 28px color-mix(in srgb, var(--shop-primary) 15%, transparent);
-  color: var(--shop-primary);
-}
-.brand-mark .material-symbols-outlined { font-size: 34px; }
-.auth-card h1 {
-  margin: 0;
-  color: var(--shop-text);
-  font-family: 'Sora', sans-serif;
-  font-size: 26px;
-  letter-spacing: -.03em;
-}
-.subtitle {
-  margin: 8px 0 24px;
-  color: var(--shop-text-muted);
-  font-size: 14px;
-}
 .error-message {
   display: flex;
   align-items: center;
@@ -227,13 +137,9 @@ export default {
   background: var(--shop-border);
   content: '';
 }
-.form-group { margin-bottom: 16px; text-align: left; }
 .form-group label {
-  display: block;
-  margin-bottom: 7px;
   color: var(--shop-text);
   font-size: 13px;
-  font-weight: 700;
 }
 .form-group input {
   width: 100%;
@@ -253,24 +159,6 @@ export default {
   border-color: var(--shop-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--shop-primary) 12%, transparent);
 }
-.password-field { position: relative; }
-.password-field input { padding-right: 48px; }
-.password-field button {
-  position: absolute;
-  top: 50%;
-  right: 8px;
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 0;
-  background: transparent;
-  color: var(--shop-text-muted);
-  cursor: pointer;
-  transform: translateY(-50%);
-}
-.password-field button:hover { color: var(--shop-primary); }
-.password-field .material-symbols-outlined { font-size: 21px; }
 .login-button {
   display: flex;
   align-items: center;
@@ -296,14 +184,6 @@ export default {
   transform: translateY(-1px);
 }
 .login-button:disabled { cursor: wait; opacity: .65; }
-.loader {
-  width: 16px;
-  height: 16px;
-  border: 2px solid color-mix(in srgb, var(--shop-on-primary) 30%, transparent);
-  border-top-color: var(--shop-on-primary);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
 .register-link {
   margin: 24px 0 0;
   padding-top: 20px;
@@ -318,34 +198,4 @@ export default {
   text-decoration: none;
 }
 .register-link a:hover { text-decoration: underline; }
-.auth-footer {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  padding: 22px 16px;
-  border-top: 1px solid var(--shop-border);
-  background: var(--shop-surface-lowest);
-  color: var(--shop-text-muted);
-  font-size: 10px;
-  letter-spacing: .08em;
-}
-.auth-footer strong {
-  color: var(--shop-text);
-  font-family: 'Sora', sans-serif;
-  font-size: 15px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width: 768px) {
-  .auth-page { margin: -20px -16px; }
-  .auth-stage { padding: 34px 16px; }
-  .auth-card { padding: 28px 20px; }
-  .glow-left { left: -220px; }
-  .glow-right { right: -190px; }
-}
-@media (max-width: 420px) {
-  .auth-footer { align-items: center; flex-direction: column; gap: 6px; }
-}
 </style>

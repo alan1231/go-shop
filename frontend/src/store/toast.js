@@ -9,7 +9,6 @@ export const toastStore = reactive({
   },
   success(message) { this.show(message, 'success') },
   error(message) { this.show(message, 'error') },
-  info(message) { this.show(message, 'info') },
   remove(id) {
     const i = this.items.findIndex(t => t.id === id)
     if (i !== -1) this.items.splice(i, 1)

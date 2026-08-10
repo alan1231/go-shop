@@ -1,4 +1,4 @@
-export const oauthConfig = {
+const oauthConfig = {
   redirectUri: 'http://localhost:5173/auth/callback',
   google: {
     clientId: '828907985954-gfmpa7rua6isuucerl22tjcmgq74jsej.apps.googleusercontent.com',

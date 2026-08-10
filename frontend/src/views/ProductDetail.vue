@@ -1,11 +1,11 @@
 <template>
   <section class="product-page">
-    <div v-if="loading" class="state-card">
-      <span class="loader"></span>
+    <div v-if="loading" class="state-card glass-card">
+      <span class="loader loader-lg"></span>
       <span>載入商品中</span>
     </div>
 
-    <div v-else-if="!p" class="state-card">
+    <div v-else-if="!p" class="state-card glass-card">
       <span class="material-symbols-outlined state-icon">inventory_2</span>
       <h1>商品不存在</h1>
       <router-link to="/" class="secondary-button">返回首頁</router-link>
@@ -18,12 +18,12 @@
       </button>
 
       <div class="product-hero">
-        <div class="image-panel">
+        <div class="image-panel glass-card">
           <img v-if="p.image" :src="p.image" :alt="p.name" />
           <span v-else class="material-symbols-outlined no-image">inventory_2</span>
         </div>
 
-        <div class="product-info">
+        <div class="product-info glass-card">
           <span v-if="p.category" class="category">{{ p.category }}</span>
           <h1>{{ p.name }}</h1>
           <div class="price-row">
@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <section class="description-panel">
+      <section class="description-panel glass-card">
         <div class="section-heading">
           <div>
             <span class="eyebrow">PRODUCT DETAILS</span>
@@ -66,12 +66,11 @@
 
 <script>
 import { api } from '../api/index.js'
+import { money } from '../utils/format.js'
 export default {
   data() { return { p: null, loading: true } },
   methods: {
-    money(value) {
-      return Number(value || 0).toLocaleString()
-    },
+    money,
     goBack() {
       if (window.history.length > 1) this.$router.back()
       else this.$router.push('/')
@@ -120,12 +119,8 @@ export default {
 .product-info,
 .description-panel,
 .state-card {
-  border: 1px solid var(--shop-border);
   border-radius: 16px;
-  background: var(--shop-glass-card);
   box-shadow: 0 16px 40px rgba(0, 0, 0, .2);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 .image-panel {
   display: grid;
@@ -296,15 +291,6 @@ export default {
 }
 .state-card h1 { margin: 0; color: var(--shop-text); font-size: 22px; }
 .state-icon { color: var(--shop-primary); font-size: 50px; }
-.loader {
-  width: 30px;
-  height: 30px;
-  border: 2px solid var(--shop-border);
-  border-top-color: var(--shop-primary);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 @media (min-width: 820px) {
   .product-hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); }
   .product-meta { grid-template-columns: repeat(3, minmax(0, 1fr)); }

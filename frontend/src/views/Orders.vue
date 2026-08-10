@@ -12,12 +12,12 @@
       <button v-for="t in tabs" :key="t.value" class="status-tab" :class="{ active: status === t.value }" type="button" role="tab" :aria-selected="status === t.value" @click="selectStatus(t.value)">{{ t.label }}</button>
     </div>
 
-    <div v-if="loading" class="state-card loading-state">
+    <div v-if="loading" class="state-card loading-state glass-card">
       <span class="loader"></span>
       <span>載入訂單中</span>
     </div>
 
-    <div v-else-if="!orders.length" class="state-card empty-state">
+    <div v-else-if="!orders.length" class="state-card empty-state glass-card">
       <span class="material-symbols-outlined">receipt_long</span>
       <h2>{{ status ? '沒有此狀態的訂單' : '尚無訂單' }}</h2>
       <p>找到喜歡的商品後，訂單會顯示在這裡。</p>
@@ -25,7 +25,7 @@
     </div>
 
     <div v-else class="order-list">
-      <article v-for="o in orders" :key="o.id" class="order-card" :class="{ completed: o.status === 'completed' }" tabindex="0" @click="openOrder(o.id)" @keydown.enter="openOrder(o.id)">
+      <article v-for="o in orders" :key="o.id" class="order-card glass-card" tabindex="0" @click="openOrder(o.id)" @keydown.enter="openOrder(o.id)">
         <div class="order-header">
           <div>
             <div class="order-date">{{ formatDate(o.created_at) }}</div>
@@ -64,6 +64,7 @@
 
 <script>
 import { api } from '../api/index.js'
+import { formatDate, imageUrl, money, orderStatusLabel } from '../utils/format.js'
 export default {
   data() {
     return {
@@ -107,31 +108,17 @@ export default {
       if (res.success) this.orders = res.data
       this.loading = false
     },
-    statusLabel(s) {
-      const map = { pending: '待付款', paid: '已付款', shipped: '出貨中', completed: '已完成', cancelled: '已取消' }
-      return map[s] || s
-    },
+    statusLabel: orderStatusLabel,
     openOrder(id) {
       this.$router.push(`/orders/${id}`)
     },
-    money(value) {
-      return Number(value).toLocaleString()
-    },
-    imageUrl(image) {
-      if (!image || image.startsWith('/') || image.startsWith('http')) return image
-      return `/uploads/${image}`
-    },
+    money,
+    imageUrl,
     itemLabel(order) {
       const count = Number(order.item_count || 0)
       return count ? `共 ${count} 件商品` : '查看訂單內容'
     },
-    formatDate(v) {
-      if (!v) return ''
-      const d = new Date(v.replace(' ', 'T'))
-      if (isNaN(d)) return v
-      const pad = n => String(n).padStart(2, '0')
-      return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`
-    },
+    formatDate,
   },
   async created() {
     await this.selectStatus(this.validStatus(this.$route.query.status))
@@ -210,12 +197,8 @@ export default {
 }
 .order-card,
 .state-card {
-  border: 1px solid var(--shop-border);
   border-radius: 16px;
-  background: var(--shop-glass-card);
   box-shadow: 0 16px 36px rgba(0, 0, 0, .18);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 .order-card {
   padding: 20px;
@@ -399,15 +382,6 @@ export default {
 }
 .empty-state p { margin: 0 0 10px; font-size: 13px; }
 .loading-state { min-height: 220px; align-content: center; }
-.loader {
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--shop-border);
-  border-top-color: var(--shop-primary);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes status-pulse {
   50% { opacity: .45; box-shadow: 0 0 12px currentColor; }
 }

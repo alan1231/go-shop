@@ -1,11 +1,11 @@
 <template>
   <section class="detail-page">
-    <div v-if="loading" class="state-card">
-      <span class="loader"></span>
+    <div v-if="loading" class="state-card glass-card">
+      <span class="loader loader-lg"></span>
       <span>載入訂單中</span>
     </div>
 
-    <div v-else-if="!order" class="state-card">
+    <div v-else-if="!order" class="state-card glass-card">
       <span class="material-symbols-outlined state-icon">receipt_long</span>
       <h1>訂單不存在</h1>
       <router-link to="/orders" class="secondary-button">返回訂單列表</router-link>
@@ -27,7 +27,7 @@
         </span>
       </div>
 
-      <section v-if="order.status !== 'cancelled'" class="panel progress-panel">
+      <section v-if="order.status !== 'cancelled'" class="panel progress-panel glass-card">
         <div class="timeline">
           <div v-for="(step, i) in steps" :key="step.key" class="timeline-step" :class="{ done: orderIndex > i, active: orderIndex === i, reached: orderIndex >= i }">
             <div class="timeline-dot">
@@ -38,7 +38,7 @@
         </div>
       </section>
 
-      <section v-else class="panel cancelled-panel">
+      <section v-else class="panel cancelled-panel glass-card">
         <span class="material-symbols-outlined">cancel</span>
         <div>
           <h2>訂單已取消</h2>
@@ -47,7 +47,7 @@
       </section>
 
       <div class="info-grid">
-        <section class="panel info-card">
+        <section class="panel info-card glass-card">
           <h2><span class="material-symbols-outlined">receipt</span>訂單資訊</h2>
           <dl>
             <div>
@@ -65,7 +65,7 @@
           </dl>
         </section>
 
-        <section class="panel info-card">
+        <section class="panel info-card glass-card">
           <h2><span class="material-symbols-outlined">pin_drop</span>配送資訊</h2>
           <dl>
             <div>
@@ -84,7 +84,7 @@
         </section>
       </div>
 
-      <section class="panel items-panel">
+      <section class="panel items-panel glass-card">
         <div class="section-heading">
           <h2>商品明細</h2>
           <span>{{ totalQuantity }} 件商品</span>
@@ -131,6 +131,7 @@
 <script>
 import { api } from '../api/index.js'
 import { toastStore } from '../store/toast.js'
+import { formatDate as formatDateValue, imageUrl, money, orderStatusLabel } from '../utils/format.js'
 export default {
   data() { return { order: null, loading: true, paying: false } },
   computed: {
@@ -155,22 +156,12 @@ export default {
   },
   methods: {
     statusLabel(status) {
-      const labels = { pending: '待付款', paid: '已付款', shipped: '配送中', completed: '已完成', cancelled: '已取消' }
-      return labels[status] || status
+      return orderStatusLabel(status, '配送中')
     },
-    money(value) {
-      return Number(value || 0).toLocaleString()
-    },
-    imageUrl(image) {
-      if (!image || image.startsWith('/') || image.startsWith('http')) return image
-      return `/uploads/${image}`
-    },
+    money,
+    imageUrl,
     formatDate(value) {
-      if (!value) return '未提供'
-      const date = new Date(value.replace(' ', 'T'))
-      if (isNaN(date)) return value
-      const pad = number => String(number).padStart(2, '0')
-      return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+      return formatDateValue(value, { separator: '/', time: true, empty: '未提供' })
     },
     async pay() {
       this.paying = true
@@ -261,12 +252,8 @@ export default {
 .status-badge.shipped { color: var(--shop-primary); }
 .panel,
 .state-card {
-  border: 1px solid var(--shop-border);
   border-radius: 16px;
-  background: var(--shop-glass-card);
   box-shadow: 0 16px 36px rgba(0, 0, 0, .18);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 .progress-panel { margin-bottom: 24px; padding: 26px 20px; }
 .timeline { display: flex; align-items: flex-start; }
@@ -492,15 +479,6 @@ td:nth-child(3) { text-align: center; }
 }
 .state-card h1 { margin: 0; color: var(--shop-text); font-size: 22px; }
 .state-icon { color: var(--shop-primary); font-size: 48px; }
-.loader {
-  width: 30px;
-  height: 30px;
-  border: 2px solid var(--shop-border);
-  border-top-color: var(--shop-primary);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 @media (min-width: 760px) {
   .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 }

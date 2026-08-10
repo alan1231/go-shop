@@ -1,4 +1,4 @@
-# GO SHOP
+# SHOP
 
 基於 **PHP + MySQL + Vue 3** 的前後端分離購物網站。前台與後台皆為 Vue 3 SPA，由同一個 PHP API（vanilla PHP，無框架）提供資料與 Token 認證。
 
@@ -8,12 +8,12 @@
 
 | 功能 | 說明 |
 |------|------|
-| 商品瀏覽 | 商品列表、明細、搜尋、分類篩選、庫存與售價顯示 |
+| 商品瀏覽 | 首頁精選、限時優惠、最新商品、明細、搜尋、分類篩選與分頁 |
 | 會員系統 | 註冊、登入、登出、Google / LINE 三方登入 |
 | 會員中心 | 編輯聯絡資料與更改密碼 |
 | 購物車 | 加入、增減、刪除、localStorage 同步與庫存上限檢查 |
 | 訂單 | 建立訂單、狀態篩選、訂單明細、進度時間軸與模擬付款 |
-| 其他 | 跑馬燈自動更新與響應式版面 |
+| 其他 | 跑馬燈自動更新、桌面／手機響應式版面與 Toast 通知 |
 
 ### 後台（Vue 3）
 
@@ -28,7 +28,7 @@
 ## 技術架構
 
 - **後端**：vanilla PHP 8（無框架）、PDO + MySQL、Controller / Service / Repository 分層
-- **前台**：Vue 3、Vite、Vue Router、原生 fetch
+- **前台**：Vue 3、Vite、Vue Router、Tailwind CSS、原生 fetch
 - **後台**：Vue 3、Vite、Vue Router、Chart.js、原生 fetch
 - **認證**：前台與後台皆使用 Bearer Token，Token 分別存於 `localStorage.token` 與 `localStorage.admin_token`
 - **帳號分離**：前台會員使用 `users`，後台管理員使用 `admin_users`
@@ -58,6 +58,10 @@
 │       ├── Services/          # 商業邏輯
 │       └── Controllers/       # 前台/後台 handler + BaseController
 ├── frontend/                  # Vue 3 前台（開發埠 5173）
+│   ├── src/components/        # 共用商品卡、登入外框與通知元件
+│   ├── src/store/             # 購物車、會員與通知狀態
+│   ├── src/utils/             # 金額、日期、圖片與狀態格式化
+│   └── src/views/             # 首頁、商品、購物車、會員與訂單頁面
 ├── frontend-admin/            # Vue 3 後台（開發埠 5174）
 └── uploads/                   # 商品圖片
 ```
@@ -125,6 +129,8 @@ npm run dev
 
 前台網址：`http://localhost:5173/`
 
+前台的限時優惠與最新商品共用同一個商品卡元件；商品列表每頁顯示 10 件，超過 10 件才會出現分頁控制。
+
 ### 4. 啟動 Vue 3 後台
 
 ```bash
@@ -136,6 +142,16 @@ npm run dev
 後台網址：`http://localhost:5174/admin/`
 
 兩個 Vite dev server 都會將 `/api` 與 `/uploads` 代理至 `http://localhost:8080`。
+
+## 常用檢查
+
+```bash
+cd frontend && npm run build
+cd ../frontend-admin && npm run build
+find ../backend -name '*.php' -exec php -l {} \;
+```
+
+前台 Tailwind CSS 由 Vite/PostCSS 編入正式產物，不依賴瀏覽器端 CDN。
 
 ## 正式環境（Apache / Laragon）
 

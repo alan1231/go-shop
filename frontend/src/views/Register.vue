@@ -1,15 +1,5 @@
 <template>
-  <section class="register-page">
-    <div class="ambient ambient-top"></div>
-    <div class="ambient ambient-bottom"></div>
-
-    <div class="register-card">
-      <div class="brand-mark">
-        <span class="material-symbols-outlined">storefront</span>
-      </div>
-      <h1>建立帳號</h1>
-      <p class="subtitle">加入 SHOP，體驗高科技零售新境界</p>
-
+  <AuthShell title="建立帳號" subtitle="加入 SHOP，體驗高科技零售新境界" variant="register">
       <div v-if="error" class="message error-message" role="alert">
         <span class="material-symbols-outlined">error</span>
         {{ error }}
@@ -52,19 +42,20 @@
           </div>
         </div>
         <button class="register-button" type="submit" :disabled="loading">
-          <span v-if="loading" class="loader"></span>
+          <span v-if="loading" class="loader loader-sm"></span>
           {{ loading ? '註冊中...' : '註冊' }}
         </button>
       </form>
 
-      <p class="login-link">已經有帳號了？<router-link to="/login">登入</router-link></p>
-    </div>
-  </section>
+    <p class="login-link">已經有帳號了？<router-link to="/login">登入</router-link></p>
+  </AuthShell>
 </template>
 
 <script>
 import { api } from '../api/index.js'
+import AuthShell from '../components/AuthShell.vue'
 export default {
+  components: { AuthShell },
   data() {
     return { username: '', email: '', password: '', confirmPassword: '', error: '', success: '', loading: false, showPassword: false }
   },
@@ -92,77 +83,6 @@ export default {
 </script>
 
 <style scoped>
-.register-page {
-  position: relative;
-  display: flex;
-  min-height: 100vh;
-  margin: -30px -40px;
-  padding: 56px 16px;
-  align-items: center;
-  justify-content: center;
-  background: var(--shop-background);
-  overflow: hidden;
-}
-.ambient {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--shop-primary-strong);
-  filter: blur(110px);
-  pointer-events: none;
-}
-.ambient-top {
-  top: -140px;
-  right: -80px;
-  width: 430px;
-  height: 430px;
-  opacity: .1;
-}
-.ambient-bottom {
-  bottom: -160px;
-  left: -100px;
-  width: 380px;
-  height: 380px;
-  opacity: .06;
-}
-.register-card {
-  position: relative;
-  z-index: 1;
-  width: min(100%, 460px);
-  padding: 38px;
-  border: 1px solid var(--shop-border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--shop-background) 65%, transparent);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, .42);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-.brand-mark {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 16px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--shop-primary) 28%, transparent);
-  border-radius: 13px;
-  background: var(--shop-surface);
-  box-shadow: 0 0 26px color-mix(in srgb, var(--shop-primary) 13%, transparent);
-  color: var(--shop-primary);
-}
-.brand-mark .material-symbols-outlined { font-size: 32px; }
-.register-card h1 {
-  margin: 0;
-  color: var(--shop-primary);
-  font-family: 'Sora', sans-serif;
-  font-size: clamp(28px, 5vw, 34px);
-  letter-spacing: -.04em;
-  text-align: center;
-}
-.subtitle {
-  margin: 8px 0 26px;
-  color: var(--shop-text-muted);
-  font-size: 14px;
-  text-align: center;
-}
 .message {
   display: flex;
   align-items: center;
@@ -184,14 +104,6 @@ export default {
   color: var(--shop-primary);
 }
 .success-message a { color: var(--shop-primary); font-weight: 700; }
-.form-group { margin-bottom: 16px; }
-.form-group label {
-  display: block;
-  margin-bottom: 7px;
-  color: var(--shop-text-muted);
-  font-size: 12px;
-  font-weight: 700;
-}
 .input-field { position: relative; }
 .input-field > .material-symbols-outlined {
   position: absolute;
@@ -220,23 +132,6 @@ export default {
   border-color: var(--shop-primary);
   box-shadow: inset 0 0 15px color-mix(in srgb, var(--shop-primary) 12%, transparent);
 }
-.password-field input { padding-right: 48px; }
-.password-field button {
-  position: absolute;
-  top: 50%;
-  right: 7px;
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 0;
-  background: transparent;
-  color: var(--shop-text-muted);
-  cursor: pointer;
-  transform: translateY(-50%);
-}
-.password-field button:hover { color: var(--shop-primary); }
-.password-field button .material-symbols-outlined { font-size: 21px; }
 .register-button {
   display: flex;
   align-items: center;
@@ -260,14 +155,6 @@ export default {
   transform: scale(1.01);
 }
 .register-button:disabled { cursor: wait; opacity: .65; }
-.loader {
-  width: 16px;
-  height: 16px;
-  border: 2px solid color-mix(in srgb, var(--shop-text) 30%, transparent);
-  border-top-color: var(--shop-text);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
 .login-link {
   margin: 26px 0 0;
   color: var(--shop-text-muted);
@@ -281,9 +168,4 @@ export default {
   text-decoration: none;
 }
 .login-link a:hover { text-decoration: underline; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width: 768px) {
-  .register-page { margin: -20px -16px; padding: 34px 16px; }
-  .register-card { padding: 28px 20px; }
-}
 </style>
