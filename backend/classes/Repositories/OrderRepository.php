@@ -127,7 +127,12 @@ class OrderRepository {
     }
 
     public function findByUserId(int $userId, string $status = ''): array {
-        $sql = 'SELECT ' . self::ORDER_COLS . ' FROM orders o WHERE o.user_id = ?';
+        $sql = 'SELECT ' . self::ORDER_COLS . ', u.username, u.email, u.phone, u.address,
+                       (SELECT p.name FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1) AS item_name,
+                       (SELECT p.image FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1) AS item_image,
+                       (SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS item_count,
+                       (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_types
+                FROM orders o JOIN users u ON o.user_id = u.id WHERE o.user_id = ?';
         $args = [$userId];
         if ($status !== '' && Support::validStatus($status)) {
             $sql .= ' AND o.status = ?';
@@ -186,6 +191,12 @@ class OrderRepository {
         $o['total_amount'] = (float)$o['total_amount'];
         foreach (['remark', 'member_remark', 'receiver_name', 'receiver_phone', 'receiver_address', 'username', 'email', 'phone', 'address'] as $f) {
             $o[$f] = $o[$f] ?? '';
+        }
+        if (array_key_exists('item_count', $o)) {
+            $o['item_name'] = $o['item_name'] ?? '';
+            $o['item_image'] = $o['item_image'] ?? '';
+            $o['item_count'] = (int)$o['item_count'];
+            $o['item_types'] = (int)$o['item_types'];
         }
         return $o;
     }

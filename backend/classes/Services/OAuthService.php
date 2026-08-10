@@ -90,7 +90,6 @@ class OAuthService {
         $body = curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $contentType = (string)curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-        curl_close($ch);
         if ($status !== 200 || $body === false || $body === '') {
             throw new ServiceException('三方登入驗證失敗', 401);
         }
@@ -114,7 +113,6 @@ class OAuthService {
             CURLOPT_TIMEOUT => 15,
         ]);
         $resp = curl_exec($ch);
-        curl_close($ch);
         if ($resp === false) {
             return [];
         }
@@ -130,7 +128,6 @@ class OAuthService {
             CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
         ]);
         $resp = curl_exec($ch);
-        curl_close($ch);
         if ($resp === false) {
             return [];
         }

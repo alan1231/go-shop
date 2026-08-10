@@ -100,8 +100,10 @@ export default {
     if (res.success) {
       this.stats = res.data
       this.recentOrders = res.data.recentOrders || []
+      this.loading = false
       await this.$nextTick()
       this.renderCharts()
+      return
     }
     this.loading = false
   },

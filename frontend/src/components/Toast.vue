@@ -19,8 +19,8 @@ export default {
 </script>
 
 <style scoped>
-.toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-.toast { display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.toast-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+.toast { display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
 .toast.success { background: #4CAF50; }
 .toast.error { background: #f44336; }
 .toast.info { background: #2196F3; }

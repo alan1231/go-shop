@@ -75,6 +75,21 @@
         </div>
       </div>
     </template>
+
+    <div v-if="showStatusConfirm" class="modal-mask" @click.self="showStatusConfirm = false">
+      <div class="modal">
+        <h3><i class="fas fa-tasks"></i> 確認更改訂單狀態</h3>
+        <p class="modal-text">
+          將訂單 <b>#{{ order?.id }}</b> 由「{{ STATUS[order?.status] || order?.status }}」更改為「{{ STATUS[pendingStatus] }}」，確定？
+        </p>
+        <div class="modal-actions">
+          <button class="btn btn-default" @click="showStatusConfirm = false">取消</button>
+          <button class="btn btn-primary" :disabled="savingStatus" @click="confirmChangeStatus">
+            {{ savingStatus ? '處理中...' : '確定' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -93,6 +108,8 @@ export default {
       remark: '',
       savingStatus: false,
       savingRemark: false,
+      showStatusConfirm: false,
+      pendingStatus: '',
     }
   },
   async created() {
@@ -118,10 +135,17 @@ export default {
       }
       this.loading = false
     },
-    async changeStatus(status) {
+    changeStatus(status) {
+      if (status === this.order.status) return
+      this.pendingStatus = status
+      this.showStatusConfirm = true
+    },
+    async confirmChangeStatus() {
+      const status = this.pendingStatus
       this.savingStatus = true
       const res = await api.updateOrderStatus(this.order.id, status)
       this.savingStatus = false
+      this.showStatusConfirm = false
       if (res.success) {
         this.msgType = 'success'
         this.msg = res.message
@@ -157,4 +181,13 @@ export default {
 .status-btn:hover { border-color: #4CAF50; color: #4CAF50; }
 .status-btn.active { background: #4CAF50; border-color: #4CAF50; color: #fff; }
 .status-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal {
+  background: #fff; border-radius: 12px; padding: 28px; width: 420px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.modal h3 { font-size: 17px; margin-bottom: 10px; }
+.modal-text { color: #555; font-size: 14px; line-height: 1.8; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 </style>

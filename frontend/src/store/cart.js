@@ -12,6 +12,7 @@ export const cartStore = reactive({
     const stock = product.stock
     const exist = cartStore.items.find(i => i.product_id === product.id)
     if (exist) {
+      if (!exist.image && product.image) exist.image = product.image
       if (exist.quantity + 1 > stock) {
         return { ok: false, message: `「${product.name}」庫存不足（最多 ${stock} 件）` }
       }
@@ -20,7 +21,7 @@ export const cartStore = reactive({
       if (stock < 1) {
         return { ok: false, message: `「${product.name}」已售完` }
       }
-      cartStore.items.push({ product_id: product.id, name: product.name, price: product.price, stock, quantity: 1 })
+      cartStore.items.push({ product_id: product.id, name: product.name, image: product.image, price: product.price, stock, quantity: 1 })
     }
     cartStore.save()
     return { ok: true, message: `「${product.name}」已加入購物車` }

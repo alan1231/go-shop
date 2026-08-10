@@ -39,6 +39,7 @@ export function verifyOAuthState(state) {
 }
 
 export function extractOAuthRedirect(state) {
+  if (!state) return ''
   const i = state.indexOf('|')
   if (i === -1) return ''
   return decodeURIComponent(state.slice(i + 1))

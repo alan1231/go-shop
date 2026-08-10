@@ -45,9 +45,9 @@ class ApiAuthController extends BaseController {
             Response::fail('無效的三方登入請求', 400);
         }
         $info = Registry::get('oauthSvc')->getUserInfo($provider, $code);
-        $avatar = self::saveAvatar($info['avatar']);
         $userRepo = Registry::get('userRepo');
         $user = $userRepo->findByProvider($provider, $info['provider_id']);
+        $avatar = $user !== null && ($user['avatar'] ?? '') !== '' ? $user['avatar'] : self::saveAvatar($info['avatar']);
         if ($user === null) {
             $name = $info['name'];
             if ($name === '') {

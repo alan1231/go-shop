@@ -34,6 +34,7 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const requiresAuth = computed(() => route.meta.requiresAuth)
+    authStore.fetch()
 
     async function logout() {
       await api.logout()
