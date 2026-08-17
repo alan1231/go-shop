@@ -1,12 +1,22 @@
 import { reactive, computed } from 'vue'
 
-const saved = JSON.parse(localStorage.getItem('cart') || '[]')
+const CART_KEY = 'shop_cart'
+
+function loadItems() {
+  try {
+    const items = JSON.parse(localStorage.getItem(CART_KEY) || '[]')
+    if (!Array.isArray(items)) return []
+    return items.filter(i => i && Number.isFinite(Number(i.product_id)))
+  } catch {
+    return []
+  }
+}
 
 export const cartStore = reactive({
-  items: saved,
+  items: loadItems(),
   count: computed(() => cartStore.items.reduce((s, i) => s + i.quantity, 0)),
   save() {
-    localStorage.setItem('cart', JSON.stringify(cartStore.items))
+    localStorage.setItem(CART_KEY, JSON.stringify(cartStore.items))
   },
   add(product) {
     const stock = product.stock

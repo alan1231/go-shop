@@ -105,7 +105,7 @@ export default {
       cartStore.remove(i)
     },
     async loadCartImages() {
-      const missing = cartStore.items.filter(item => !item.image)
+      const missing = cartStore.items.filter(item => !item.image && Number.isFinite(Number(item.product_id)))
       await Promise.all(missing.map(async item => {
         const res = await api.product(item.product_id)
         if (res.success) item.image = res.data.image
