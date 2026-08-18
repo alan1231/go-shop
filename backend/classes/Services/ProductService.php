@@ -1,5 +1,12 @@
 <?php
 
+namespace App\Services;
+
+use App\Images;
+use App\Repositories\ProductRepository;
+use App\ServiceException;
+use App\Support;
+
 class ProductService {
     private ProductRepository $repo;
     private Images $images;

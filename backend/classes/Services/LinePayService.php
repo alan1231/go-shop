@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Services;
+
 class LinePayService {
     private string $channelId;
     private string $channelSecret;

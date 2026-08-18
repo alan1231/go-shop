@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Registry;
+use App\Response;
+use App\Support;
+
 class AdminAuthController extends BaseController {
     public static function login(): void {
         $body = Support::jsonBody();

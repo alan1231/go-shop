@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Services;
+
+use App\Repositories\UserRepository;
+use App\ServiceException;
+use App\Support;
+
 class UserService {
     private UserRepository $repo;
 

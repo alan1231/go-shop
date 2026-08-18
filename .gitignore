@@ -5,3 +5,5 @@ frontend-admin/dist/
 frontend/dev.log
 frontend/dev.err.log
 .env
+backend/vendor/
+.phpunit.result.cache

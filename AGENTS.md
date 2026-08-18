@@ -16,9 +16,12 @@
 .
 ├── backend/                   # PHP API 與靜態檔案伺服器
 │   ├── index.php              # 前端控制器：路由、/uploads/、SPA 伺服
-│   ├── bootstrap.php          # autoloader → Config → DB → Migrate → 註冊 services
+│   ├── bootstrap.php          # composer autoload → Config → DB → Migrate → 註冊 services
 │   ├── .htaccess              # Apache：非檔案請求導向 index.php
-│   └── classes/
+│   ├── composer.json          # PSR-4 autoload（App\ → classes/）+ PHPUnit（dev）
+│   ├── phpunit.xml            # PHPUnit 設定
+│   ├── tests/                 # PHPUnit 測試（App\Tests\）
+│   └── classes/               # 全部 class 帶 namespace（App\）
 │       ├── Config.php         # 讀取 .env（含預設值與專案根目錄）
 │       ├── Database.php       # PDO 單例（ERRMODE_EXCEPTION、無模擬預備語句）
 │       ├── Migrate.php        # 自動建表/補欄位/seed 管理員
@@ -127,6 +130,7 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 6. **圖片上傳無大小限制**：`Images::save` 直接讀檔案內容，如要防護需 `ini` 的 `upload_max_filesize` 或手動檢查。
 7. **Config 路徑**：`Config.php` 在 `backend/classes/` 內，專案根目錄要用 `dirname(__DIR__, 2)`（跳兩層），否則 UPLOADS_DIR / PUBLIC_DIST / ADMIN_DIST 會錯指到 `backend/` 下。
 8. **啟動方式**：`php -S localhost:8080 index.php` 一定要帶 router script `index.php`，否則 `/uploads/` 與 `/api` 不會經過路由。
+9. **namespace 內引用 PHP 內建類別**：所有 class 都有 `namespace App\...`，在類別內用 `PDO`、`Exception`、`Throwable` 必須 `use PDO;` / `use Exception;` 或寫 `\Throwable`，否則會被解析成 `App\PDO` 等不存在的類別。
 
 ## 程式碼慣例
 
@@ -138,16 +142,19 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
   - 前台 `ApiAuthController` 用 `rateLimited('login'/'register')` 做登入防護
 - 前端：
   - 使用 vanilla fetch，**不用 Axios**
-  - 共享狀態用 `reactive` store（`store/cart.js`、`store/toast.js`、`store/user.js`）
+  - 共享狀態用 Pinia store（`store/cart.js`、`store/session.js`、`store/toast.js` 等）
+  - 購物車的 guest（localStorage）與 server（API）雙軌邏輯集中在 `store/cart.js`，localStorage 讀寫抽在 `store/guestCart.js`
   - 圖片路徑需經 Vite proxy（`/uploads` 規則）
   - 不做任何加註解（程式碼不需要 comment）
 
 ## 常用指令
 
+- 安裝後端依賴（第一次 clone 後）：`cd backend && composer install`
 - 啟動 PHP server：`cd backend && php -S localhost:8080 index.php`（http://localhost:8080）
 - 啟動前台 dev server：`cd frontend && npm run dev`（http://localhost:5173/）
 - 啟動後台 dev server：`cd frontend-admin && npm run dev`（http://localhost:5174/admin/）
-- PHP 檢查：`find backend -name '*.php' -exec php -l {} \;`
+- PHP 檢查：`cd backend && composer lint`（或 `find backend -name '*.php' -exec php -l {} \;`）
+- 執行測試：`cd backend && composer test`（PHPUnit，OrderService 交易/超賣防護用 SQLite 記憶體跑，不需 MySQL）
 - 建置 SPA：`cd frontend && npm run build`；`cd frontend-admin && npm run build`
 - Apache/Laragon：用 `backend/.htaccess` 將非檔案請求導向 `index.php`
 - 預設管理員：admin / 123456

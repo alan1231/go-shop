@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Services;
+
+use App\Repositories\AdminUserRepository;
+use App\ServiceException;
+use App\Support;
+
 class AuthService {
     private AdminUserRepository $repo;
 

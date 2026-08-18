@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Repositories;
+
+use App\Database;
+use App\Support;
+use PDO;
+
 class ProductRepository {
     private PDO $pdo;
 
@@ -12,7 +18,7 @@ class ProductRepository {
     public function getAll(int $limit = 100, int $offset = 0): array {
         $stmt = $this->pdo->prepare('SELECT ' . self::COLS . ' FROM products ORDER BY created_at DESC LIMIT ? OFFSET ?');
         $stmt->execute([$limit, $offset]);
-        return array_map('Support::normalizeProduct', $stmt->fetchAll());
+        return array_map('\\App\\Support::normalizeProduct', $stmt->fetchAll());
     }
 
     public function countAll(): int {
@@ -26,7 +32,7 @@ class ProductRepository {
         $args[] = $offset;
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($args);
-        return array_map('Support::normalizeProduct', $stmt->fetchAll());
+        return array_map('\\App\\Support::normalizeProduct', $stmt->fetchAll());
     }
 
     public function countSearch(string $keyword = '', string $category = ''): int {
@@ -72,7 +78,7 @@ class ProductRepository {
         $args[] = $offset;
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($args);
-        return array_map('Support::normalizeProduct', $stmt->fetchAll());
+        return array_map('\\App\\Support::normalizeProduct', $stmt->fetchAll());
     }
 
     public function countActive(string $keyword = '', string $category = ''): int {

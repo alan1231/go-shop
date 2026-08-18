@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Registry;
+use App\Response;
+use App\Support;
+
 class BaseController {
     protected static function requireUser(): array {
         $user = Registry::get('userRepo')->findByToken(Support::bearerToken());

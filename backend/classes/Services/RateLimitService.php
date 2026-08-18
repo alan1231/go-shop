@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Services;
+
+use App\Repositories\LoginAttemptRepository;
+
 class RateLimitService {
     private LoginAttemptRepository $repo;
     private int $maxAttempts;

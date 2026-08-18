@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Repositories;
+
+use App\Database;
+use App\Support;
+use PDO;
+
 class UserRepository {
     private PDO $pdo;
 

@@ -1,5 +1,10 @@
 <?php
 
+namespace App\Repositories;
+
+use App\Database;
+use PDO;
+
 class LoginAttemptRepository {
     private PDO $pdo;
 

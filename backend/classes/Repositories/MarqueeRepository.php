@@ -1,5 +1,10 @@
 <?php
 
+namespace App\Repositories;
+
+use App\Database;
+use PDO;
+
 class MarqueeRepository {
     private PDO $pdo;
 

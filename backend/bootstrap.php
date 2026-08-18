@@ -1,20 +1,29 @@
 <?php
 
-spl_autoload_register(function (string $class): void {
-    $name = str_replace('\\', '/', $class);
-    if (str_ends_with($name, 'Repository')) {
-        $file = __DIR__ . '/classes/Repositories/' . $name . '.php';
-    } elseif (str_ends_with($name, 'Service')) {
-        $file = __DIR__ . '/classes/Services/' . $name . '.php';
-    } elseif (str_ends_with($name, 'Controller')) {
-        $file = __DIR__ . '/classes/Controllers/' . $name . '.php';
-    } else {
-        $file = __DIR__ . '/classes/' . $name . '.php';
-    }
-    if (file_exists($file)) {
-        require $file;
-    }
-});
+require __DIR__ . '/vendor/autoload.php';
+
+use App\Config;
+use App\Database;
+use App\Images;
+use App\Migrate;
+use App\Registry;
+use App\Repositories\AdminUserRepository;
+use App\Repositories\CartRepository;
+use App\Repositories\LoginAttemptRepository;
+use App\Repositories\MarqueeRepository;
+use App\Repositories\OrderRepository;
+use App\Repositories\ProductRepository;
+use App\Repositories\UserRepository;
+use App\Services\AuthService;
+use App\Services\CartService;
+use App\Services\DashboardService;
+use App\Services\LinePayService;
+use App\Services\MarqueeService;
+use App\Services\OAuthService;
+use App\Services\OrderService;
+use App\Services\ProductService;
+use App\Services\RateLimitService;
+use App\Services\UserService;
 
 Config::load(__DIR__ . '/../.env');
 $pdo = Database::connect();

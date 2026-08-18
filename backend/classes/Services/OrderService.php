@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services;
+
+use App\Repositories\OrderRepository;
+use App\Repositories\ProductRepository;
+use App\ServiceException;
+use App\Support;
+use PDO;
+
 class OrderService {
     private PDO $pdo;
     private OrderRepository $repo;
@@ -72,7 +80,7 @@ class OrderService {
             }
             $this->repo->commit();
             return $orderId;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->repo->rollBack();
             throw $e;
         }

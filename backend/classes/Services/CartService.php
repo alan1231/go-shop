@@ -1,5 +1,12 @@
 <?php
 
+namespace App\Services;
+
+use App\Repositories\CartRepository;
+use App\Repositories\ProductRepository;
+use App\ServiceException;
+use App\Support;
+
 class CartService {
     private CartRepository $repo;
     private ProductRepository $productRepo;

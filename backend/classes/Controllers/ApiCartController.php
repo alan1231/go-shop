@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Registry;
+use App\Response;
+use App\Support;
+
 class ApiCartController extends BaseController {
     public static function index(): void {
         $user = self::requireUser();

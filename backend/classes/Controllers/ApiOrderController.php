@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Registry;
+use App\Response;
+use App\Support;
+
 class ApiOrderController extends BaseController {
     public static function create(): void {
         $user = self::requireUser();

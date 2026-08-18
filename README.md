@@ -106,6 +106,7 @@ PHP server 使用以下資料庫設定；未設定時會採用括號內的預設
 
 ```bash
 cd backend
+composer install   # 安裝 PSR-4 autoload 與 PHPUnit（第一次執行）
 php -S localhost:8080 index.php
 ```
 

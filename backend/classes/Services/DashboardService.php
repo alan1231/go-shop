@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Services;
+
+use App\Repositories\OrderRepository;
+use App\Repositories\ProductRepository;
+use App\Repositories\UserRepository;
+
 class DashboardService {
     private ProductRepository $productRepo;
     private OrderRepository $orderRepo;

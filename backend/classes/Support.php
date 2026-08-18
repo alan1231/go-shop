@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 class Support {
     public static function float(string $s): float {
         $s = trim($s);

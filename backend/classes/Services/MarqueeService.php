@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Services;
+
+use App\Repositories\MarqueeRepository;
+use App\ServiceException;
+use App\Support;
+
 class MarqueeService {
     private MarqueeRepository $repo;
 

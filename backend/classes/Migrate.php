@@ -1,5 +1,9 @@
 <?php
 
+namespace App;
+
+use PDO;
+
 class Migrate {
     private PDO $pdo;
 

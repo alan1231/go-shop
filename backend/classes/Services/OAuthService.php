@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Services;
+
+use App\ServiceException;
+
 class OAuthService {
     private string $googleClientId;
     private string $googleClientSecret;

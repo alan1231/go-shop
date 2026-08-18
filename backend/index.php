@@ -1,5 +1,21 @@
 <?php
 
+use App\Config;
+use App\Controllers\AdminAuthController;
+use App\Controllers\AdminDashboardController;
+use App\Controllers\AdminMarqueeController;
+use App\Controllers\AdminOrderController;
+use App\Controllers\AdminProductController;
+use App\Controllers\AdminUserController;
+use App\Controllers\ApiAuthController;
+use App\Controllers\ApiCartController;
+use App\Controllers\ApiMarqueeController;
+use App\Controllers\ApiOrderController;
+use App\Controllers\ApiProductController;
+use App\Response;
+use App\Router;
+use App\ServiceException;
+
 require __DIR__ . '/bootstrap.php';
 
 set_exception_handler(function (Throwable $e): void {

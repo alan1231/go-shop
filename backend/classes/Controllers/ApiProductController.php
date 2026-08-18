@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Registry;
+use App\Response;
+use App\Support;
+
 class ApiProductController extends BaseController {
     public static function index(): void {
         $q = (string)($_GET['q'] ?? '');

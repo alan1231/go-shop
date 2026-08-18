@@ -1,5 +1,12 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Registry;
+use App\Response;
+use App\ServiceException;
+use App\Support;
+
 class ApiAuthController extends BaseController {
     public static function register(): void {
         if (self::rateLimited('register')) {
@@ -119,7 +126,7 @@ class ApiAuthController extends BaseController {
                 return '';
             }
             return Registry::get('images')->save($data, 'avatar.' . $ext);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return '';
         }
     }
