@@ -1,4 +1,4 @@
-import { reactive, computed } from 'vue'
+import { defineStore } from 'pinia'
 
 const CART_KEY = 'shop_cart'
 
@@ -12,47 +12,53 @@ function loadItems() {
   }
 }
 
-export const cartStore = reactive({
-  items: loadItems(),
-  count: computed(() => cartStore.items.reduce((s, i) => s + i.quantity, 0)),
-  save() {
-    localStorage.setItem(CART_KEY, JSON.stringify(cartStore.items))
+export const useCartStore = defineStore('cart', {
+  state: () => ({
+    items: loadItems(),
+  }),
+  getters: {
+    count: (state) => state.items.reduce((s, i) => s + i.quantity, 0),
   },
-  add(product) {
-    const stock = product.stock
-    const exist = cartStore.items.find(i => i.product_id === product.id)
-    if (exist) {
-      if (!exist.image && product.image) exist.image = product.image
-      if (exist.quantity + 1 > stock) {
-        return { ok: false, message: `「${product.name}」庫存不足（最多 ${stock} 件）` }
+  actions: {
+    save() {
+      localStorage.setItem(CART_KEY, JSON.stringify(this.items))
+    },
+    add(product) {
+      const stock = product.stock
+      const exist = this.items.find(i => i.product_id === product.id)
+      if (exist) {
+        if (!exist.image && product.image) exist.image = product.image
+        if (exist.quantity + 1 > stock) {
+          return { ok: false, message: `「${product.name}」庫存不足（最多 ${stock} 件）` }
+        }
+        exist.quantity++
+      } else {
+        if (stock < 1) {
+          return { ok: false, message: `「${product.name}」已售完` }
+        }
+        this.items.push({ product_id: product.id, name: product.name, image: product.image, price: product.price, stock, quantity: 1 })
       }
-      exist.quantity++
-    } else {
-      if (stock < 1) {
-        return { ok: false, message: `「${product.name}」已售完` }
+      this.save()
+      return { ok: true, message: `「${product.name}」已加入購物車` }
+    },
+    changeQty(index, delta) {
+      const item = this.items[index]
+      const next = item.quantity + delta
+      if (next < 1) return { ok: false }
+      if (delta > 0 && next > item.stock) {
+        return { ok: false, message: `庫存不足（最多 ${item.stock} 件）` }
       }
-      cartStore.items.push({ product_id: product.id, name: product.name, image: product.image, price: product.price, stock, quantity: 1 })
-    }
-    cartStore.save()
-    return { ok: true, message: `「${product.name}」已加入購物車` }
-  },
-  changeQty(index, delta) {
-    const item = cartStore.items[index]
-    const next = item.quantity + delta
-    if (next < 1) return { ok: false }
-    if (delta > 0 && next > item.stock) {
-      return { ok: false, message: `庫存不足（最多 ${item.stock} 件）` }
-    }
-    item.quantity = next
-    cartStore.save()
-    return { ok: true }
-  },
-  remove(index) {
-    cartStore.items.splice(index, 1)
-    cartStore.save()
-  },
-  clear() {
-    cartStore.items.splice(0, cartStore.items.length)
-    cartStore.save()
+      item.quantity = next
+      this.save()
+      return { ok: true }
+    },
+    remove(index) {
+      this.items.splice(index, 1)
+      this.save()
+    },
+    clear() {
+      this.items.splice(0, this.items.length)
+      this.save()
+    },
   },
 })

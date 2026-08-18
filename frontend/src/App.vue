@@ -63,11 +63,11 @@
         </div>
       </div>
     </nav>
-    <div class="site-marquee" v-if="showHeader && marqueeText">
-      <span>{{ marqueeText }}</span>
+    <div class="site-marquee" v-if="showHeader && site.marqueeText">
+      <span>{{ site.marqueeText }}</span>
     </div>
     <main>
-      <router-view @add-to-cart="addToCart" />
+      <router-view />
     </main>
     <footer v-if="showHeader">
       <p>&copy; 2026 SHOP</p>
@@ -76,157 +76,135 @@
   </div>
 </template>
 
-<script>
-import { api } from './api/index.js'
-import { cartStore } from './store/cart.js'
-import { userStore } from './store/user.js'
-import { toastStore } from './store/toast.js'
+<script setup>
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useSessionStore } from './store/session.js'
+import { useSiteStore } from './store/site.js'
+import { useCartStore } from './store/cart.js'
+import { useToastStore } from './store/toast.js'
 import Toast from './components/Toast.vue'
 
-export default {
-  components: { Toast },
-  data() {
-    return {
-      marqueeText: '',
-      userMenuOpen: false,
-      mobileOpen: false,
-      editing: false,
-      saving: false,
-      editPhone: '',
-      editAddress: '',
-      pwEdit: false,
-      pwSaving: false,
-      pwOld: '',
-      pwNew: '',
-      pwConfirm: '',
-    }
-  },
-  computed: {
-    showHeader() {
-      return !['login', 'register', 'oauth-callback'].includes(this.$route.name)
-    },
-    cartCount() {
-      return cartStore.count
-    },
-    user() {
-      return userStore.user
-    },
-    providerLabel() {
-      if (!this.user) return ''
-      if (this.user.provider === 'google') return 'Google 登入'
-      if (this.user.provider === 'line') return 'LINE 登入'
-      return '帳號登入'
-    },
-    providerIcon() {
-      if (!this.user) return ''
-      if (this.user.provider === 'google') return 'fab fa-google'
-      if (this.user.provider === 'line') return 'fab fa-line'
-      return 'fas fa-user'
-    },
-    memberSince() {
-      if (!this.user || !this.user.created_at) return ''
-      const d = new Date(this.user.created_at.replace(' ', 'T'))
-      return isNaN(d) ? '' : d.toLocaleDateString('zh-TW')
-    },
-  },
-  watch: {
-    $route() {
-      this.userMenuOpen = false
-      this.mobileOpen = false
-    },
-  },
-  methods: {
-    toggleUserMenu() {
-      this.userMenuOpen = !this.userMenuOpen
-    },
-    closeUserMenu() {
-      this.userMenuOpen = false
-      this.mobileOpen = false
-    },
-    async fetchUser() {
-      await userStore.fetch()
-    },
-    async fetchMarquee() {
-      const res = await api.marquee()
-      if (res.success) this.marqueeText = res.data.content
-    },
-    addToCart(product) {
-      const r = cartStore.add(product)
-      if (r.ok) toastStore.success(r.message)
-      else toastStore.error(r.message)
-    },
-    startMarqueePoll() {
-      if (this.marqueeTimer) clearInterval(this.marqueeTimer)
-      this.marqueeTimer = setInterval(() => {
-        if (this.showHeader) this.fetchMarquee()
-      }, 30000)
-    },
-    avatarError() {
-      if (this.user) this.user.avatar = null
-    },
-    startEdit() {
-      this.editPhone = this.user.phone || ''
-      this.editAddress = this.user.address || ''
-      this.editing = true
-    },
-    cancelEdit() {
-      this.editing = false
-    },
-    togglePwEdit() {
-      this.pwEdit = !this.pwEdit
-      if (!this.pwEdit) {
-        this.pwOld = ''
-        this.pwNew = ''
-        this.pwConfirm = ''
-      }
-    },
-    async savePassword() {
-      if (this.pwNew.length < 6) {
-        toastStore.error('新密碼至少需 6 個字元')
-        return
-      }
-      if (this.pwNew !== this.pwConfirm) {
-        toastStore.error('兩次輸入的新密碼不一致')
-        return
-      }
-      this.pwSaving = true
-      const res = await api.changePassword(this.pwOld, this.pwNew)
-      if (res.success) {
-        toastStore.success(res.message)
-        this.togglePwEdit()
-      } else {
-        toastStore.error(res.message)
-      }
-      this.pwSaving = false
-    },
-    async saveEdit() {
-      this.saving = true
-      const res = await api.updateContact(this.editPhone, this.editAddress)
-      if (res.success) {
-        await userStore.fetch()
-        this.editing = false
-      }
-      this.saving = false
-    },
-    async handleLogout() {
-      await api.logout()
-      localStorage.removeItem('token')
-      userStore.clear()
-      this.userMenuOpen = false
-      this.$router.push('/')
-    },
-  },
-  async created() {
-    await this.fetchMarquee()
-    await this.fetchUser()
-    this.startMarqueePoll()
-    document.addEventListener('click', this.closeUserMenu)
-  },
-  beforeUnmount() {
-    if (this.marqueeTimer) clearInterval(this.marqueeTimer)
-    document.removeEventListener('click', this.closeUserMenu)
-  },
+const route = useRoute()
+const router = useRouter()
+const session = useSessionStore()
+const site = useSiteStore()
+const cartStore = useCartStore()
+const toastStore = useToastStore()
+
+const userMenuOpen = ref(false)
+const mobileOpen = ref(false)
+const editing = ref(false)
+const saving = ref(false)
+const editPhone = ref('')
+const editAddress = ref('')
+const pwEdit = ref(false)
+const pwSaving = ref(false)
+const pwOld = ref('')
+const pwNew = ref('')
+const pwConfirm = ref('')
+
+const showHeader = computed(() => !['login', 'register', 'oauth-callback'].includes(route.name))
+const cartCount = computed(() => cartStore.count)
+const user = computed(() => session.user)
+const providerLabel = computed(() => {
+  if (!user.value) return ''
+  if (user.value.provider === 'google') return 'Google 登入'
+  if (user.value.provider === 'line') return 'LINE 登入'
+  return '帳號登入'
+})
+const providerIcon = computed(() => {
+  if (!user.value) return ''
+  if (user.value.provider === 'google') return 'fab fa-google'
+  if (user.value.provider === 'line') return 'fab fa-line'
+  return 'fas fa-user'
+})
+const memberSince = computed(() => {
+  if (!user.value || !user.value.created_at) return ''
+  const d = new Date(user.value.created_at.replace(' ', 'T'))
+  return isNaN(d) ? '' : d.toLocaleDateString('zh-TW')
+})
+
+watch(() => route.fullPath, () => {
+  userMenuOpen.value = false
+  mobileOpen.value = false
+})
+
+function toggleUserMenu() {
+  userMenuOpen.value = !userMenuOpen.value
 }
+
+function closeUserMenu() {
+  userMenuOpen.value = false
+  mobileOpen.value = false
+}
+
+function avatarError() {
+  if (user.value) user.value.avatar = null
+}
+
+function startEdit() {
+  editPhone.value = user.value.phone || ''
+  editAddress.value = user.value.address || ''
+  editing.value = true
+}
+
+function cancelEdit() {
+  editing.value = false
+}
+
+function togglePwEdit() {
+  pwEdit.value = !pwEdit.value
+  if (!pwEdit.value) {
+    pwOld.value = ''
+    pwNew.value = ''
+    pwConfirm.value = ''
+  }
+}
+
+async function savePassword() {
+  if (pwNew.value.length < 6) {
+    toastStore.error('新密碼至少需 6 個字元')
+    return
+  }
+  if (pwNew.value !== pwConfirm.value) {
+    toastStore.error('兩次輸入的新密碼不一致')
+    return
+  }
+  pwSaving.value = true
+  const res = await session.changePassword(pwOld.value, pwNew.value)
+  if (res.success) {
+    toastStore.success(res.message)
+    togglePwEdit()
+  } else {
+    toastStore.error(res.message)
+  }
+  pwSaving.value = false
+}
+
+async function saveEdit() {
+  saving.value = true
+  const res = await session.updateContact(editPhone.value, editAddress.value)
+  if (res.success) editing.value = false
+  saving.value = false
+}
+
+async function handleLogout() {
+  await session.logout()
+  userMenuOpen.value = false
+  router.push('/')
+}
+
+onMounted(async () => {
+  site.init()
+  await session.fetch()
+  document.addEventListener('click', closeUserMenu)
+})
+
+onBeforeUnmount(() => {
+  site.dispose()
+  document.removeEventListener('click', closeUserMenu)
+})
 </script>
 
 <style>

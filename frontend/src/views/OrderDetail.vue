@@ -128,59 +128,60 @@
   </section>
 </template>
 
-<script>
-import { api } from '../api/index.js'
-import { toastStore } from '../store/toast.js'
+<script setup>
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useOrderStore } from '../store/order.js'
+import { useToastStore } from '../store/toast.js'
 import { formatDate as formatDateValue, imageUrl, money, orderStatusLabel } from '../utils/format.js'
-export default {
-  data() { return { order: null, loading: true, paying: false } },
-  computed: {
-    steps() {
-      return [
-        { key: 'pending', label: '待付款', icon: 'pending_actions' },
-        { key: 'paid', label: '已付款', icon: 'credit_card' },
-        { key: 'shipped', label: '配送中', icon: 'local_shipping' },
-        { key: 'completed', label: '已完成', icon: 'task_alt' },
-      ]
-    },
-    orderIndex() {
-      if (!this.order) return -1
-      return this.steps.findIndex(s => s.key === this.order.status)
-    },
-    totalQuantity() {
-      return (this.order?.items || []).reduce((sum, item) => sum + Number(item.quantity), 0)
-    },
-    productTotal() {
-      return (this.order?.items || []).reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0)
-    },
-  },
-  methods: {
-    statusLabel(status) {
-      return orderStatusLabel(status, '配送中')
-    },
-    money,
-    imageUrl,
-    formatDate(value) {
-      return formatDateValue(value, { separator: '/', time: true, empty: '未提供' })
-    },
-    async pay() {
-      this.paying = true
-      const res = await api.payOrder(this.order.id)
-      if (res.success) {
-        this.order.status = 'paid'
-        toastStore.success('付款成功！')
-      } else {
-        toastStore.error(res.message)
-      }
-      this.paying = false
-    },
-  },
-  async created() {
-    const res = await api.order(this.$route.params.id)
-    if (res.success) this.order = res.data
-    this.loading = false
-  },
+
+const route = useRoute()
+const orderStore = useOrderStore()
+const toastStore = useToastStore()
+
+const order = computed(() => orderStore.detail)
+const loading = computed(() => orderStore.detailLoading)
+const paying = computed(() => orderStore.paying)
+
+const steps = [
+  { key: 'pending', label: '待付款', icon: 'pending_actions' },
+  { key: 'paid', label: '已付款', icon: 'credit_card' },
+  { key: 'shipped', label: '配送中', icon: 'local_shipping' },
+  { key: 'completed', label: '已完成', icon: 'task_alt' },
+]
+
+const orderIndex = computed(() => {
+  if (!order.value) return -1
+  return steps.findIndex(s => s.key === order.value.status)
+})
+
+const totalQuantity = computed(() =>
+  (order.value?.items || []).reduce((sum, item) => sum + Number(item.quantity), 0)
+)
+
+const productTotal = computed(() =>
+  (order.value?.items || []).reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0)
+)
+
+function statusLabel(status) {
+  return orderStatusLabel(status, '配送中')
 }
+
+function formatDate(value) {
+  return formatDateValue(value, { separator: '/', time: true, empty: '未提供' })
+}
+
+async function pay() {
+  if (!order.value) return
+  const res = await orderStore.pay(order.value.id)
+  if (res.success) {
+    toastStore.success('付款成功！')
+  } else {
+    toastStore.error(res.message)
+  }
+}
+
+onMounted(() => orderStore.loadDetail(route.params.id))
 </script>
 
 <style scoped>

@@ -85,68 +85,80 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { api } from '../api/index.js'
-import { cartStore } from '../store/cart.js'
-import { toastStore } from '../store/toast.js'
-export default {
-  data() { return { ordering: false, receiver: { name: '', phone: '', address: '' }, remark: '' } },
-  computed: {
-    cart() { return cartStore.items },
-    totalItems() { return cartStore.count },
-    totalPrice() { return cartStore.items.reduce((s, i) => s + i.price * i.quantity, 0) },
-  },
-  methods: {
-    changeQty(i, delta) {
-      const r = cartStore.changeQty(i, delta)
-      if (!r.ok && r.message) toastStore.error(r.message)
-    },
-    removeItem(i) {
-      cartStore.remove(i)
-    },
-    async loadCartImages() {
-      const missing = cartStore.items.filter(item => !item.image && Number.isFinite(Number(item.product_id)))
-      await Promise.all(missing.map(async item => {
-        const res = await api.product(item.product_id)
-        if (res.success) item.image = res.data.image
-      }))
-      if (missing.length) cartStore.save()
-    },
-    async checkout() {
-      const userRes = await api.me()
-      if (!userRes.success) {
-        this.$router.push('/login?redirect=/cart')
-        return
-      }
-      if (!this.receiver.name || !this.receiver.phone || !this.receiver.address) {
-        toastStore.error('請填寫完整的收件資訊')
-        return
-      }
-      this.ordering = true
-      const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
-      const res = await api.createOrder(items, this.receiver, this.remark)
-      if (res.success) {
-        cartStore.clear()
-        toastStore.success('訂單已建立！')
-        this.$router.push(`/orders/${res.data.order_id}`)
-      } else {
-        toastStore.error(res.message)
-      }
-      this.ordering = false
-    },
-  },
-  async created() {
-    const [userRes] = await Promise.all([api.me(), this.loadCartImages()])
-    if (userRes.success) {
-      const u = userRes.data
-      this.receiver = {
-        name: u.username || '',
-        phone: u.phone || '',
-        address: u.address || '',
-      }
-    }
-  },
+import { useCartStore } from '../store/cart.js'
+import { useToastStore } from '../store/toast.js'
+import { useOrderStore } from '../store/order.js'
+import { useSessionStore } from '../store/session.js'
+
+const router = useRouter()
+const cartStore = useCartStore()
+const toastStore = useToastStore()
+const orderStore = useOrderStore()
+const session = useSessionStore()
+
+const ordering = ref(false)
+const receiver = ref({ name: '', phone: '', address: '' })
+const remark = ref('')
+
+const cart = computed(() => cartStore.items)
+const totalItems = computed(() => cartStore.count)
+const totalPrice = computed(() => cartStore.items.reduce((s, i) => s + i.price * i.quantity, 0))
+
+function changeQty(i, delta) {
+  const r = cartStore.changeQty(i, delta)
+  if (!r.ok && r.message) toastStore.error(r.message)
 }
+
+function removeItem(i) {
+  cartStore.remove(i)
+}
+
+async function loadCartImages() {
+  const missing = cartStore.items.filter(item => !item.image && Number.isFinite(Number(item.product_id)))
+  await Promise.all(missing.map(async item => {
+    const res = await api.product(item.product_id)
+    if (res.success) item.image = res.data.image
+  }))
+  if (missing.length) cartStore.save()
+}
+
+async function checkout() {
+  if (!session.isLoggedIn) {
+    router.push('/login?redirect=/cart')
+    return
+  }
+  if (!receiver.value.name || !receiver.value.phone || !receiver.value.address) {
+    toastStore.error('請填寫完整的收件資訊')
+    return
+  }
+  ordering.value = true
+  const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
+  const res = await orderStore.placeOrder(items, receiver.value, remark.value)
+  if (res.success) {
+    toastStore.success('訂單已建立！')
+    router.push(`/orders/${res.data.order_id}`)
+  } else {
+    toastStore.error(res.message)
+  }
+  ordering.value = false
+}
+
+onMounted(async () => {
+  if (session.isLoggedIn) await session.fetch()
+  await loadCartImages()
+  if (session.user) {
+    const u = session.user
+    receiver.value = {
+      name: u.username || '',
+      phone: u.phone || '',
+      address: u.address || '',
+    }
+  }
+})
 </script>
 
 <style scoped>

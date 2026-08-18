@@ -47,31 +47,37 @@
   </AuthShell>
 </template>
 
-<script>
-import { api } from '../api/index.js'
+<script setup>
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { buildOAuthUrl } from '../api/oauth.js'
-import { userStore } from '../store/user.js'
+import { useSessionStore } from '../store/session.js'
 import AuthShell from '../components/AuthShell.vue'
-export default {
-  components: { AuthShell },
-  data() { return { username: '', password: '', error: '', loading: false, showPassword: false } },
-  methods: {
-    startOAuth(provider) {
-      window.location.href = buildOAuthUrl(provider, this.$route.query.redirect)
-    },
-    async handleLogin() {
-      this.loading = true
-      this.error = ''
-      const res = await api.login(this.username, this.password)
-      if (res.success) {
-        userStore.set(res.data.user)
-        this.$router.push(this.$route.query.redirect || '/')
-      } else {
-        this.error = res.message
-      }
-      this.loading = false
-    },
-  },
+
+const route = useRoute()
+const router = useRouter()
+const session = useSessionStore()
+
+const username = ref('')
+const password = ref('')
+const error = ref('')
+const loading = ref(false)
+const showPassword = ref(false)
+
+function startOAuth(provider) {
+  window.location.href = buildOAuthUrl(provider, route.query.redirect)
+}
+
+async function handleLogin() {
+  loading.value = true
+  error.value = ''
+  const res = await session.login(username.value, password.value)
+  if (res.success) {
+    router.push(route.query.redirect || '/')
+  } else {
+    error.value = res.message
+  }
+  loading.value = false
 }
 </script>
 

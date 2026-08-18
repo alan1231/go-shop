@@ -49,11 +49,11 @@
           <small>精選好物，優惠入手</small>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <ProductCard v-for="p in saleProducts" :key="p.id" :product="p" @add="$emit('add-to-cart', $event)" />
+          <ProductCard v-for="p in saleProducts" :key="p.id" :product="p" />
         </div>
       </section>
 
-      <div ref="catalog" class="catalog-anchor"></div>
+      <div ref="catalogEl" class="catalog-anchor"></div>
       <div class="mb-6 mt-2 relative">
         <div class="glass-card flex items-center px-4 py-3 rounded-xl focus-within:border-primary transition-colors duration-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] focus-within:shadow-[0_0_15px_rgba(76,175,80,0.25)]">
           <span class="material-symbols-outlined text-on-surface-variant mr-3">search</span>
@@ -74,7 +74,7 @@
       <div v-if="loading" class="text-center py-16 text-on-surface-variant"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
       <div v-else-if="!products.length" class="text-center py-16 text-on-surface-variant">尚無符合的商品</div>
       <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <ProductCard v-for="p in products" :key="p.id" :product="p" @add="$emit('add-to-cart', $event)" />
+        <ProductCard v-for="p in products" :key="p.id" :product="p" />
       </div>
 
       <div v-if="totalPages > 1" class="flex justify-center items-center gap-4 mb-12">
@@ -90,85 +90,56 @@
   </div>
 </template>
 
-<script>
-import { api } from '../api/index.js'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useCatalogStore } from '../store/catalog.js'
 import ProductCard from '../components/ProductCard.vue'
 import { money } from '../utils/format.js'
 
-export default {
-  components: { ProductCard },
-  data() {
-    return { products: [], allProducts: [], categories: [], q: '', category: '', page: 1, totalPages: 1, loading: true, searchTimer: null }
-  },
-  computed: {
-    showDiscovery() {
-      return !this.q && !this.category && this.page === 1
-    },
-    featuredProduct() {
-      return this.allProducts[0] || this.products[0] || null
-    },
-    saleProducts() {
-      return this.allProducts.filter(p => Number(p.list_price) > Number(p.price)).slice(0, 4)
-    },
-    catalogTitle() {
-      if (this.q) return `「${this.q}」的搜尋結果`
-      if (this.category) return this.category
-      return this.page === 1 ? '最新商品' : '更多商品'
-    },
-  },
-  methods: {
-    money,
-    categoryCount(value) {
-      return this.allProducts.filter(product => product.category === value).length
-    },
-    categoryIcon(value) {
-      const icons = { 手機: 'smartphone', 音訊設備: 'headphones', 電腦設備: 'computer', 影像設備: 'photo_camera', 穿戴與虛擬實境: 'view_in_ar', 食品: 'nutrition', 玩具: 'toys' }
-      return icons[value] || 'category'
-    },
-    scrollToProducts() {
-      this.$refs.catalog?.scrollIntoView({ behavior: 'smooth' })
-    },
-    catClass(active) {
-      return active
-        ? 'whitespace-nowrap px-4 py-2 rounded-full font-label-sm text-label-sm bg-primary text-on-primary font-bold shadow-[0_0_15px_rgba(76,175,80,0.3)]'
-        : 'whitespace-nowrap px-4 py-2 rounded-full font-label-sm text-label-sm glass-card text-on-surface-variant hover:border-primary/50 transition-colors'
-    },
-    onSearch() {
-      clearTimeout(this.searchTimer)
-      this.searchTimer = setTimeout(() => { this.page = 1; this.loadProducts() }, 300)
-    },
-    selectCategory(c) {
-      this.category = c
-      this.page = 1
-      this.loadProducts()
-    },
-    goPage(p) {
-      if (p < 1 || p > this.totalPages) return
-      this.page = p
-      this.loadProducts()
-    },
-    async loadProducts() {
-      this.loading = true
-      const res = await api.products({ q: this.q, category: this.category, page: this.page })
-      if (res.success) {
-        this.products = res.data.items
-        this.page = res.data.page
-        this.totalPages = res.data.total_pages
-      }
-      this.loading = false
-    },
-  },
-  async created() {
-    const [cRes, allRes] = await Promise.all([api.categories(), api.products({ per_page: 100 })])
-    if (cRes.success) this.categories = cRes.data
-    if (allRes.success) {
-      this.allProducts = allRes.data.items
-      this.products = allRes.data.items.slice(0, 10)
-      this.totalPages = Math.max(1, Math.ceil(allRes.data.total / 10))
-    }
-    this.loading = false
-  },
+const catalog = useCatalogStore()
+const catalogEl = ref(null)
+const searchInput = ref(null)
+
+const q = computed({
+  get: () => catalog.q,
+  set: (v) => { catalog.q = v; catalog.onSearchInput() },
+})
+const products = computed(() => catalog.products)
+const categories = computed(() => catalog.categories)
+const category = computed(() => catalog.category)
+const page = computed(() => catalog.page)
+const totalPages = computed(() => catalog.totalPages)
+const loading = computed(() => catalog.loading)
+const showDiscovery = computed(() => catalog.showDiscovery)
+const featuredProduct = computed(() => catalog.featuredProduct)
+const saleProducts = computed(() => catalog.saleProducts)
+const catalogTitle = computed(() => catalog.catalogTitle)
+
+function categoryCount(value) {
+  return catalog.categoryCount(value)
 }
+function categoryIcon(value) {
+  return catalog.categoryIcon(value)
+}
+function scrollToProducts() {
+  catalogEl.value?.scrollIntoView({ behavior: 'smooth' })
+}
+function catClass(active) {
+  return active
+    ? 'whitespace-nowrap px-4 py-2 rounded-full font-label-sm text-label-sm bg-primary text-on-primary font-bold shadow-[0_0_15px_rgba(76,175,80,0.3)]'
+    : 'whitespace-nowrap px-4 py-2 rounded-full font-label-sm text-label-sm glass-card text-on-surface-variant hover:border-primary/50 transition-colors'
+}
+function onSearch() {
+  catalog.onSearchInput()
+}
+function selectCategory(c) {
+  catalog.selectCategory(c)
+}
+function goPage(p) {
+  catalog.goPage(p)
+}
+
+onMounted(() => catalog.init())
 </script>
 
 <style scoped>

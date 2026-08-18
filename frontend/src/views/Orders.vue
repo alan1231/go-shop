@@ -62,68 +62,60 @@
   </section>
 </template>
 
-<script>
-import { api } from '../api/index.js'
+<script setup>
+import { computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useOrderStore } from '../store/order.js'
 import { formatDate, imageUrl, money, orderStatusLabel } from '../utils/format.js'
-export default {
-  data() {
-    return {
-      orders: [],
-      status: '',
-      loading: true,
-      requestId: 0,
-      tabs: [
-        { value: '', label: '全部' },
-        { value: 'pending', label: '待付款' },
-        { value: 'paid', label: '已付款' },
-        { value: 'shipped', label: '出貨中' },
-        { value: 'completed', label: '已完成' },
-        { value: 'cancelled', label: '已取消' },
-      ],
-    }
-  },
-  watch: {
-    '$route.query.status'(value) {
-      const next = this.validStatus(value)
-      if (next !== this.status) this.selectStatus(next, false)
-    },
-  },
-  methods: {
-    validStatus(value) {
-      return typeof value === 'string' && this.tabs.some(tab => tab.value === value) ? value : ''
-    },
-    async selectStatus(value, syncRoute = true) {
-      const next = this.validStatus(value)
-      const requestId = ++this.requestId
-      this.status = next
-      this.loading = true
-      if (syncRoute && (this.$route.query.status || '') !== next) {
-        const query = { ...this.$route.query }
-        if (next) query.status = next
-        else delete query.status
-        await this.$router.replace({ query })
-      }
-      const res = await api.orders(next)
-      if (requestId !== this.requestId) return
-      if (res.success) this.orders = res.data
-      this.loading = false
-    },
-    statusLabel: orderStatusLabel,
-    openOrder(id) {
-      this.$router.push(`/orders/${id}`)
-    },
-    money,
-    imageUrl,
-    itemLabel(order) {
-      const count = Number(order.item_count || 0)
-      return count ? `共 ${count} 件商品` : '查看訂單內容'
-    },
-    formatDate,
-  },
-  async created() {
-    await this.selectStatus(this.validStatus(this.$route.query.status))
-  },
+
+const route = useRoute()
+const router = useRouter()
+const orderStore = useOrderStore()
+
+const statusLabel = orderStatusLabel
+const orders = computed(() => orderStore.orders)
+const status = computed(() => orderStore.status)
+const loading = computed(() => orderStore.loading)
+
+const tabs = [
+  { value: '', label: '全部' },
+  { value: 'pending', label: '待付款' },
+  { value: 'paid', label: '已付款' },
+  { value: 'shipped', label: '出貨中' },
+  { value: 'completed', label: '已完成' },
+  { value: 'cancelled', label: '已取消' },
+]
+
+function validStatus(value) {
+  return typeof value === 'string' && tabs.some(tab => tab.value === value) ? value : ''
 }
+
+async function selectStatus(value, syncRoute = true) {
+  const next = validStatus(value)
+  if (syncRoute && (route.query.status || '') !== next) {
+    const query = { ...route.query }
+    if (next) query.status = next
+    else delete query.status
+    await router.replace({ query })
+  }
+  await orderStore.loadOrders(next)
+}
+
+function openOrder(id) {
+  router.push(`/orders/${id}`)
+}
+
+function itemLabel(order) {
+  const count = Number(order.item_count || 0)
+  return count ? `共 ${count} 件商品` : '查看訂單內容'
+}
+
+watch(() => route.query.status, (value) => {
+  const next = validStatus(value)
+  if (next !== orderStore.status) selectStatus(next, false)
+})
+
+onMounted(() => orderStore.loadOrders(validStatus(route.query.status)))
 </script>
 
 <style scoped>

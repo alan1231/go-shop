@@ -9,13 +9,10 @@
   </div>
 </template>
 
-<script>
-import { toastStore } from '../store/toast.js'
-export default {
-  setup() {
-    return { toastStore }
-  },
-}
+<script setup>
+import { useToastStore } from '../store/toast.js'
+
+const toastStore = useToastStore()
 </script>
 
 <style scoped>

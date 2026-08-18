@@ -5,28 +5,31 @@
   </div>
 </template>
 
-<script>
-import { api } from '../api/index.js'
-import { userStore } from '../store/user.js'
-import { toastStore } from '../store/toast.js'
+<script setup>
+import { onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useSessionStore } from '../store/session.js'
+import { useToastStore } from '../store/toast.js'
 import { verifyOAuthState, extractOAuthRedirect } from '../api/oauth.js'
 
-export default {
-  async created() {
-    const code = this.$route.query.code
-    const state = this.$route.query.state
-    const redirect = extractOAuthRedirect(state) || this.$route.query.redirect || '/'
-    if (code && state && verifyOAuthState(state)) {
-      const provider = state.split('-')[0]
-      const res = await api.oauthLogin(provider, code)
-      if (res.success) {
-        userStore.set(res.data.user)
-        this.$router.push(redirect)
-        return
-      }
-      toastStore.error(res.message)
+const route = useRoute()
+const router = useRouter()
+const session = useSessionStore()
+const toastStore = useToastStore()
+
+onMounted(async () => {
+  const code = route.query.code
+  const state = route.query.state
+  const redirect = extractOAuthRedirect(state) || route.query.redirect || '/'
+  if (code && state && verifyOAuthState(state)) {
+    const provider = state.split('-')[0]
+    const res = await session.completeOAuth(provider, code)
+    if (res.success) {
+      router.push(redirect)
+      return
     }
-    this.$router.push('/login')
-  },
-}
+    toastStore.error(res.message)
+  }
+  router.push('/login')
+})
 </script>

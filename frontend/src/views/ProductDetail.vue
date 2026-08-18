@@ -36,7 +36,7 @@
           </div>
           <div class="quick-description">{{ p.description || '此商品尚未提供詳細說明。' }}</div>
           <div class="actions">
-            <button class="cart-button" type="button" :disabled="!p.stock" @click="$emit('add-to-cart', p)">
+            <button class="cart-button" type="button" :disabled="!p.stock" @click="joinCart">
               <span class="material-symbols-outlined">add_shopping_cart</span>
               {{ p.stock ? '加入購物車' : '商品已完售' }}
             </button>
@@ -64,25 +64,36 @@
   </section>
 </template>
 
-<script>
-import { api } from '../api/index.js'
+<script setup>
+import { computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useCatalogStore } from '../store/catalog.js'
+import { useCartStore } from '../store/cart.js'
+import { useToastStore } from '../store/toast.js'
 import { money } from '../utils/format.js'
-export default {
-  data() { return { p: null, loading: true } },
-  methods: {
-    money,
-    goBack() {
-      if (window.history.length > 1) this.$router.back()
-      else this.$router.push('/')
-    },
-  },
-  async created() {
-    const id = parseInt(this.$route.params.id)
-    const res = await api.product(id)
-    if (res.success) this.p = res.data
-    this.loading = false
-  },
+
+const route = useRoute()
+const router = useRouter()
+const catalog = useCatalogStore()
+const cartStore = useCartStore()
+const toastStore = useToastStore()
+
+const p = computed(() => catalog.detail)
+const loading = computed(() => catalog.detailLoading)
+
+function goBack() {
+  if (window.history.length > 1) router.back()
+  else router.push('/')
 }
+
+function joinCart() {
+  if (!p.value) return
+  const r = cartStore.add(p.value)
+  if (r.ok) toastStore.success(r.message)
+  else toastStore.error(r.message)
+}
+
+onMounted(() => catalog.loadDetail(parseInt(route.params.id)))
 </script>
 
 <style scoped>

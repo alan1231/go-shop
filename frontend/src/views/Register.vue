@@ -51,34 +51,39 @@
   </AuthShell>
 </template>
 
-<script>
-import { api } from '../api/index.js'
+<script setup>
+import { ref } from 'vue'
+import { useSessionStore } from '../store/session.js'
 import AuthShell from '../components/AuthShell.vue'
-export default {
-  components: { AuthShell },
-  data() {
-    return { username: '', email: '', password: '', confirmPassword: '', error: '', success: '', loading: false, showPassword: false }
-  },
-  methods: {
-    async handleRegister() {
-      this.error = ''
-      this.success = ''
-      if (this.password !== this.confirmPassword) {
-        this.error = '兩次輸入的密碼不一致'
-        return
-      }
-      this.loading = true
-      const res = await api.register(this.username, this.email, this.password)
-      if (res.success) {
-        this.success = '註冊成功'
-        this.password = ''
-        this.confirmPassword = ''
-      } else {
-        this.error = res.message
-      }
-      this.loading = false
-    },
-  },
+
+const session = useSessionStore()
+
+const username = ref('')
+const email = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const error = ref('')
+const success = ref('')
+const loading = ref(false)
+const showPassword = ref(false)
+
+async function handleRegister() {
+  error.value = ''
+  success.value = ''
+  if (password.value !== confirmPassword.value) {
+    error.value = '兩次輸入的密碼不一致'
+    return
+  }
+  loading.value = true
+  const res = await session.register(username.value, email.value, password.value)
+  if (res.success) {
+    success.value = '註冊成功'
+    password.value = ''
+    confirmPassword.value = ''
+  } else {
+    error.value = res.message
+  }
+  loading.value = false
 }
 </script>
 

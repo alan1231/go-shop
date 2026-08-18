@@ -14,30 +14,35 @@
         <del v-if="product.list_price">NT$ {{ money(product.list_price) }}</del>
       </div>
     </router-link>
-    <button type="button" :disabled="product.stock === 0" @click="$emit('add', product)">
+    <button type="button" :disabled="product.stock === 0" @click="addToCart">
       <span class="material-symbols-outlined">shopping_cart</span>
       {{ product.stock === 0 ? '商品已售完' : '加入購物車' }}
     </button>
   </article>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
 import { money } from '../utils/format.js'
+import { useCartStore } from '../store/cart.js'
+import { useToastStore } from '../store/toast.js'
 
-export default {
-  props: {
-    product: { type: Object, required: true },
-  },
-  emits: ['add'],
-  computed: {
-    discount() {
-      if (Number(this.product.list_price) <= Number(this.product.price)) return 0
-      return Math.round((1 - Number(this.product.price) / Number(this.product.list_price)) * 100)
-    },
-  },
-  methods: {
-    money,
-  },
+const props = defineProps({
+  product: { type: Object, required: true },
+})
+
+const cartStore = useCartStore()
+const toastStore = useToastStore()
+
+const discount = computed(() => {
+  if (Number(props.product.list_price) <= Number(props.product.price)) return 0
+  return Math.round((1 - Number(props.product.price) / Number(props.product.list_price)) * 100)
+})
+
+function addToCart() {
+  const r = cartStore.add(props.product)
+  if (r.ok) toastStore.success(r.message)
+  else toastStore.error(r.message)
 }
 </script>
 

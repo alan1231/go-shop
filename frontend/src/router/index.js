@@ -7,6 +7,8 @@ import Orders from '../views/Orders.vue'
 import OrderDetail from '../views/OrderDetail.vue'
 import Register from '../views/Register.vue'
 import OAuthCallback from '../views/OAuthCallback.vue'
+import { pinia } from '../pinia'
+import { useSessionStore } from '../store/session.js'
 
 const routes = [
   { path: '/', name: 'home', component: Home, meta: { title: '首頁' } },
@@ -24,14 +26,12 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   document.title = (to.meta.title ? to.meta.title + ' - ' : '') + 'SHOP'
-  const token = localStorage.getItem('token')
-  if (to.meta.requiresAuth && !token) {
-    next({ path: '/login', query: { redirect: to.fullPath } })
-  } else {
-    next()
+  if (to.meta.requiresAuth && !useSessionStore(pinia).isLoggedIn) {
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
+  return true
 })
 
 export default router
