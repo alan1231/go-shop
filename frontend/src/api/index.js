@@ -121,8 +121,43 @@ export const api = {
   order(id) {
     return request(`/orders/${id}`)
   },
-  payOrder(id) {
-    return request(`/orders/${id}/pay`, { method: 'POST' })
+  payOrder(id, method) {
+    return request(`/orders/${id}/pay`, {
+      method: 'POST',
+      body: JSON.stringify({ method: method || 'linepay' }),
+    })
+  },
+  payOrderStatus(id) {
+    return request(`/orders/${id}/pay/status`)
+  },
+
+  // Cart
+  cart() {
+    return request('/cart')
+  },
+  cartAdd(productId, quantity) {
+    return request('/cart/items', {
+      method: 'POST',
+      body: JSON.stringify({ product_id: productId, quantity }),
+    })
+  },
+  cartSet(productId, quantity) {
+    return request(`/cart/items/${productId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity }),
+    })
+  },
+  cartRemove(productId) {
+    return request(`/cart/items/${productId}`, { method: 'DELETE' })
+  },
+  cartClear() {
+    return request('/cart', { method: 'DELETE' })
+  },
+  cartMerge(items) {
+    return request('/cart/merge', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    })
   },
 
   // Marquee

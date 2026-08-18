@@ -39,8 +39,8 @@ const discount = computed(() => {
   return Math.round((1 - Number(props.product.price) / Number(props.product.list_price)) * 100)
 })
 
-function addToCart() {
-  const r = cartStore.add(props.product)
+async function addToCart() {
+  const r = await cartStore.add(props.product)
   if (r.ok) toastStore.success(r.message)
   else toastStore.error(r.message)
 }

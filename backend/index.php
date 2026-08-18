@@ -29,7 +29,15 @@ $router->get('/api/products/{id}', [ApiProductController::class, 'show']);
 $router->post('/api/orders', [ApiOrderController::class, 'create']);
 $router->get('/api/orders', [ApiOrderController::class, 'index']);
 $router->get('/api/orders/{id}', [ApiOrderController::class, 'show']);
+$router->get('/api/orders/{id}/pay/status', [ApiOrderController::class, 'payStatus']);
 $router->post('/api/orders/{id}/pay', [ApiOrderController::class, 'pay']);
+
+$router->get('/api/cart', [ApiCartController::class, 'index']);
+$router->post('/api/cart/items', [ApiCartController::class, 'add']);
+$router->add('PUT', '/api/cart/items/{id}', [ApiCartController::class, 'update']);
+$router->add('DELETE', '/api/cart/items/{id}', [ApiCartController::class, 'remove']);
+$router->post('/api/cart/merge', [ApiCartController::class, 'merge']);
+$router->add('DELETE', '/api/cart', [ApiCartController::class, 'clear']);
 
 $router->post('/api/admin/login', [AdminAuthController::class, 'login']);
 $router->get('/api/admin/me', [AdminAuthController::class, 'me']);

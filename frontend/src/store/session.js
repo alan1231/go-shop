@@ -4,9 +4,10 @@ import { api } from '../api/index.js'
 export const useSessionStore = defineStore('session', {
   state: () => ({
     user: null,
+    token: localStorage.getItem('token'),
   }),
   getters: {
-    isLoggedIn: () => !!localStorage.getItem('token'),
+    isLoggedIn: state => !!state.token,
   },
   actions: {
     async fetch() {
@@ -22,7 +23,10 @@ export const useSessionStore = defineStore('session', {
     },
     async login(username, password) {
       const res = await api.login(username, password)
-      if (res.success) this.user = res.data.user
+      if (res.success) {
+        this.user = res.data.user
+        this.token = res.data.token
+      }
       return res
     },
     async register(username, email, password) {
@@ -31,7 +35,10 @@ export const useSessionStore = defineStore('session', {
     },
     async completeOAuth(provider, code) {
       const res = await api.oauthLogin(provider, code)
-      if (res.success) this.user = res.data.user
+      if (res.success) {
+        this.user = res.data.user
+        this.token = res.data.token
+      }
       return res
     },
     async updateContact(phone, address) {
@@ -46,6 +53,7 @@ export const useSessionStore = defineStore('session', {
     async logout() {
       await api.logout()
       localStorage.removeItem('token')
+      this.token = null
       this.user = null
     },
   },

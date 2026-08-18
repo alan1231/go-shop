@@ -59,6 +59,10 @@
               <dd>{{ statusLabel(order.status) }}</dd>
             </div>
             <div>
+              <dt>付款方式</dt>
+              <dd>{{ paymentMethodLabel(order.payment_method) }}</dd>
+            </div>
+            <div>
               <dt>備註</dt>
               <dd>{{ order.member_remark || '無備註' }}</dd>
             </div>
@@ -118,22 +122,59 @@
         </div>
       </section>
 
-      <div v-if="order.status === 'pending'" class="action-area">
-        <button class="pay-button" type="button" :disabled="paying" @click="pay">
-          <span class="material-symbols-outlined">account_balance_wallet</span>
-          {{ paying ? '付款中...' : '立即付款' }}
+      <div v-if="order.status === 'pending' && !payment" class="action-area">
+        <span class="action-title">選擇付款方式</span>
+        <button class="pay-method-btn" type="button" :disabled="paying" @click="pay('linepay')">
+          <span class="material-symbols-outlined">label_important</span>
+          <span class="pm-copy">
+            <span class="pm-name">LINE Pay</span>
+            <span class="pm-desc">QR Code 掃碼付款</span>
+          </span>
+        </button>
+        <button class="pay-method-btn" type="button" :disabled="paying" @click="pay('cod')">
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span class="pm-copy">
+            <span class="pm-name">貨到付款</span>
+            <span class="pm-desc">收取商品時付款</span>
+          </span>
         </button>
       </div>
+
+      <section v-if="payment" class="panel payment-panel glass-card">
+        <h2><span class="material-symbols-outlined">qr_code_2</span>LINE Pay 付款</h2>
+        <div class="payment-body">
+          <div class="qr-wrap">
+            <img v-if="qrDataUrl" :src="qrDataUrl" alt="LINE Pay QR Code" />
+            <span v-else class="loader loader-lg"></span>
+          </div>
+          <div class="payment-info">
+            <p v-if="payment.sandbox" class="sandbox-hint">
+              Sandbox 環境不支援 LINE App 掃描 QR Code，請點下方按鈕開啟網頁付款。
+            </p>
+            <p class="payment-tip">請使用 <strong>LINE App</strong> 掃描左側 QR Code，或點下方按鈕前往付款。</p>
+            <button class="pay-button" type="button" @click="openPayment">
+              <span class="material-symbols-outlined">open_in_new</span>
+              {{ payment.sandbox ? '開啟 LINE Pay 付款' : '前往 LINE Pay 付款' }}
+            </button>
+            <p class="waiting-hint">
+              <span class="loader loader-sm"></span>
+              等待付款完成...
+            </p>
+            <button class="secondary-button cancel-pay" type="button" @click="cancelPay">取消付款</button>
+          </div>
+        </div>
+      </section>
     </template>
   </section>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useOrderStore } from '../store/order.js'
 import { useToastStore } from '../store/toast.js'
-import { formatDate as formatDateValue, imageUrl, money, orderStatusLabel } from '../utils/format.js'
+import { formatDate as formatDateValue, imageUrl, money, orderStatusLabel, paymentMethodLabel } from '../utils/format.js'
+import QRCode from 'qrcode'
 
 const route = useRoute()
 const orderStore = useOrderStore()
@@ -142,6 +183,9 @@ const toastStore = useToastStore()
 const order = computed(() => orderStore.detail)
 const loading = computed(() => orderStore.detailLoading)
 const paying = computed(() => orderStore.paying)
+const payment = computed(() => orderStore.payment)
+const qrDataUrl = ref('')
+const payWin = ref(null)
 
 const steps = [
   { key: 'pending', label: '待付款', icon: 'pending_actions' },
@@ -171,17 +215,77 @@ function formatDate(value) {
   return formatDateValue(value, { separator: '/', time: true, empty: '未提供' })
 }
 
-async function pay() {
+async function pay(method) {
   if (!order.value) return
-  const res = await orderStore.pay(order.value.id)
-  if (res.success) {
-    toastStore.success('付款成功！')
-  } else {
+  const res = await orderStore.pay(order.value.id, method)
+  if (!res.success) {
     toastStore.error(res.message)
+    return
+  }
+  if (res.data?.payment_access_token) {
+    await generateQr()
+    orderStore.startPolling(order.value.id, (poll) => {
+      if (poll.data?.status === 'paid') {
+        toastStore.success('付款成功！')
+      } else if (poll.data?.payment === 'cancelled') {
+        toastStore.error('付款已取消，請重新操作')
+      }
+    })
+  } else {
+    orderStore.payment = null
+    await orderStore.loadDetail(order.value.id)
+    toastStore.success('付款成功！')
   }
 }
 
+async function generateQr() {
+  const token = payment.value?.payment_access_token
+  if (!token) return
+  qrDataUrl.value = await QRCode.toDataURL(token, { width: 220, margin: 1 })
+}
+
+function openPayment() {
+  if (!payment.value) return
+  const appUrl = payment.value.payment_url_app
+  const webUrl = payment.value.payment_url
+  if (!payment.value.sandbox && appUrl) {
+    window.location.href = appUrl
+    return
+  }
+  const width = 760
+  const height = 580
+  const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2))
+  const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2))
+  const win = window.open(webUrl, 'linepay', `left=${left},top=${top},width=${width},height=${height}`)
+  if (!win) {
+    toastStore.error('請允許快顯視窗以開啟付款頁')
+    return
+  }
+  payWin.value = win
+}
+
+function cancelPay() {
+  orderStore.stopPolling()
+  qrDataUrl.value = ''
+  orderStore.payment = null
+  if (payWin.value) {
+    payWin.value.close()
+    payWin.value = null
+  }
+}
+
+watch(() => order.value?.status, (status) => {
+  if (status === 'paid' && payWin.value) {
+    payWin.value.close()
+    payWin.value = null
+  }
+})
+
 onMounted(() => orderStore.loadDetail(route.params.id))
+onUnmounted(() => {
+  orderStore.stopPolling()
+  if (payWin.value) payWin.value.close()
+})
 </script>
 
 <style scoped>
@@ -438,7 +542,115 @@ td:nth-child(3) { text-align: center; }
   font-size: 15px !important;
 }
 .grand-total strong { color: var(--shop-primary); font-family: 'Sora', sans-serif; font-size: 19px; }
-.action-area { display: flex; justify-content: flex-end; padding-top: 20px; }
+.action-area {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 20px;
+}
+.action-title {
+  width: 100%;
+  color: var(--shop-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+.pay-method-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--shop-border);
+  border-radius: 12px;
+  background: var(--shop-surface-highest);
+  color: var(--shop-text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .2s, background .2s, color .2s, transform .2s;
+}
+.pay-method-btn:hover {
+  border-color: var(--shop-primary);
+  background: rgba(117, 255, 158, .12);
+  color: var(--shop-primary);
+}
+.pay-method-btn:disabled { cursor: wait; opacity: .6; }
+.pay-method-btn .material-symbols-outlined { font-size: 26px; color: var(--shop-primary); }
+.pm-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+}
+.pm-name {
+  font-size: 14px;
+  font-weight: 800;
+}
+.pm-desc {
+  color: var(--shop-text-muted);
+  font-size: 11px;
+}
+.payment-panel { margin-top: 24px; padding: 24px; }
+.payment-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 20px;
+  color: var(--shop-text);
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+}
+.payment-panel h2 .material-symbols-outlined { color: var(--shop-primary); }
+.payment-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.qr-wrap {
+  display: grid;
+  width: 240px;
+  height: 240px;
+  flex: 0 0 240px;
+  place-items: center;
+  border: 1px solid var(--shop-border);
+  border-radius: 14px;
+  background: #fff;
+  padding: 8px;
+}
+.qr-wrap img { width: 100%; height: 100%; }
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 300px;
+  text-align: center;
+}
+.payment-tip { margin: 0; color: var(--shop-text-muted); font-size: 13px; line-height: 1.7; }
+.payment-tip strong { color: var(--shop-text); }
+.sandbox-hint {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--shop-error) 45%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--shop-error) 10%, transparent);
+  color: var(--shop-error);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.waiting-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--shop-text-muted);
+  font-size: 12px;
+}
+.cancel-pay { margin: 0; }
 .pay-button,
 .secondary-button {
   display: inline-flex;

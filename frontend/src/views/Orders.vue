@@ -52,7 +52,7 @@
 
         <div class="order-footer">
           <div class="total-copy">
-            <span>總計</span>
+            <span>總計・{{ paymentMethodLabel(o.payment_method) }}</span>
             <strong>NT$ {{ money(o.total_amount) }}</strong>
           </div>
           <button type="button" class="detail-button" @click.stop="openOrder(o.id)">查看明細</button>
@@ -66,7 +66,7 @@
 import { computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOrderStore } from '../store/order.js'
-import { formatDate, imageUrl, money, orderStatusLabel } from '../utils/format.js'
+import { formatDate, imageUrl, money, orderStatusLabel, paymentMethodLabel } from '../utils/format.js'
 
 const route = useRoute()
 const router = useRouter()

@@ -86,9 +86,9 @@ function goBack() {
   else router.push('/')
 }
 
-function joinCart() {
+async function joinCart() {
   if (!p.value) return
-  const r = cartStore.add(p.value)
+  const r = await cartStore.add(p.value)
   if (r.ok) toastStore.success(r.message)
   else toastStore.error(r.message)
 }

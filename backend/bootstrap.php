@@ -25,6 +25,7 @@ Registry::set('userRepo', new UserRepository());
 Registry::set('adminRepo', new AdminUserRepository());
 Registry::set('productRepo', new ProductRepository());
 Registry::set('orderRepo', new OrderRepository());
+Registry::set('cartRepo', new CartRepository());
 Registry::set('marqueeRepo', new MarqueeRepository());
 Registry::set('loginAttemptRepo', new LoginAttemptRepository());
 
@@ -32,7 +33,13 @@ Registry::set('images', new Images(Config::get('UPLOADS_DIR')));
 Registry::set('authSvc', new AuthService(Registry::get('adminRepo')));
 Registry::set('userSvc', new UserService(Registry::get('userRepo')));
 Registry::set('productSvc', new ProductService(Registry::get('productRepo'), Registry::get('images')));
-Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo')));
+Registry::set('linePaySvc', new LinePayService(
+    Config::get('LINE_PAY_CHANNEL_ID'),
+    Config::get('LINE_PAY_CHANNEL_SECRET'),
+    Config::get('LINE_PAY_SANDBOX', 'true')
+));
+Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo'), Registry::get('linePaySvc')));
+Registry::set('cartSvc', new CartService(Registry::get('cartRepo'), Registry::get('productRepo')));
 Registry::set('marqueeSvc', new MarqueeService(Registry::get('marqueeRepo')));
 Registry::set('dashboardSvc', new DashboardService(Registry::get('productRepo'), Registry::get('orderRepo'), Registry::get('userRepo')));
 Registry::set('rateLimitSvc', new RateLimitService(Registry::get('loginAttemptRepo')));
@@ -42,9 +49,4 @@ Registry::set('oauthSvc', new OAuthService(
     Config::get('LINE_CHANNEL_ID'),
     Config::get('LINE_CHANNEL_SECRET'),
     Config::get('OAUTH_REDIRECT_URI', 'http://localhost:5173/auth/callback')
-));
-Registry::set('linePaySvc', new LinePayService(
-    Config::get('LINE_PAY_CHANNEL_ID'),
-    Config::get('LINE_PAY_CHANNEL_SECRET'),
-    Config::get('LINE_PAY_SANDBOX', 'true')
 ));

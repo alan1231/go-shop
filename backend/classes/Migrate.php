@@ -54,6 +54,8 @@ class Migrate {
                 receiver_name VARCHAR(100) DEFAULT NULL,
                 receiver_phone VARCHAR(20) DEFAULT NULL,
                 receiver_address VARCHAR(255) DEFAULT NULL,
+                linepay_transaction_id VARCHAR(64) DEFAULT NULL,
+                payment_method VARCHAR(20) DEFAULT \'\',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
             'CREATE TABLE IF NOT EXISTS order_items (
@@ -76,6 +78,15 @@ class Migrate {
                 locked_until DATETIME NULL,
                 updated_at DATETIME NOT NULL,
                 UNIQUE KEY uniq_ip_type (ip, type)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+            'CREATE TABLE IF NOT EXISTS cart_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                product_id INT NOT NULL,
+                quantity INT NOT NULL DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uniq_user_product (user_id, product_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
         ];
 
@@ -101,6 +112,8 @@ class Migrate {
         $alterIfMissing('orders', 'receiver_name', 'ALTER TABLE orders ADD COLUMN receiver_name VARCHAR(100) DEFAULT NULL');
         $alterIfMissing('orders', 'receiver_phone', 'ALTER TABLE orders ADD COLUMN receiver_phone VARCHAR(20) DEFAULT NULL');
         $alterIfMissing('orders', 'receiver_address', 'ALTER TABLE orders ADD COLUMN receiver_address VARCHAR(255) DEFAULT NULL');
+        $alterIfMissing('orders', 'linepay_transaction_id', 'ALTER TABLE orders ADD COLUMN linepay_transaction_id VARCHAR(64) DEFAULT NULL');
+        $alterIfMissing('orders', 'payment_method', 'ALTER TABLE orders ADD COLUMN payment_method VARCHAR(20) DEFAULT \'\'');
         $alterIfMissing('admin_users', 'token', 'ALTER TABLE admin_users ADD COLUMN token VARCHAR(64) DEFAULT NULL');
 
         $this->ensureProviderIndex();

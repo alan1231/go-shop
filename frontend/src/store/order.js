@@ -10,6 +10,9 @@ export const useOrderStore = defineStore('order', {
     detail: null,
     detailLoading: true,
     paying: false,
+    payment: null,
+    pollTimer: null,
+    polling: false,
     requestId: 0,
   }),
   actions: {
@@ -30,16 +33,44 @@ export const useOrderStore = defineStore('order', {
       this.detailLoading = false
       return res
     },
-    async pay(id) {
+    async pay(id, method) {
       this.paying = true
-      const res = await api.payOrder(id)
-      if (res.success && this.detail) this.detail.status = 'paid'
+      const res = await api.payOrder(id, method)
+      if (res.success) this.payment = res.data
       this.paying = false
       return res
     },
+    startPolling(id, onResult) {
+      this.stopPolling()
+      this.pollTimer = setInterval(async () => {
+        if (this.polling) return
+        this.polling = true
+        const res = await api.payOrderStatus(id)
+        this.polling = false
+        if (!res.success) return
+        if (res.data.status === 'paid') {
+          this.stopPolling()
+          this.payment = null
+          await this.loadDetail(id)
+          if (onResult) onResult(res)
+        } else if (res.data.payment === 'cancelled') {
+          this.stopPolling()
+          this.payment = null
+          await this.loadDetail(id)
+          if (onResult) onResult(res)
+        }
+      }, 3000)
+    },
+    stopPolling() {
+      this.polling = false
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer)
+        this.pollTimer = null
+      }
+    },
     async placeOrder(items, receiver, remark) {
       const res = await api.createOrder(items, receiver, remark)
-      if (res.success) useCartStore().clear()
+      if (res.success) await useCartStore().clear()
       return res
     },
   },

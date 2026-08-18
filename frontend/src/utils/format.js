@@ -19,3 +19,7 @@ export function formatDate(value, { separator = '.', time = false, empty = '' } 
 export function orderStatusLabel(status, shipped = '出貨中') {
   return { pending: '待付款', paid: '已付款', shipped, completed: '已完成', cancelled: '已取消' }[status] || status
 }
+
+export function paymentMethodLabel(method) {
+  return { linepay: 'LINE Pay', cod: '貨到付款' }[method] || '未指定'
+}

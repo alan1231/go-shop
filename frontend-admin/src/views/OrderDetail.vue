@@ -24,6 +24,7 @@
           <div class="info-row"><span>收件人</span><b>{{ order.receiver_name || '—' }}</b></div>
           <div class="info-row"><span>收件電話</span><b>{{ order.receiver_phone || '—' }}</b></div>
           <div class="info-row"><span>收件地址</span><b>{{ order.receiver_address || '—' }}</b></div>
+          <div class="info-row"><span>付款方式</span><b>{{ payLabel(order.payment_method) }}</b></div>
           <div class="info-row"><span>訂單時間</span><b>{{ formatDate(order.created_at) }}</b></div>
         </div>
       </div>
@@ -118,6 +119,9 @@ export default {
   methods: {
     fmt(n) {
       return 'NT$ ' + Number(n).toLocaleString()
+    },
+    payLabel(m) {
+      return { linepay: 'LINE Pay', cod: '貨到付款' }[m] || '—'
     },
     formatDate(s) {
       if (!s) return '—'

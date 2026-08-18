@@ -3,7 +3,7 @@
 class OrderRepository {
     private PDO $pdo;
 
-    private const ORDER_COLS = 'o.id, o.user_id, o.total_amount, o.status, o.remark, o.member_remark, o.receiver_name, o.receiver_phone, o.receiver_address, o.created_at';
+    private const ORDER_COLS = 'o.id, o.user_id, o.total_amount, o.status, o.remark, o.member_remark, o.receiver_name, o.receiver_phone, o.receiver_address, o.linepay_transaction_id, o.payment_method, o.created_at';
 
     public function __construct(?PDO $pdo = null) {
         $this->pdo = $pdo ?? Database::connect();
@@ -65,6 +65,16 @@ class OrderRepository {
     public function updateStatus(int $id, string $status): void {
         $stmt = $this->pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
         $stmt->execute([$status, $id]);
+    }
+
+    public function updateLinePayTransactionId(int $id, string $transactionId): void {
+        $stmt = $this->pdo->prepare('UPDATE orders SET linepay_transaction_id = ? WHERE id = ?');
+        $stmt->execute([$transactionId, $id]);
+    }
+
+    public function updatePaymentMethod(int $id, string $method): void {
+        $stmt = $this->pdo->prepare('UPDATE orders SET payment_method = ? WHERE id = ?');
+        $stmt->execute([$method, $id]);
     }
 
     public function updateRemark(int $id, string $remark): void {
@@ -189,7 +199,7 @@ class OrderRepository {
         $o['id'] = (int)$o['id'];
         $o['user_id'] = (int)$o['user_id'];
         $o['total_amount'] = (float)$o['total_amount'];
-        foreach (['remark', 'member_remark', 'receiver_name', 'receiver_phone', 'receiver_address', 'username', 'email', 'phone', 'address'] as $f) {
+        foreach (['remark', 'member_remark', 'receiver_name', 'receiver_phone', 'receiver_address', 'linepay_transaction_id', 'payment_method', 'username', 'email', 'phone', 'address'] as $f) {
             $o[$f] = $o[$f] ?? '';
         }
         if (array_key_exists('item_count', $o)) {

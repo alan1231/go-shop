@@ -130,6 +130,10 @@ watch(() => route.fullPath, () => {
   mobileOpen.value = false
 })
 
+watch(() => session.isLoggedIn, () => {
+  cartStore.sync()
+}, { immediate: true })
+
 function toggleUserMenu() {
   userMenuOpen.value = !userMenuOpen.value
 }
@@ -191,6 +195,7 @@ async function saveEdit() {
 
 async function handleLogout() {
   await session.logout()
+  cartStore.items.splice(0, cartStore.items.length)
   userMenuOpen.value = false
   router.push('/')
 }

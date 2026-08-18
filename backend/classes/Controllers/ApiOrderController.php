@@ -37,14 +37,19 @@ class ApiOrderController extends BaseController {
 
     public static function pay(int $id): void {
         $user = self::requireUser();
-        $order = Registry::get('orderSvc')->getWithItems($id);
-        if ($order === null || (int)$order['user_id'] !== (int)$user['id']) {
-            Response::fail('訂單不存在', 404);
+        $body = Support::jsonBody();
+        $method = (string)($body['method'] ?? 'linepay');
+        if ($method === 'cod') {
+            Registry::get('orderSvc')->payWithCashOnDelivery($id, (int)$user['id']);
+            Response::success(null, '付款成功');
         }
-        if ($order['status'] !== 'pending') {
-            Response::fail('此訂單無法付款', 400);
-        }
-        Registry::get('orderSvc')->updateStatus($id, 'paid');
-        Response::success(null, '付款成功');
+        $payment = Registry::get('orderSvc')->startLinePay($id, (int)$user['id']);
+        Response::success($payment, 'ok');
+    }
+
+    public static function payStatus(int $id): void {
+        $user = self::requireUser();
+        $status = Registry::get('orderSvc')->checkLinePay($id, (int)$user['id']);
+        Response::success($status, 'ok');
     }
 }

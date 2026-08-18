@@ -26,6 +26,7 @@
               <th>訂單編號</th>
               <th>會員</th>
               <th style="text-align:center;">金額</th>
+              <th style="text-align:center;">付款方式</th>
               <th style="text-align:center;">狀態</th>
               <th style="text-align:center;">備註</th>
               <th style="text-align:center;">日期</th>
@@ -37,6 +38,7 @@
               <td style="color:#4CAF50;font-weight:600;">#{{ o.id }}</td>
               <td>{{ o.username || '—' }}</td>
               <td style="text-align:center;font-weight:600;">{{ fmt(o.total_amount) }}</td>
+              <td style="text-align:center;">{{ payLabel(o.payment_method) }}</td>
               <td style="text-align:center;"><span :class="'badge badge-' + o.status">{{ STATUS[o.status] || o.status }}</span></td>
               <td style="text-align:center;">
                 <span v-if="o.remark" :title="o.remark" style="color:#888;font-size:13px;">{{ o.remark }}</span>
@@ -84,6 +86,9 @@ export default {
   methods: {
     fmt(n) {
       return 'NT$ ' + Number(n).toLocaleString()
+    },
+    payLabel(m) {
+      return { linepay: 'LINE Pay', cod: '貨到付款' }[m] || '—'
     },
     formatDate(s) {
       if (!s) return '—'

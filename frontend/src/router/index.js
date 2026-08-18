@@ -11,6 +11,8 @@ import { pinia } from '../pinia'
 import { useSessionStore } from '../store/session.js'
 
 const routes = [
+  { path: '/idnex', redirect: '/' },
+  { path: '/index', redirect: '/' },
   { path: '/', name: 'home', component: Home, meta: { title: '首頁' } },
   { path: '/login', name: 'login', component: Login, meta: { title: '登入' } },
   { path: '/register', name: 'register', component: Register, meta: { title: '註冊' } },

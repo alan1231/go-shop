@@ -108,13 +108,13 @@ const cart = computed(() => cartStore.items)
 const totalItems = computed(() => cartStore.count)
 const totalPrice = computed(() => cartStore.items.reduce((s, i) => s + i.price * i.quantity, 0))
 
-function changeQty(i, delta) {
-  const r = cartStore.changeQty(i, delta)
+async function changeQty(i, delta) {
+  const r = await cartStore.changeQty(i, delta)
   if (!r.ok && r.message) toastStore.error(r.message)
 }
 
-function removeItem(i) {
-  cartStore.remove(i)
+async function removeItem(i) {
+  await cartStore.remove(i)
 }
 
 async function loadCartImages() {
@@ -123,7 +123,7 @@ async function loadCartImages() {
     const res = await api.product(item.product_id)
     if (res.success) item.image = res.data.image
   }))
-  if (missing.length) cartStore.save()
+  if (missing.length) cartStore.saveGuest()
 }
 
 async function checkout() {

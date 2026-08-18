@@ -12,7 +12,7 @@
 | 會員系統 | 註冊、登入、登出、Google / LINE 三方登入 |
 | 會員中心 | 編輯聯絡資料與更改密碼 |
 | 購物車 | 加入、增減、刪除、localStorage 同步與庫存上限檢查 |
-| 訂單 | 建立訂單、狀態篩選、訂單明細、進度時間軸與模擬付款 |
+| 訂單 | 建立訂單、狀態篩選、訂單明細、進度時間軸與付款（LINE Pay / 貨到付款） |
 | 其他 | 跑馬燈自動更新、桌面／手機響應式版面與 Toast 通知 |
 
 ### 後台（Vue 3）
@@ -190,12 +190,91 @@ cd ../frontend-admin && npm install && npm run build
 | POST | `/api/orders` | 建立訂單 |
 | GET | `/api/orders` | 會員訂單列表 |
 | GET | `/api/orders/{id}` | 訂單明細 |
-| POST | `/api/orders/{id}/pay` | 模擬付款 |
+| POST | `/api/orders/{id}/pay` | 付款（LINE Pay / 貨到付款） |
+| GET | `/api/orders/{id}/pay/status` | 查詢 LINE Pay 付款狀態 |
 | GET | `/api/marquee` | 跑馬燈內容 |
 
 ### 後台 API
 
 後台 API 以 `/api/admin` 為前綴，包含登入、儀表板統計、商品、訂單、會員與跑馬燈管理。
+
+## LINE Pay 付款整合
+
+本專案整合 **LINE Pay Online API v3**（`/v3/payments/*`），支援兩種付款方式：
+
+| 方式 | `payment_method` 值 | 前端行為 |
+|------|---------------------|----------|
+| LINE Pay | `linepay` | 顯示 QR Code + 彈窗付款，伺服器輪詢確認後標為已付款 |
+| 貨到付款 | `cod` | 直接標為已付款 |
+
+### 申請流程（正式環境）
+
+1. 到 LINE 官方合作平台申請 **LINE Pay 商家（Merchant）** 資格，需提供公司/統編等商家資料並完成簽約審核。
+2. 取得一組 **Channel ID** 與 **Channel Secret**（商家的付款金鑰，非 LINE Login 的憑證）。
+3. 設定 **Payment Confirm URL / Cancel URL**（可留空，本專案不做跳轉，改由伺服器輪詢確認）。
+4. 若需使用實體 POS / 掃碼設備，另申請 **Offline API** 權限；一般網頁收款使用 Online API 即可。
+5. 正式環境建議聯絡 LINE Pay 業務團隊完成整合測試後再上線。
+
+### 環境變數（`.env`）
+
+| 變數 | 說明 |
+|------|------|
+| `LINE_PAY_CHANNEL_ID` | 商家 Channel ID |
+| `LINE_PAY_CHANNEL_SECRET` | 商家 Channel Secret |
+| `LINE_PAY_SANDBOX` | `true` 使用沙箱（`sandbox-api-pay.line.me`），`false` 使用正式（`api-pay.line.me`） |
+
+沒填憑證時，使用 LINE Pay 付款會在 API 回傳「LINE Pay 尚未設定」。
+
+### 付款流程
+
+```
+前端 OrderDetail.vue                    PHP 後端          LINE Pay
+─────────────────────                ────────────      ──────────
+按下「LINE Pay」
+      │  POST /api/orders/{id}/pay
+      │  body: { method: 'linepay' } ──→ startLinePay()
+      │                                  │  1. 寫入 payment_method='linepay'
+      │                                  │  2. request() 建立付款請求
+      │                                  │      （amount/currency/orderId/packages/redirectUrls）
+      │ ◄── paymentAccessToken、paymentUrl、transactionId
+產生 QR Code（paymentAccessToken）
+開啟付款彈窗（paymentUrl，以目前視窗為中心）
+      │
+      │ 每 3 秒 GET /api/orders/{id}/pay/status ──→ checkLinePay()
+      │                                          checkStatus(transactionId)
+      │                                          │  returnCode 判定：
+      │                                          │  0000 尚未認證 → 繼續等待
+      │                                          │  0110 認證完成 → confirm()
+      │                                          │  0123 已付款   → 不重複 confirm
+      │                                          │  0121/0122 取消/失敗 → 結束輪詢
+      │ ◄── status: 'paid'  → 前端停止輪詢、關閉彈窗、刷新頁面
+```
+
+- **金額計算**：以訂單明細 `price × quantity` 加總、四捨五入為整數（TWD），`request()` 與 `confirm()` 使用相同金額，避免金額不一致錯誤（returnCode `1153`）。
+- **確認（confirm）**：收到 `0110` 後呼叫 confirm 才能真正完成付款；若 confirm 失敗會再查一次狀態，避免並發輪詢誤判。
+- **QR Code**：以 `paymentAccessToken` 產生（僅正式環境可用 LINE App 掃描；沙箱不支援掃描）。
+- **付款彈窗**：LINE Pay 網頁不允許被 iframe 嵌入（anti-clickjacking），因此使用 `window.open` 開獨立彈窗，置中以目前瀏覽器視窗為基準；付款成功後由輪詢偵測並自動關閉。
+- **沙箱限制**：沙箱環境不支援 LINE App 掃描 QR Code 與 `line://` deep link，只能開啟網頁付款頁。
+
+### 付款狀態回碼（checkStatus 判定）
+
+| returnCode | 意義 | 本專案處理 |
+|------------|------|------------|
+| `0000` | 尚未完成 LINE Pay 認證 | 繼續輪詢 |
+| `0110` | 認證完成，可進行付款確認 | 呼叫 confirm |
+| `0121` | 使用者取消或超時 | 結束輪詢，提示重新操作 |
+| `0122` | 付款失敗 | 結束輪詢，提示重新操作 |
+| `0123` | 付款已完成（終態） | 直接標為已付款 |
+| 其他 / 空值 | 連線或伺服器錯誤 | 繼續輪詢（或回傳等待） |
+
+### 相關檔位
+
+- 後端：`backend/classes/Services/LinePayService.php`（簽章與 HTTP 呼叫）、`backend/classes/Services/OrderService.php`（`startLinePay` / `checkLinePay` / `payWithCashOnDelivery`）、`backend/classes/Controllers/ApiOrderController.php`（`pay` / `payStatus`）
+- 資料表：`orders.linepay_transaction_id`（LINE Pay 交易 ID）、`orders.payment_method`（`linepay` / `cod`）
+- 前端：`frontend/src/views/OrderDetail.vue`（付款按鈕、QR Code、彈窗、輪詢）、`frontend/src/store/order.js`（`pay` / `startPolling` / `stopPolling`）
+- 顯示付款方式：`frontend/src/utils/format.js:paymentMethodLabel()`、後台 `frontend-admin/src/views/Orders.vue`、`frontend-admin/src/views/OrderDetail.vue`
+
+> 注意：LINE Pay 商家金鑰請存放在 `.env`（已在 `.gitignore`），切勿提交至版本控管。正式金鑰與沙箱金鑰不同，上線前務必改為正式值並將 `LINE_PAY_SANDBOX` 設為 `false`。
 
 ## License
 
