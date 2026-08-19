@@ -36,9 +36,7 @@
                 <img v-if="item.image" :src="'/uploads/' + item.image" style="width:50px;height:50px;object-fit:cover;border-radius:6px;" />
                 <div v-else style="width:50px;height:50px;background:#eee;border-radius:6px;"></div>
               </td>
-              <td style="font-weight:600;">{{ item.name }}
-                <div v-if="item.note" style="font-size:12px;color:#888;margin-top:4px;">{{ item.note }}</div>
-              </td>
+              <td style="font-weight:600;">{{ item.name }}</td>
               <td style="text-align:center;">{{ fmt(item.price) }}</td>
               <td style="text-align:center;">{{ item.quantity }}</td>
               <td style="text-align:center;font-weight:600;">{{ fmt(item.price * item.quantity) }}</td>

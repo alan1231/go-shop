@@ -111,7 +111,6 @@
                       <span v-else class="material-symbols-outlined">inventory_2</span>
                     </div>
                     <span>{{ item.name }}</span>
-                    <div v-if="item.note" class="item-note">{{ item.note }}</div>
                   </div>
                 </td>
                 <td>NT$ {{ money(item.price) }}</td>
@@ -653,7 +652,6 @@ td:nth-child(3) { text-align: center; }
   font-size: 12px;
 }
 .cancel-pay { margin: 0; }
-.item-note { margin-top: 6px; padding: 6px 10px; background: var(--shop-surface-highest); border: 1px solid var(--shop-border); border-radius: 6px; font-size: 12px; color: var(--shop-text-muted); white-space: pre-wrap; word-break: break-word; }
 .pay-button,
 .secondary-button {
   display: inline-flex;
