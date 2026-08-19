@@ -11,17 +11,9 @@
     <template v-else>
       <div v-if="msg" :class="'msg msg-' + msgType">{{ msg }}</div>
 
-      <div class="grid-2">
-        <div class="card">
-          <h3><i class="fas fa-user"></i> 會員資訊</h3>
-          <div class="info-row"><span>會員名稱</span><b>{{ order.username || '—' }}</b></div>
-          <div class="info-row"><span>Email</span><b>{{ order.email || '—' }}</b></div>
-          <div class="info-row"><span>電話</span><b>{{ order.phone || '—' }}</b></div>
-          <div class="info-row"><span>地址</span><b>{{ order.address || '—' }}</b></div>
-        </div>
-        <div class="card">
-          <h3><i class="fas fa-truck"></i> 收件資訊</h3>
-          <div class="info-row"><span>收件人</span><b>{{ order.receiver_name || '—' }}</b></div>
+      <div class="card">
+        <h3><i class="fas fa-truck"></i> 收件資訊</h3>
+        <div class="info-row"><span>收件人</span><b>{{ order.receiver_name || '—' }}</b></div>
           <div class="info-row"><span>收件電話</span><b>{{ order.receiver_phone || '—' }}</b></div>
           <div class="info-row"><span>收件地址</span><b>{{ order.receiver_address || '—' }}</b></div>
           <div class="info-row">
@@ -29,8 +21,7 @@
             <b>{{ orderTypeLabel(order.order_type) }}<span v-if="order.order_type === 'dine_in' && order.table_number"> · {{ order.table_number }} 號桌</span></b>
           </div>
           <div class="info-row"><span>付款方式</span><b>{{ payLabel(order.payment_method) }}</b></div>
-          <div class="info-row"><span>訂單時間</span><b>{{ formatDate(order.created_at) }}</b></div>
-        </div>
+<div class="info-row"><span>訂單時間</span><b>{{ formatDate(order.created_at) }}</b></div>
       </div>
 
       <div class="card">

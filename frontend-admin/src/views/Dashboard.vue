@@ -66,12 +66,11 @@
         <p v-if="!recentOrders.length" style="text-align:center;padding:40px;color:#888;">尚無訂單</p>
         <table v-else>
           <thead>
-            <tr><th>訂單編號</th><th>會員</th><th style="text-align:center;">金額</th><th style="text-align:center;">狀態</th><th style="text-align:center;">日期</th></tr>
+            <tr><th>訂單編號</th><th style="text-align:center;">金額</th><th style="text-align:center;">狀態</th><th style="text-align:center;">日期</th></tr>
           </thead>
           <tbody>
             <tr v-for="o in recentOrders" :key="o.id" style="cursor:pointer;" @click="goOrder(o.id)">
               <td style="color:#4CAF50;font-weight:600;">#{{ o.id }}</td>
-              <td>{{ o.username || '—' }}</td>
               <td style="text-align:center;">NT$ {{ Number(o.total_amount).toLocaleString() }}</td>
               <td style="text-align:center;"><span :class="'badge badge-' + o.status">{{ statusLabel(o.status) }}</span></td>
               <td style="text-align:center;color:#888;font-size:13px;">{{ formatDate(o.created_at) }}</td>
