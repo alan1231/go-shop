@@ -47,6 +47,16 @@ class ApiOrderController extends BaseController {
         Response::success(['order_id' => $orderId, 'order' => $order], '訂單已建立');
     }
 
+    public static function availableTable(): void {
+        $tableCount = Registry::get('settingsSvc')->getTableCount();
+        if ($tableCount <= 0) {
+            Response::success(['table_number' => 0], 'ok');
+            return;
+        }
+        $table = Registry::get('orderSvc')->availableTable($tableCount);
+        Response::success(['table_number' => $table], 'ok');
+    }
+
     public static function index(): void {
         $user = self::requireUser();
         $status = (string)($_GET['status'] ?? '');

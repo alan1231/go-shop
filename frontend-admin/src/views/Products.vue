@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="page-header">
-      <h1><i class="fas fa-box"></i> 商品列表</h1>
-      <router-link to="/products/add" class="btn btn-primary"><i class="fas fa-plus"></i> 新增商品</router-link>
+      <h1><i class="fas fa-utensils"></i> 菜單列表</h1>
+      <router-link to="/products/add" class="btn btn-primary"><i class="fas fa-plus"></i> 新增菜單</router-link>
     </div>
 
     <div class="card filter-bar">
-      <input type="text" v-model="q" placeholder="搜尋商品名稱或描述..." @keyup.enter="search" />
+      <input type="text" v-model="q" placeholder="搜尋菜單名稱或描述..." @keyup.enter="search" />
       <select v-model="category">
         <option value="">全部分類</option>
         <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
@@ -17,13 +17,13 @@
 
     <div class="card" style="padding:0;overflow:hidden;">
       <div v-if="loading" style="text-align:center;padding:48px;color:#888;"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
-      <p v-else-if="!items.length" style="text-align:center;padding:48px;color:#888;">尚無商品</p>
+      <p v-else-if="!items.length" style="text-align:center;padding:48px;color:#888;">尚無菜單</p>
       <template v-else>
         <table>
           <thead>
             <tr>
               <th style="width:60px;">圖片</th>
-              <th>商品名稱</th>
+              <th>菜單名稱</th>
               <th style="text-align:center;">分類</th>
               <th style="text-align:center;">定價 / 特價</th>
               <th style="text-align:center;">狀態</th>
@@ -50,7 +50,8 @@
                 <span v-else class="badge badge-inactive">已下架</span>
               </td>
               <td style="text-align:center;">
-                <router-link :to="`/products/${p.id}/edit`" style="color:#4CAF50;font-size:16px;" title="修改"><i class="fas fa-edit"></i></router-link>
+                <router-link :to="`/products/${p.id}/edit`" style="color:#4CAF50;font-size:16px;margin-right:10px;" title="修改"><i class="fas fa-edit"></i></router-link>
+                <button type="button" style="color:#e53935;background:none;border:none;cursor:pointer;font-size:16px;" title="刪除" @click="remove(p)"><i class="fas fa-trash-alt"></i></button>
               </td>
             </tr>
           </tbody>
@@ -108,6 +109,16 @@ export default {
     goPage(p) {
       this.page = p
       this.load()
+    },
+    async remove(p) {
+      if (!window.confirm(`確定要刪除「${p.name}」嗎？此操作無法復原。`)) return
+      const res = await api.deleteProduct(p.id)
+      if (res.success) {
+        if (this.items.length === 1 && this.page > 1) this.page -= 1
+        await this.load()
+      } else {
+        alert(res.message)
+      }
     },
   },
 }

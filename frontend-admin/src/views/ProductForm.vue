@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="page-header">
-      <h1><i class="fas fa-box"></i> {{ isEdit ? '修改商品' : '新增商品' }}</h1>
+      <h1><i class="fas fa-utensils"></i> {{ isEdit ? '修改菜單' : '新增菜單' }}</h1>
       <router-link to="/products" class="btn btn-default"><i class="fas fa-arrow-left"></i> 返回列表</router-link>
     </div>
 
@@ -10,12 +10,12 @@
     <div class="card" style="max-width:640px;">
       <form @submit.prevent="submit">
         <div class="form-group">
-          <label>商品名稱 *</label>
-          <input type="text" v-model="form.name" required placeholder="輸入商品名稱" />
+          <label>菜單名稱 *</label>
+          <input type="text" v-model="form.name" required placeholder="輸入菜單名稱" />
         </div>
         <div class="form-group">
-          <label>商品描述</label>
-          <textarea v-model="form.description" placeholder="輸入商品描述"></textarea>
+          <label>菜單描述</label>
+          <textarea v-model="form.description" placeholder="輸入菜單描述"></textarea>
         </div>
         <div class="form-group">
           <label>分類</label>
@@ -42,7 +42,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label>商品圖片</label>
+          <label>菜單圖片</label>
           <div style="display:flex;align-items:center;gap:16px;">
             <input type="file" accept="image/*" @change="onFile" />
             <img v-if="preview" :src="preview" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />

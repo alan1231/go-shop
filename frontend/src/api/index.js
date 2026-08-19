@@ -42,6 +42,11 @@ export const api = {
     return request(`/products/${id}`)
   },
 
+  // Tables
+  availableTable() {
+    return request('/tables/available')
+  },
+
   // Orders
   createOrder(items, receiver = {}, remark = '', tableNumber = 0, orderType = 'dine_in') {
     return request('/orders', {

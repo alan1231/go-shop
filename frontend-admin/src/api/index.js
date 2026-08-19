@@ -128,6 +128,9 @@ export const api = {
   updateProduct(id, form) {
     return requestForm(`/admin/products/${id}`, form)
   },
+  deleteProduct(id) {
+    return request(`/admin/products/${id}/delete`, { method: 'POST' })
+  },
 
   orders(params = {}) {
     const qs = new URLSearchParams()

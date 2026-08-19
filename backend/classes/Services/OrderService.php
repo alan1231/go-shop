@@ -45,6 +45,19 @@ class OrderService {
         return $this->repo->findByUserId($userId, $status);
     }
 
+    public function availableTable(int $tableCount): int {
+        if ($tableCount <= 0) {
+            return 0;
+        }
+        $used = array_flip($this->repo->activeTables());
+        for ($i = 1; $i <= $tableCount; $i++) {
+            if (!isset($used[$i])) {
+                return $i;
+            }
+        }
+        return 0;
+    }
+
     public function createOrder(int $userId, array $items, array $receiver, string $remark, ?int $tableNumber = null, string $orderType = 'dine_in'): int {
         if (!in_array($orderType, ['dine_in', 'takeout'], true)) {
             throw new ServiceException('用餐方式無效');

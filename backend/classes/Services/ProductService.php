@@ -40,23 +40,24 @@ class ProductService {
         return $this->repo->getById($id);
     }
 
-    public function create(array $in): void {
+    public function create(array $in): int {
         if (trim($in['name']) === '' || $in['price'] <= 0) {
             throw new ServiceException('請填寫商品名稱且售價需大於 0');
         }
-        $imageName = '';
-        if ($in['image'] !== '') {
-            $imageName = $this->images->save($in['image'], $in['image_name']);
-        }
-        $this->repo->create(
+        $id = $this->repo->create(
             trim($in['name']),
-            $imageName,
+            '',
             $in['description'],
             trim($in['category']),
             $in['price'],
             $in['list_price'],
             $in['status']
         );
+        if ($in['image'] !== '') {
+            $imageName = $this->saveAsProductImage($id, $in['image'], $in['image_name']);
+            $this->repo->updateImage($id, $imageName);
+        }
+        return $id;
     }
 
     public function update(int $id, array $in): void {
@@ -69,10 +70,10 @@ class ProductService {
         }
         $imageName = $p['image'];
         if ($in['image'] !== '') {
-            $imageName = $this->images->save($in['image'], $in['image_name']);
             if ($p['image'] !== '') {
                 $this->images->delete($p['image']);
             }
+            $imageName = $this->saveAsProductImage($id, $in['image'], $in['image_name']);
         }
         $this->repo->update(
             $id,
@@ -84,5 +85,21 @@ class ProductService {
             $in['list_price'],
             $in['status']
         );
+    }
+
+    public function delete(int $id): void {
+        $p = $this->repo->getById($id);
+        if ($p === null) {
+            throw new ServiceException('商品不存在');
+        }
+        if ($p['image'] !== '') {
+            $this->images->delete($p['image']);
+        }
+        $this->repo->delete($id);
+    }
+
+    private function saveAsProductImage(int $id, string $data, string $filename): string {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        return $this->images->saveAs($data, (string)$id . '.' . $ext);
     }
 }

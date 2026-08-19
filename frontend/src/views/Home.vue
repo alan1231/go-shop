@@ -44,6 +44,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCatalogStore } from '../store/catalog.js'
 import { useOrderStore } from '../store/order.js'
 import { useToastStore } from '../store/toast.js'
+import { api } from '../api/index.js'
 import ProductCard from '../components/ProductCard.vue'
 
 const route = useRoute()
@@ -89,8 +90,12 @@ onMounted(async () => {
     orderStore.setDine(0, 'takeout')
   } else if (table > 0) {
     orderStore.setDine(table, 'dine_in')
+  } else if (orderStore.tableNumber > 0) {
+    orderStore.setDine(orderStore.tableNumber, 'dine_in')
   } else {
-    orderStore.setDine(0, 'dine_in')
+    const res = await api.availableTable()
+    const free = Number(res.data?.table_number) || 0
+    orderStore.setDine(free, 'dine_in')
   }
 })
 </script>

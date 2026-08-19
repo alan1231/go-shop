@@ -191,6 +191,13 @@ class OrderRepository {
         return array_map([$this, 'normalize'], $stmt->fetchAll());
     }
 
+    public function activeTables(): array {
+        $rows = $this->pdo->query(
+            "SELECT DISTINCT table_number FROM orders WHERE order_type = 'dine_in' AND table_number IS NOT NULL AND table_number > 0 AND status IN ('pending', 'paid', 'shipped')"
+        )->fetchAll(PDO::FETCH_COLUMN);
+        return array_map('intval', $rows);
+    }
+
     public function beginTransaction(): void {
         $this->pdo->beginTransaction();
     }

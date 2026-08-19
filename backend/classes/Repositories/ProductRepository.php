@@ -60,11 +60,22 @@ class ProductRepository {
         return (int)$this->pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
     }
 
-    public function create(string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, string $status): void {
+    public function create(string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, string $status): int {
         $stmt = $this->pdo->prepare(
             'INSERT INTO products (name, image, description, category, price, list_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([$name, Support::nullIfEmpty($image), $description, Support::nullIfEmpty($category), $price, $listPrice, $status]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    public function updateImage(int $id, string $image): void {
+        $stmt = $this->pdo->prepare('UPDATE products SET image = ? WHERE id = ?');
+        $stmt->execute([$image, $id]);
+    }
+
+    public function delete(int $id): void {
+        $stmt = $this->pdo->prepare('DELETE FROM products WHERE id = ?');
+        $stmt->execute([$id]);
     }
 
     public function findActive(string $keyword = '', string $category = '', int $limit = 100, int $offset = 0): array {

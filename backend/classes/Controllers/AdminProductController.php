@@ -45,6 +45,12 @@ class AdminProductController extends BaseController {
         Response::success(null, '商品修改成功');
     }
 
+    public static function delete(int $id): void {
+        self::requireAdmin();
+        Registry::get('productSvc')->delete($id);
+        Response::success(null, '商品已刪除');
+    }
+
     public static function categories(): void {
         self::requireAdmin();
         Response::success(Registry::get('productSvc')->getAllCategories(), 'ok');

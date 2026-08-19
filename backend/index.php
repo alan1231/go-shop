@@ -33,6 +33,8 @@ $router->get('/api/products', [ApiProductController::class, 'index']);
 $router->get('/api/categories', [ApiProductController::class, 'categories']);
 $router->get('/api/products/{id}', [ApiProductController::class, 'show']);
 
+$router->get('/api/tables/available', [ApiOrderController::class, 'availableTable']);
+
 $router->post('/api/orders', [ApiOrderController::class, 'create']);
 $router->get('/api/orders', [ApiOrderController::class, 'index']);
 $router->get('/api/orders/{id}', [ApiOrderController::class, 'show']);
@@ -51,6 +53,7 @@ $router->get('/api/admin/products', [AdminProductController::class, 'index']);
 $router->post('/api/admin/products', [AdminProductController::class, 'create']);
 $router->get('/api/admin/products/{id}', [AdminProductController::class, 'show']);
 $router->post('/api/admin/products/{id}', [AdminProductController::class, 'update']);
+$router->post('/api/admin/products/{id}/delete', [AdminProductController::class, 'delete']);
 $router->get('/api/admin/categories', [AdminProductController::class, 'categories']);
 
 $router->post('/api/admin/orders', [AdminOrderController::class, 'create']);
