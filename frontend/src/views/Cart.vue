@@ -55,7 +55,6 @@
         <div class="summary-details">
           <div><span>商品數量</span><strong>{{ totalItems }} 件</strong></div>
           <div><span>商品小計</span><strong>NT$ {{ totalPrice.toLocaleString() }}</strong></div>
-          <div><span>運費</span><strong>結帳時計算</strong></div>
         </div>
         <div class="summary-total">
           <span>總金額</span>
@@ -79,22 +78,36 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { api } from '../api/index.js'
 import { useCartStore } from '../store/cart.js'
 import { useToastStore } from '../store/toast.js'
 import { useOrderStore } from '../store/order.js'
-
 const router = useRouter()
+const route = useRoute()
 const cartStore = useCartStore()
 const toastStore = useToastStore()
 const orderStore = useOrderStore()
 
 const ordering = ref(false)
 const remark = ref('')
+
 const cart = computed(() => cartStore.items)
 const totalItems = computed(() => cartStore.count)
 const totalPrice = computed(() => cartStore.items.reduce((s, i) => s + i.price * i.quantity, 0))
+
+onMounted(async () => {
+  const takeout = route.query.takeout || route.query.mode === 'takeout'
+  const table = Number(route.query.table)
+  if (takeout) {
+    cartStore.setDine(0, 'takeout')
+  } else if (table > 0) {
+    cartStore.setDine(table, 'dine_in')
+  } else {
+    cartStore.setDine(0, 'takeout')
+  }
+  await loadCartImages()
+})
 
 async function changeQty(i, delta) {
   const r = await cartStore.changeQty(i, delta)
@@ -115,32 +128,20 @@ async function loadCartImages() {
 }
 
 async function checkout() {
-  if (dineType.value === 'takeout') {
-    const phone = prompt('外帶請留手機號碼，方便取餐聯繫：');
-    if (!phone) return;
-    ordering.value = true;
-    cartStore.setDine(tableNum.value, dineType.value);
-    const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }));
-    const res = await orderStore.placeOrder(items, { name: '', phone, address: '' }, remark.value, cartStore.tableNumber, cartStore.orderType);
-    ordering.value = false;
-    if (res.success) {
-      toastStore.success('訂單已建立！');
-      router.push(`/orders/${res.data.order_id}`);
-    } else {
-      toastStore.error(res.message);
-    }
-    return;
+  ordering.value = true
+  const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
+  let phone = ''
+  if (cartStore.orderType === 'takeout') {
+    phone = prompt('外帶請留手機號碼，方便取餐聯繫：')
+    if (!phone) { ordering.value = false; return }
   }
-  ordering.value = true;
-  cartStore.setDine(tableNum.value, dineType.value);
-  const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }));
-  const res = await orderStore.placeOrder(items, { name: '', phone: '', address: '' }, remark.value, cartStore.tableNumber, cartStore.orderType);
-  ordering.value = false;
+  const res = await orderStore.placeOrder(items, { name: '', phone, address: '' }, remark.value, cartStore.tableNumber, cartStore.orderType)
+  ordering.value = false
   if (res.success) {
-    toastStore.success('訂單已建立！');
-    router.push(`/orders/${res.data.order_id}`);
+    toastStore.success('訂單已建立！')
+    router.push(`/orders/${res.data.order_id}`)
   } else {
-    toastStore.error(res.message);
+    toastStore.error(res.message)
   }
 }
 
