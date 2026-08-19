@@ -10,7 +10,7 @@ const routes = [
   { path: '/', name: 'home', component: Home, meta: { title: '首頁' } },
   { path: '/menu', name: 'menu', component: Home, meta: { title: '菜單' } },
   { path: '/products/:id', name: 'product', component: ProductDetail, meta: { title: '商品' } },
-  { path: '/cart', name: 'cart', component: Cart, meta: { title: '訂單' } },
+  { path: '/order', name: 'cart', component: Cart, meta: { title: '訂單' } },
   { path: '/orders/:id', name: 'order', component: OrderDetail, meta: { title: '訂單' } },
 ]
 

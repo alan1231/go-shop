@@ -8,7 +8,7 @@
         </button>
         <div class="nav-links" :class="{ open: mobileOpen }">
           <router-link to="/"><i class="fas fa-home"></i> 首頁</router-link>
-          <router-link to="/cart"><i class="fas fa-clipboard-list"></i> 訂單 ({{ cartCount }})</router-link>
+          <router-link to="/order"><i class="fas fa-clipboard-list"></i> 訂單 ({{ cartCount }})</router-link>
         </div>
       </div>
     </nav>
