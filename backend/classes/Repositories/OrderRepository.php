@@ -64,6 +64,7 @@ class OrderRepository {
             $i['quantity'] = (int)$i['quantity'];
             $i['name'] = $i['name'] ?? '';
             $i['image'] = $i['image'] ?? '';
+            $i['note'] = $i['note'] ?? '';
             return $i;
         }, $stmt->fetchAll());
     }
@@ -178,9 +179,9 @@ class OrderRepository {
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function createItem(int $orderId, int $productId, float $price, int $quantity): void {
-        $stmt = $this->pdo->prepare('INSERT INTO order_items (order_id, product_id, price, quantity) VALUES (?, ?, ?, ?)');
-        $stmt->execute([$orderId, $productId, $price, $quantity]);
+    public function createItem(int $orderId, int $productId, float $price, int $quantity, string $note = ''): void {
+        $stmt = $this->pdo->prepare('INSERT INTO order_items (order_id, product_id, price, quantity, note) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([$orderId, $productId, $price, $quantity, $note]);
     }
 
     public function getRecent(int $limit = 5): array {

@@ -123,6 +123,7 @@ class Migrate {
         $alterIfMissing('orders', 'payment_method', 'ALTER TABLE orders ADD COLUMN payment_method VARCHAR(20) DEFAULT \'\'');
         $alterIfMissing('orders', 'table_number', 'ALTER TABLE orders ADD COLUMN table_number INT DEFAULT NULL');
         $alterIfMissing('orders', 'order_type', "ALTER TABLE orders ADD COLUMN order_type VARCHAR(20) DEFAULT 'dine_in'");
+        $alterIfMissing('order_items', 'note', 'ALTER TABLE order_items ADD COLUMN note TEXT DEFAULT NULL');
         $alterIfMissing('admin_users', 'token', 'ALTER TABLE admin_users ADD COLUMN token VARCHAR(64) DEFAULT NULL');
         $alterIfMissing('admin_users', 'provider', "ALTER TABLE admin_users ADD COLUMN provider VARCHAR(20) DEFAULT NULL");
         $alterIfMissing('admin_users', 'provider_id', 'ALTER TABLE admin_users ADD COLUMN provider_id VARCHAR(100) DEFAULT NULL');

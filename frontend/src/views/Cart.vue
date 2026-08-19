@@ -20,6 +20,10 @@
               <div class="item-info">
                 <h3>{{ item.name }}</h3>
                 <div class="item-price">NT$ {{ Number(item.price).toLocaleString() }}</div>
+                <div class="item-note-field">
+                  <label for="item-note-{{ i }}">備註</label>
+                  <textarea id="item-note-{{ i }}" v-model="item.note" rows="1" placeholder="例如：少辣、不要香菜、醬料分開" @input="updateItemNote(i, $event.target.value)"></textarea>
+                </div>
               </div>
               <div class="item-controls">
                 <div class="qty-control">
@@ -118,6 +122,11 @@ async function removeItem(i) {
   await cartStore.remove(i)
 }
 
+function updateItemNote(i, note) {
+  cartStore.items[i].note = note
+  cartStore.saveGuest()
+}
+
 async function loadCartImages() {
   const missing = cartStore.items.filter(item => !item.image && Number.isFinite(Number(item.product_id)))
   await Promise.all(missing.map(async item => {
@@ -129,7 +138,7 @@ async function loadCartImages() {
 
 async function checkout() {
   ordering.value = true
-  const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
+  const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity, note: i.note || '' }))
   let phone = ''
   if (cartStore.orderType === 'takeout') {
     phone = prompt('外帶請留手機號碼，方便取餐聯繫：')
@@ -165,8 +174,11 @@ onMounted(async () => {
 .product-placeholder .material-symbols-outlined { font-size: 30px; }
 .item-info { flex: 1; min-width: 0; }
 .item-info h3 { overflow: hidden; color: var(--shop-text); font-size: 20px; font-weight: 600; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.item-info p { margin: 3px 0 9px; color: var(--shop-text-muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; }
 .item-price { color: var(--shop-primary); font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; }
+.item-note-field { margin-top: 8px; }
+.item-note-field label { display: block; font-size: 11px; color: var(--shop-text-muted); margin-bottom: 4px; }
+.item-note-field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--shop-border); border-radius: 6px; font-size: 12px; font-family: inherit; color: var(--shop-text); background: var(--shop-input); resize: vertical; min-height: 32px; max-height: 60px; transition: border-color 0.2s; }
+.item-note-field textarea:focus { outline: none; border-color: var(--shop-primary); box-shadow: 0 0 0 3px rgba(76,175,80,0.12); }
 .item-controls { display: flex; align-items: center; gap: 10px; }
 .qty-control { display: flex; flex-direction: column; align-items: center; overflow: hidden; border: 1px solid var(--shop-border); border-radius: 8px; background: var(--shop-input); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); }
 .qty-control button { display: flex; width: 34px; height: 29px; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--shop-text-muted); cursor: pointer; transition: color 0.2s, transform 0.2s; }

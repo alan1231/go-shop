@@ -69,7 +69,7 @@ class OrderService {
                 if ($p === null || $p['status'] !== 'active') {
                     throw new ServiceException('商品不存在或已下架');
                 }
-                $lines[] = ['product' => $p, 'quantity' => $qty];
+                $lines[] = ['product' => $p, 'quantity' => $qty, 'note' => $item['note'] ?? ''];
                 $total += (float)$p['price'] * $qty;
             }
             if (count($lines) === 0) {
@@ -86,7 +86,7 @@ class OrderService {
                 $orderType
             );
             foreach ($lines as $l) {
-                $this->repo->createItem($orderId, (int)$l['product']['id'], (float)$l['product']['price'], $l['quantity']);
+                $this->repo->createItem($orderId, (int)$l['product']['id'], (float)$l['product']['price'], $l['quantity'], $l['note']);
             }
             $this->repo->commit();
             return $orderId;
