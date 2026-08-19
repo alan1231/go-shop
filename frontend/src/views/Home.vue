@@ -159,7 +159,7 @@ function goPage(p) {
 
 onMounted(async () => {
   catalog.init()
-  const takeout = route.query.takeout === '1' || route.query.mode === 'takeout'
+  const takeout = route.query.takeout || route.query.mode === 'takeout'
   const table = Number(route.query.table)
   if (takeout) {
     cartStore.setDine(0, 'takeout')
