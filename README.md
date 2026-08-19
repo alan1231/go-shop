@@ -270,7 +270,8 @@ cd ../frontend-admin && npm install && npm run build
 
 ### 相關檔位
 
-- 後端：`backend/classes/Services/LinePayService.php`（簽章與 HTTP 呼叫）、`backend/classes/Services/OrderService.php`（`startLinePay` / `checkLinePay` / `payWithCashOnDelivery`）、`backend/classes/Controllers/ApiOrderController.php`（`pay` / `payStatus`）
+- LINE Pay SDK：獨立套件 `linepay-php/`（`LinePayGateway` / `LinePayClient`，含 request/confirm/refund/check 與回碼狀態機），以 composer path repository 引入，可複製到其他專案使用，見 `linepay-php/README.md`
+- 後端整合：`backend/classes/Services/OrderService.php`（`startLinePay` / `checkLinePay` / `payWithCashOnDelivery`）、`backend/classes/Controllers/ApiOrderController.php`（`pay` / `payStatus`）、`backend/bootstrap.php`（組裝 `LinePayGateway`）
 - 資料表：`orders.linepay_transaction_id`（LINE Pay 交易 ID）、`orders.payment_method`（`linepay` / `cod`）
 - 前端：`frontend/src/views/OrderDetail.vue`（付款按鈕、QR Code、彈窗、輪詢）、`frontend/src/store/order.js`（`pay` / `startPolling` / `stopPolling`）
 - 顯示付款方式：`frontend/src/utils/format.js:paymentMethodLabel()`、後台 `frontend-admin/src/views/Orders.vue`、`frontend-admin/src/views/OrderDetail.vue`

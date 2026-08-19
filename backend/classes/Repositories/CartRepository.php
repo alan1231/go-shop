@@ -14,7 +14,7 @@ class CartRepository {
 
     public function findByUserId(int $userId): array {
         $stmt = $this->pdo->prepare(
-            'SELECT ci.product_id, ci.quantity, p.name, p.image, p.price, p.list_price, p.listed_stock, p.status
+            'SELECT ci.product_id, ci.quantity, p.name, p.image, p.price, p.list_price, p.status
              FROM cart_items ci JOIN products p ON p.id = ci.product_id
              WHERE ci.user_id = ? ORDER BY ci.id'
         );
@@ -24,7 +24,6 @@ class CartRepository {
             $row['quantity'] = (int)$row['quantity'];
             $row['price'] = (float)$row['price'];
             $row['list_price'] = $row['list_price'] === null ? null : (float)$row['list_price'];
-            $row['listed_stock'] = (int)$row['listed_stock'];
             return $row;
         }, $stmt->fetchAll());
     }

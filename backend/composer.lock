@@ -4,8 +4,42 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f02fe919088821d2b663e9bfb5249b26",
-    "packages": [],
+    "content-hash": "548d8690d9b8a96005c27552bf7b1bcb",
+    "packages": [
+        {
+            "name": "linepay/php-sdk",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "../linepay-php",
+                "reference": "17a9b465a7708371000885c03cdf1de822ddbcca"
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": ">=8.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "LinePay\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "LinePay\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "LINE Pay (v3) PHP SDK - request/confirm/refund/check + payment status machine, framework-agnostic",
+            "transport-options": {
+                "symlink": false,
+                "relative": true
+            }
+        }
+    ],
     "packages-dev": [
         {
             "name": "myclabs/deep-copy",

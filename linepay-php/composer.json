@@ -1,0 +1,22 @@
+{
+    "name": "linepay/php-sdk",
+    "description": "LINE Pay (v3) PHP SDK - request/confirm/refund/check + payment status machine, framework-agnostic",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "LinePay\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LinePay\\Tests\\": "tests/"
+        }
+    }
+}

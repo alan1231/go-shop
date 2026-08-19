@@ -5,8 +5,10 @@ namespace App\Tests;
 use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\ServiceException;
-use App\Services\LinePayService;
 use App\Services\OrderService;
+use LinePay\LinePayClient;
+use LinePay\LinePayConfig;
+use LinePay\LinePayGateway;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -27,8 +29,6 @@ final class OrderServiceTest extends TestCase {
             category TEXT,
             price REAL NOT NULL,
             list_price REAL,
-            stock INTEGER DEFAULT 0,
-            listed_stock INTEGER DEFAULT 0,
             status TEXT DEFAULT \'active\',
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )');
@@ -66,20 +66,14 @@ final class OrderServiceTest extends TestCase {
             $this->pdo,
             new OrderRepository($this->pdo),
             new ProductRepository($this->pdo),
-            new LinePayService('', '', 'true')
+            new LinePayGateway(new LinePayClient(new LinePayConfig('', '', true)))
         );
     }
 
-    private function product(int $stock = 5, string $status = 'active', float $price = 100.0): int {
-        $stmt = $this->pdo->prepare('INSERT INTO products (name, price, stock, listed_stock, status) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute(['測試商品', $price, $stock, $stock, $status]);
+    private function product(string $status = 'active', float $price = 100.0): int {
+        $stmt = $this->pdo->prepare('INSERT INTO products (name, price, status) VALUES (?, ?, ?)');
+        $stmt->execute(['測試商品', $price, $status]);
         return (int)$this->pdo->lastInsertId();
-    }
-
-    private function stockOf(int $id): array {
-        $stmt = $this->pdo->prepare('SELECT stock, listed_stock FROM products WHERE id = ?');
-        $stmt->execute([$id]);
-        return $stmt->fetch();
     }
 
     private function orderCount(): int {
@@ -91,8 +85,8 @@ final class OrderServiceTest extends TestCase {
     }
 
     public function testCreateOrderSuccess(): void {
-        $a = $this->product(10, 'active', 100.0);
-        $b = $this->product(5, 'active', 50.5);
+        $a = $this->product('active', 100.0);
+        $b = $this->product('active', 50.5);
 
         $orderId = $this->orderSvc->createOrder(1, [
             ['product_id' => $a, 'quantity' => 2],
@@ -104,58 +98,10 @@ final class OrderServiceTest extends TestCase {
         $this->assertSame('pending', $order['status']);
         $this->assertEqualsWithDelta(351.5, $order['total_amount'], 1e-6);
         $this->assertCount(2, $order['items']);
-
-        $stockA = $this->stockOf($a);
-        $this->assertSame(8, $stockA['stock']);
-        $this->assertSame(8, $stockA['listed_stock']);
-    }
-
-    public function testCreateOrderAllowsExactStock(): void {
-        $a = $this->product(3);
-        $orderId = $this->orderSvc->createOrder(1, [
-            ['product_id' => $a, 'quantity' => 3],
-        ], $this->receiver(), '');
-        $this->assertNotNull($orderId);
-        $stock = $this->stockOf($a);
-        $this->assertSame(0, $stock['stock']);
-    }
-
-    public function testCreateOrderRejectsOverstock(): void {
-        $a = $this->product(2);
-        try {
-            $this->orderSvc->createOrder(1, [
-                ['product_id' => $a, 'quantity' => 3],
-            ], $this->receiver(), '');
-            $this->fail('應拋出 ServiceException');
-        } catch (ServiceException $e) {
-            $this->assertStringContainsString('庫存不足', $e->getMessage());
-        }
-        $stock = $this->stockOf($a);
-        $this->assertSame(2, $stock['stock']);
-        $this->assertSame(0, $this->orderCount());
-    }
-
-    public function testCreateOrderRollsBackEarlierDecreasesWhenLaterItemFails(): void {
-        $a = $this->product(5);
-        $b = $this->product(2);
-
-        try {
-            $this->orderSvc->createOrder(1, [
-                ['product_id' => $a, 'quantity' => 3],
-                ['product_id' => $b, 'quantity' => 3],
-            ], $this->receiver(), '');
-            $this->fail('應拋出 ServiceException');
-        } catch (ServiceException $e) {
-            $this->assertStringContainsString('庫存不足', $e->getMessage());
-        }
-
-        $this->assertSame(5, $this->stockOf($a)['stock']);
-        $this->assertSame(2, $this->stockOf($b)['stock']);
-        $this->assertSame(0, $this->orderCount());
     }
 
     public function testCreateOrderRejectsInactiveProduct(): void {
-        $a = $this->product(5, 'inactive');
+        $a = $this->product('inactive');
         try {
             $this->orderSvc->createOrder(1, [
                 ['product_id' => $a, 'quantity' => 1],
@@ -165,7 +111,6 @@ final class OrderServiceTest extends TestCase {
             $this->assertStringContainsString('商品不存在或已下架', $e->getMessage());
         }
         $this->assertSame(0, $this->orderCount());
-        $this->assertSame(5, $this->stockOf($a)['stock']);
     }
 
     public function testCreateOrderRejectsUnknownProduct(): void {
@@ -194,7 +139,7 @@ final class OrderServiceTest extends TestCase {
     }
 
     public function testUpdateStatus(): void {
-        $a = $this->product(3);
+        $a = $this->product();
         $orderId = $this->orderSvc->createOrder(1, [
             ['product_id' => $a, 'quantity' => 1],
         ], $this->receiver(), '');
@@ -203,7 +148,7 @@ final class OrderServiceTest extends TestCase {
     }
 
     public function testUpdateStatusRejectsInvalidStatus(): void {
-        $a = $this->product(3);
+        $a = $this->product();
         $orderId = $this->orderSvc->createOrder(1, [
             ['product_id' => $a, 'quantity' => 1],
         ], $this->receiver(), '');
@@ -217,7 +162,7 @@ final class OrderServiceTest extends TestCase {
     }
 
     public function testCompletedStatusIsTerminal(): void {
-        $a = $this->product(3);
+        $a = $this->product();
         $orderId = $this->orderSvc->createOrder(1, [
             ['product_id' => $a, 'quantity' => 1],
         ], $this->receiver(), '');
@@ -232,7 +177,7 @@ final class OrderServiceTest extends TestCase {
     }
 
     public function testStartLinePayRequiresConfiguration(): void {
-        $a = $this->product(3);
+        $a = $this->product();
         $orderId = $this->orderSvc->createOrder(1, [
             ['product_id' => $a, 'quantity' => 1],
         ], $this->receiver(), '');

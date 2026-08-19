@@ -6,15 +6,20 @@ use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\ServiceException;
 use App\Support;
+use LinePay\LinePayException;
+use LinePay\LinePayGateway;
+use LinePay\LinePayOrder;
+use LinePay\LinePayProduct;
+use LinePay\LinePayStatus;
 use PDO;
 
 class OrderService {
     private PDO $pdo;
     private OrderRepository $repo;
     private ProductRepository $productRepo;
-    private LinePayService $linePay;
+    private LinePayGateway $linePay;
 
-    public function __construct(PDO $pdo, OrderRepository $repo, ProductRepository $productRepo, LinePayService $linePay) {
+    public function __construct(PDO $pdo, OrderRepository $repo, ProductRepository $productRepo, LinePayGateway $linePay) {
         $this->pdo = $pdo;
         $this->repo = $repo;
         $this->productRepo = $productRepo;
@@ -58,14 +63,11 @@ class OrderService {
                 if ($p === null || $p['status'] !== 'active') {
                     throw new ServiceException('商品不存在或已下架');
                 }
-                if (!$this->productRepo->decreaseStockIfAvailable($productId, $qty)) {
-                    throw new ServiceException('商品「' . $p['name'] . '」庫存不足');
-                }
                 $lines[] = ['product' => $p, 'quantity' => $qty];
                 $total += (float)$p['price'] * $qty;
             }
             if (count($lines) === 0) {
-                throw new ServiceException('商品不存在或庫存不足');
+                throw new ServiceException('商品不存在或已下架');
             }
             $orderId = $this->repo->createOrder(
                 $userId,
@@ -126,38 +128,38 @@ class OrderService {
 
         $products = [];
         foreach ($this->repo->getItems($id) as $item) {
-            $products[] = [
-                'id' => (string)$item['product_id'],
-                'name' => $item['name'],
-                'quantity' => (int)$item['quantity'],
-                'price' => (int)round((float)$item['price']),
-            ];
+            $products[] = new LinePayProduct(
+                (string)$item['product_id'],
+                $item['name'],
+                (int)$item['quantity'],
+                (int)round((float)$item['price']),
+            );
         }
 
         $orderId = 'SHOP-' . str_pad((string)$id, 10, '0', STR_PAD_LEFT);
         $returnUrl = 'http://localhost:5173/orders/' . $id;
-        $resp = $this->linePay->request([
-            'amount' => $amount,
-            'orderId' => $orderId,
-            'packageName' => '購物訂單 #' . $id,
-            'products' => $products,
-        ], $returnUrl, $returnUrl);
 
-        if (($resp['returnCode'] ?? '') !== '0000') {
-            throw new ServiceException('LINE Pay 請求失敗：' . ($resp['returnMessage'] ?? '未知錯誤'));
+        try {
+            $result = $this->linePay->start(new LinePayOrder(
+                $amount,
+                $orderId,
+                '購物訂單 #' . $id,
+                $products,
+            ), $returnUrl, $returnUrl);
+        } catch (LinePayException $e) {
+            throw new ServiceException('LINE Pay 請求失敗：' . $e->getMessage());
         }
 
-        $info = $resp['info'] ?? [];
-        $transactionId = (string)($info['transactionId'] ?? '');
+        $transactionId = $result->transactionId();
         if ($transactionId !== '') {
             $this->repo->updateLinePayTransactionId($id, $transactionId);
         }
 
         return [
-            'sandbox' => $this->linePay->isSandbox(),
-            'payment_access_token' => (string)($info['paymentAccessToken'] ?? ''),
-            'payment_url' => $info['paymentUrl']['web'] ?? '',
-            'payment_url_app' => (string)($info['paymentUrl']['app'] ?? ''),
+            'sandbox' => $result->isSandbox(),
+            'payment_access_token' => $result->paymentAccessToken(),
+            'payment_url' => $result->paymentUrlWeb(),
+            'payment_url_app' => $result->paymentUrlApp(),
             'transaction_id' => $transactionId,
         ];
     }
@@ -171,27 +173,12 @@ class OrderService {
         if ($transactionId === '') {
             return ['status' => 'pending', 'payment' => 'none'];
         }
-        $resp = $this->linePay->checkStatus($transactionId);
-        $code = (string)($resp['returnCode'] ?? '');
-        if ($code === '0123') {
+        $status = $this->linePay->capture($transactionId, $this->amountOf($id));
+        if ($status->value() === LinePayStatus::PAID) {
             $this->updateStatus($id, 'paid');
             return ['status' => 'paid'];
         }
-        if ($code === '0110') {
-            $confirm = $this->linePay->confirm($transactionId, $this->amountOf($id));
-            $confirmCode = (string)($confirm['returnCode'] ?? '');
-            if ($confirmCode === '0000') {
-                $this->updateStatus($id, 'paid');
-                return ['status' => 'paid'];
-            }
-            $recheck = $this->linePay->checkStatus($transactionId);
-            if ((string)($recheck['returnCode'] ?? '') === '0123') {
-                $this->updateStatus($id, 'paid');
-                return ['status' => 'paid'];
-            }
-            return ['status' => 'pending', 'payment' => 'waiting'];
-        }
-        if ($code === '0121' || $code === '0122') {
+        if ($status->value() === LinePayStatus::CANCELLED) {
             return ['status' => 'pending', 'payment' => 'cancelled'];
         }
         return ['status' => 'pending', 'payment' => 'waiting'];

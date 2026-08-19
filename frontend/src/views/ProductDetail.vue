@@ -30,15 +30,11 @@
             <span class="sale-price">NT$ {{ money(p.price) }}</span>
             <span v-if="p.list_price" class="list-price">NT$ {{ money(p.list_price) }}</span>
           </div>
-          <div class="stock" :class="p.stock > 0 ? 'available' : 'sold-out'">
-            <span class="status-dot"></span>
-            {{ p.stock > 0 ? `現貨供應・剩餘 ${p.stock} 件` : '目前完售' }}
-          </div>
           <div class="quick-description">{{ p.description || '此商品尚未提供詳細說明。' }}</div>
           <div class="actions">
-            <button class="cart-button" type="button" :disabled="!p.stock" @click="joinCart">
+            <button class="cart-button" type="button" @click="joinCart">
               <span class="material-symbols-outlined">add_shopping_cart</span>
-              {{ p.stock ? '加入購物車' : '商品已完售' }}
+              加入購物車
             </button>
             <button class="secondary-button" type="button" @click="goBack">繼續購物</button>
           </div>
@@ -57,7 +53,6 @@
         <dl class="product-meta">
           <div><dt>商品編號</dt><dd>#{{ p.id }}</dd></div>
           <div><dt>商品分類</dt><dd>{{ p.category || '未分類' }}</dd></div>
-          <div><dt>庫存狀態</dt><dd>{{ p.stock > 0 ? '有庫存' : '完售' }}</dd></div>
         </dl>
       </section>
     </template>
@@ -190,23 +185,6 @@ onMounted(() => catalog.loadDetail(parseInt(route.params.id)))
   font-size: 15px;
   text-decoration: line-through;
 }
-.stock {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  color: var(--shop-text-muted);
-  font-size: 13px;
-  font-weight: 700;
-}
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.stock.available { color: var(--shop-primary); }
-.stock.sold-out { color: var(--shop-error); }
 .quick-description {
   display: -webkit-box;
   margin-bottom: 26px;

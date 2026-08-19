@@ -56,8 +56,6 @@ class AdminProductController extends BaseController {
             'category' => (string)($_POST['category'] ?? ''),
             'price' => Support::float((string)($_POST['price'] ?? '')),
             'list_price' => null,
-            'stock' => Support::int((string)($_POST['stock'] ?? '')),
-            'listed_stock' => Support::int((string)($_POST['listed_stock'] ?? '')),
             'status' => (string)($_POST['status'] ?? ''),
             'image' => '',
             'image_name' => '',

@@ -26,7 +26,6 @@
               <th>商品名稱</th>
               <th style="text-align:center;">分類</th>
               <th style="text-align:center;">定價 / 售價</th>
-              <th style="text-align:center;">庫存 / 上架</th>
               <th style="text-align:center;">狀態</th>
               <th style="text-align:center;width:90px;">操作</th>
             </tr>
@@ -45,10 +44,6 @@
               <td style="text-align:center;">
                 <span v-if="p.list_price && p.list_price > p.price" style="text-decoration:line-through;color:#aaa;font-size:12px;margin-right:4px;">{{ fmt(p.list_price) }}</span>
                 <span :style="p.list_price && p.list_price > p.price ? 'color:#e44d26;font-weight:700;' : 'font-weight:600;'">{{ fmt(p.price) }}</span>
-              </td>
-              <td style="text-align:center;">
-                <div>{{ p.stock }} / {{ p.listed_stock }}</div>
-                <span v-if="p.status === 'active' && p.listed_stock === 0" style="padding:2px 6px;border-radius:8px;font-size:10px;background:#ffebee;color:#c62828;">完售</span>
               </td>
               <td style="text-align:center;">
                 <span v-if="p.status === 'active'" class="badge badge-active">上架中</span>

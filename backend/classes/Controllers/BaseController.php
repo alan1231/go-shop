@@ -74,7 +74,6 @@ class BaseController {
             'category' => Support::nullIfEmpty($p['category'] ?? ''),
             'price' => (float)$p['price'],
             'list_price' => $p['list_price'] === null ? null : (float)$p['list_price'],
-            'stock' => (int)$p['stock'],
             'status' => $p['status'] ?? '',
         ];
     }
@@ -88,7 +87,6 @@ class BaseController {
             'category' => Support::nullIfEmpty($p['category'] ?? ''),
             'price' => (float)$p['price'],
             'list_price' => $p['list_price'] === null ? null : (float)$p['list_price'],
-            'stock' => (int)$p['listed_stock'],
         ];
     }
 
@@ -101,8 +99,6 @@ class BaseController {
             'category' => Support::nullIfEmpty($p['category'] ?? ''),
             'price' => (float)$p['price'],
             'list_price' => $p['list_price'] === null ? null : (float)$p['list_price'],
-            'stock' => (int)$p['stock'],
-            'listed_stock' => (int)$p['listed_stock'],
             'status' => $p['status'] ?? '',
             'created_at' => $p['created_at'] ?? '',
         ];

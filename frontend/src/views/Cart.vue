@@ -19,7 +19,6 @@
               </div>
               <div class="item-info">
                 <h3>{{ item.name }}</h3>
-                <p>庫存 {{ item.stock }} 件</p>
                 <div class="item-price">NT$ {{ Number(item.price).toLocaleString() }}</div>
               </div>
               <div class="item-controls">

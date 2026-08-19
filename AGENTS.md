@@ -36,6 +36,7 @@
 │       └── Controllers/       # 前台/後台 handler + BaseController
 ├── frontend/                  # Vue 3 前台 SPA
 ├── frontend-admin/            # Vue 3 後台 SPA
+├── linepay-php/               # 獨立 LINE Pay SDK 套件（LinePay\ namespace，可複用於其他專案）
 └── uploads/                   # 商品圖片
 ```
 
@@ -62,7 +63,7 @@
 
 **admin_users（後台管理員）**：id、username、password、token、created_at
 
-**products**：id、name、image（檔名）、description、category、price、list_price、stock、listed_stock、status（預設 'active'）、created_at
+**products**：id、name、image（檔名）、description、category、price、list_price、status（預設 'active'）、created_at
 
 **orders**：id、user_id、total_amount、status（預設 'pending'）、remark、member_remark、receiver_name、receiver_phone、receiver_address、created_at
 
@@ -78,8 +79,7 @@
 ```
 Cart.vue → POST /api/orders (Bearer token)
   → ApiOrderController::create → requireUser()
-  → OrderService::createOrder → PDO transaction → 檢查 active/庫存
-  → ProductRepository::decreaseStockIfAvailable（rowCount()==1 判斷成功）
+  → OrderService::createOrder → PDO transaction → 檢查 product 存在且 active
   → 建單 + 明細 → commit
 ```
 
@@ -109,7 +109,6 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 
 - 建表集中在 `Migrate::run()`：`CREATE TABLE IF NOT EXISTS` + `SHOW COLUMNS` 檢查後 `ALTER TABLE` 補欄位
 - Repository 建構子可帶 PDO；`Database::connect()` 回傳同一個連線（單例），下單在 service 內開 transaction
-- 防超賣：`UPDATE products SET stock = stock - ?, listed_stock = listed_stock - ? WHERE id = ? AND stock >= ? AND listed_stock >= ?`，以 `rowCount() == 1` 判斷成功
 - 需登入的 API 必須帶 `Authorization: Bearer <token>`
 
 ## 錯誤處理慣例
@@ -122,8 +121,8 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 
 ## 已知陷阱（務必遵守）
 
-1. **curl `CURLOPT_TIMEOUT` 是秒**：OAuth / LINE Pay 的 `CURLOPT_TIMEOUT => 15` 是 15 秒（與 Go 版 `15 * time.Second` 一致），不要寫成毫秒。見 `Services/OAuthService.php`、`Services/LinePayService.php`。
-2. **商品庫存欄位**：前台列表回傳 `listed_stock AS stock`，明細回傳 `listed_stock`（與歷史行為一致）；後台才看真實 `stock` / `listed_stock` 兩欄。修改時務必保持一致。
+1. **curl `CURLOPT_TIMEOUT` 是秒**：OAuth / LINE Pay 的 `CURLOPT_TIMEOUT => 15` 是 15 秒（與 Go 版 `15 * time.Second` 一致），不要寫成毫秒。見 `Services/OAuthService.php`、`linepay-php/src/LinePayCurlTransport.php`。
+2. **商品**：本系統為點餐系統，`products` 無庫存欄位（stock 已全面移除），前台列表/明細不帶任何 stock 資訊，也不做庫存/超賣檢查。不要重新引入庫存欄位。
 3. **商品圖片路徑**：前台 API 回 `/uploads/xxx`；`order_items.image` 只有檔名，前端需自行組 `/uploads/` + 檔名。
 4. **金流用 float**：價格計算全用 float，可能產生小數誤差，如需嚴謹可改 int（分）。
 5. **路徑穿越**：`serveUpload` 用 `realpath` 比對 `UPLOADS_DIR` 前綴防 `..`；`serveSpa` 用 `realpath` + `is_file`，找不到再 fallback `index.html`。不要改成直接 `file_get_contents` 組合路徑。

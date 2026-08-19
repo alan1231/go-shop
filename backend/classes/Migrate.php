@@ -43,8 +43,6 @@ class Migrate {
                 category VARCHAR(100) DEFAULT NULL,
                 price DECIMAL(10,2) NOT NULL,
                 list_price DECIMAL(10,2) DEFAULT NULL,
-                stock INT DEFAULT 0,
-                listed_stock INT DEFAULT 0,
                 status VARCHAR(50) DEFAULT \'active\',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',

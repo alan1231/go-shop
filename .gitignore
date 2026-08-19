@@ -4,6 +4,10 @@ frontend/dist/
 frontend-admin/dist/
 frontend/dev.log
 frontend/dev.err.log
+frontend/dev-server.log
+frontend-admin/dev-admin.log
+uploads.rar
 .env
 backend/vendor/
 .phpunit.result.cache
+*.log

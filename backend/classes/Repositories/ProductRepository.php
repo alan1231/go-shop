@@ -9,7 +9,7 @@ use PDO;
 class ProductRepository {
     private PDO $pdo;
 
-    private const COLS = 'id, name, image, description, category, price, list_price, stock, listed_stock, status, created_at';
+    private const COLS = 'id, name, image, description, category, price, list_price, status, created_at';
 
     public function __construct(?PDO $pdo = null) {
         $this->pdo = $pdo ?? Database::connect();
@@ -60,18 +60,18 @@ class ProductRepository {
         return (int)$this->pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
     }
 
-    public function create(string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, int $stock, int $listedStock, string $status): void {
+    public function create(string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, string $status): void {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO products (name, image, description, category, price, list_price, stock, listed_stock, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO products (name, image, description, category, price, list_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$name, Support::nullIfEmpty($image), $description, Support::nullIfEmpty($category), $price, $listPrice, $stock, $listedStock, $status]);
+        $stmt->execute([$name, Support::nullIfEmpty($image), $description, Support::nullIfEmpty($category), $price, $listPrice, $status]);
     }
 
     public function findActive(string $keyword = '', string $category = '', int $limit = 100, int $offset = 0): array {
         [$sql, $args] = $this->buildFilterSql(
             $keyword,
             $category,
-            "SELECT id, name, image, description, category, price, list_price, listed_stock AS stock, status, created_at FROM products WHERE status = 'active' AND listed_stock > 0"
+            "SELECT id, name, image, description, category, price, list_price, status, created_at FROM products WHERE status = 'active'"
         );
         $sql .= ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
         $args[] = $limit;
@@ -85,7 +85,7 @@ class ProductRepository {
         [$sql, $args] = $this->buildFilterSql(
             $keyword,
             $category,
-            "SELECT COUNT(*) FROM products WHERE status = 'active' AND listed_stock > 0"
+            "SELECT COUNT(*) FROM products WHERE status = 'active'"
         );
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($args);
@@ -99,19 +99,11 @@ class ProductRepository {
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
-    public function decreaseStockIfAvailable(int $id, int $qty): bool {
+    public function update(int $id, string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, string $status): void {
         $stmt = $this->pdo->prepare(
-            'UPDATE products SET stock = stock - ?, listed_stock = listed_stock - ? WHERE id = ? AND stock >= ? AND listed_stock >= ?'
+            'UPDATE products SET name = ?, image = ?, description = ?, category = ?, price = ?, list_price = ?, status = ? WHERE id = ?'
         );
-        $stmt->execute([$qty, $qty, $id, $qty, $qty]);
-        return $stmt->rowCount() === 1;
-    }
-
-    public function update(int $id, string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, int $stock, int $listedStock, string $status): void {
-        $stmt = $this->pdo->prepare(
-            'UPDATE products SET name = ?, image = ?, description = ?, category = ?, price = ?, list_price = ?, stock = ?, listed_stock = ?, status = ? WHERE id = ?'
-        );
-        $stmt->execute([$name, $image, $description, Support::nullIfEmpty($category), $price, $listPrice, $stock, $listedStock, $status, $id]);
+        $stmt->execute([$name, $image, $description, Support::nullIfEmpty($category), $price, $listPrice, $status, $id]);
     }
 
     private function buildFilterSql(string $keyword, string $category, string $base): array {

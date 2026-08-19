@@ -55,8 +55,6 @@ class ProductService {
             trim($in['category']),
             $in['price'],
             $in['list_price'],
-            $in['stock'],
-            $in['listed_stock'],
             $in['status']
         );
     }
@@ -84,8 +82,6 @@ class ProductService {
             trim($in['category']),
             $in['price'],
             $in['list_price'],
-            $in['stock'],
-            $in['listed_stock'],
             $in['status']
         );
     }

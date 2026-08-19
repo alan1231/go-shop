@@ -5,7 +5,6 @@
         <img v-if="product.image" :src="product.image" :alt="product.name" />
         <span v-else class="material-symbols-outlined placeholder-icon">inventory_2</span>
         <span v-if="discount" class="product-badge">-{{ discount }}%</span>
-        <span v-else-if="product.stock === 0" class="product-badge sold-out">完售</span>
       </div>
       <small>{{ product.category }}</small>
       <h3>{{ product.name }}</h3>
@@ -14,9 +13,9 @@
         <del v-if="product.list_price">NT$ {{ money(product.list_price) }}</del>
       </div>
     </router-link>
-    <button type="button" :disabled="product.stock === 0" @click="addToCart">
+    <button type="button" @click="addToCart">
       <span class="material-symbols-outlined">shopping_cart</span>
-      {{ product.stock === 0 ? '商品已售完' : '加入購物車' }}
+      加入購物車
     </button>
   </article>
 </template>

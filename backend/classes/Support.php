@@ -51,8 +51,6 @@ class Support {
         $p['id'] = (int)$p['id'];
         $p['price'] = (float)$p['price'];
         $p['list_price'] = $p['list_price'] === null ? null : (float)$p['list_price'];
-        $p['stock'] = (int)($p['stock'] ?? 0);
-        $p['listed_stock'] = (int)($p['listed_stock'] ?? 0);
         $p['image'] = $p['image'] ?? '';
         $p['description'] = $p['description'] ?? '';
         $p['category'] = $p['category'] ?? '';

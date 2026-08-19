@@ -17,13 +17,15 @@ use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\CartService;
 use App\Services\DashboardService;
-use App\Services\LinePayService;
 use App\Services\MarqueeService;
 use App\Services\OAuthService;
 use App\Services\OrderService;
 use App\Services\ProductService;
 use App\Services\RateLimitService;
 use App\Services\UserService;
+use LinePay\LinePayClient;
+use LinePay\LinePayConfig;
+use LinePay\LinePayGateway;
 
 Config::load(__DIR__ . '/../.env');
 $pdo = Database::connect();
@@ -42,12 +44,12 @@ Registry::set('images', new Images(Config::get('UPLOADS_DIR')));
 Registry::set('authSvc', new AuthService(Registry::get('adminRepo')));
 Registry::set('userSvc', new UserService(Registry::get('userRepo')));
 Registry::set('productSvc', new ProductService(Registry::get('productRepo'), Registry::get('images')));
-Registry::set('linePaySvc', new LinePayService(
+Registry::set('linePayGateway', new LinePayGateway(new LinePayClient(new LinePayConfig(
     Config::get('LINE_PAY_CHANNEL_ID'),
     Config::get('LINE_PAY_CHANNEL_SECRET'),
-    Config::get('LINE_PAY_SANDBOX', 'true')
-));
-Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo'), Registry::get('linePaySvc')));
+    Config::get('LINE_PAY_SANDBOX', 'true') !== 'false'
+))));
+Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo'), Registry::get('linePayGateway')));
 Registry::set('cartSvc', new CartService(Registry::get('cartRepo'), Registry::get('productRepo')));
 Registry::set('marqueeSvc', new MarqueeService(Registry::get('marqueeRepo')));
 Registry::set('dashboardSvc', new DashboardService(Registry::get('productRepo'), Registry::get('orderRepo'), Registry::get('userRepo')));

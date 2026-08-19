@@ -33,14 +33,6 @@
             <label>定價 (NT$)</label>
             <input type="number" v-model.number="form.list_price" min="0" step="0.01" />
           </div>
-          <div class="form-group">
-            <label>庫存 *</label>
-            <input type="number" v-model.number="form.stock" required min="0" step="1" />
-          </div>
-          <div class="form-group">
-            <label>上架庫存 *</label>
-            <input type="number" v-model.number="form.listed_stock" required min="0" step="1" />
-          </div>
         </div>
         <div class="form-group">
           <label>狀態</label>
@@ -72,7 +64,7 @@ export default {
   data() {
     return {
       isEdit: !!this.$route.params.id,
-      form: { name: '', description: '', category: '', price: 0, list_price: '', stock: 0, listed_stock: 0, status: 'active' },
+      form: { name: '', description: '', category: '', price: 0, list_price: '', status: 'active' },
       file: null,
       preview: '',
       categories: [],
@@ -94,8 +86,6 @@ export default {
           category: p.category || '',
           price: p.price,
           list_price: p.list_price || '',
-          stock: p.stock,
-          listed_stock: p.listed_stock,
           status: p.status,
         }
         this.preview = p.image
@@ -115,8 +105,6 @@ export default {
       fd.append('description', this.form.description || '')
       fd.append('category', this.form.category || '')
       fd.append('price', this.form.price)
-      fd.append('stock', this.form.stock)
-      fd.append('listed_stock', this.form.listed_stock)
       fd.append('status', this.form.status)
       if (this.form.list_price !== '' && this.form.list_price != null) fd.append('list_price', this.form.list_price)
       if (this.file) fd.append('image', this.file)
@@ -129,7 +117,7 @@ export default {
         this.msgType = 'success'
         this.msg = res.message
         if (!this.isEdit) {
-          this.form = { name: '', description: '', category: '', price: 0, list_price: '', stock: 0, listed_stock: 0, status: 'active' }
+          this.form = { name: '', description: '', category: '', price: 0, list_price: '', status: 'active' }
           this.file = null
           this.preview = ''
         }
