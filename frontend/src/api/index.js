@@ -43,10 +43,10 @@ export const api = {
   },
 
   // Orders
-  createOrder(items, receiver = {}, remark = '', tableNumber = 0) {
+  createOrder(items, receiver = {}, remark = '', tableNumber = 0, orderType = 'dine_in') {
     return request('/orders', {
       method: 'POST',
-      body: JSON.stringify({ items, receiver, remark, table_number: tableNumber }),
+      body: JSON.stringify({ items, receiver, remark, table_number: tableNumber, order_type: orderType }),
     })
   },
   order(id) {

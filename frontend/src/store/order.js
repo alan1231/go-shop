@@ -55,9 +55,12 @@ export const useOrderStore = defineStore('order', {
         this.pollTimer = null
       }
     },
-    async placeOrder(items, receiver, remark, tableNumber) {
-      const res = await api.createOrder(items, receiver, remark, tableNumber)
-      if (res.success) await useCartStore().clear()
+    async placeOrder(items, receiver, remark, tableNumber, orderType) {
+      const res = await api.createOrder(items, receiver, remark, tableNumber, orderType)
+      if (res.success) {
+        await useCartStore().clear()
+        useCartStore().clearDine()
+      }
       return res
     },
   },

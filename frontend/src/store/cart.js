@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { guestCart } from './guestCart.js'
+import { guestDineLoad, guestDineSave, guestDineClear } from './guestDine.js'
 
 function upsertItem(items, product, qty) {
   const exist = items.find(i => i.product_id === product.id)
@@ -20,6 +21,8 @@ function upsertItem(items, product, qty) {
 export const useCartStore = defineStore('cart', {
   state: () => ({
     items: guestCart.load(),
+    tableNumber: guestDineLoad().tableNumber,
+    orderType: guestDineLoad().orderType,
   }),
   getters: {
     count: state => state.items.reduce((s, i) => s + i.quantity, 0),
@@ -49,6 +52,16 @@ export const useCartStore = defineStore('cart', {
     clear() {
       this.items.splice(0, this.items.length)
       guestCart.clear()
+    },
+    setDine(tableNumber, orderType) {
+      this.tableNumber = Number(tableNumber) || 0
+      this.orderType = orderType === 'takeout' ? 'takeout' : 'dine_in'
+      guestDineSave(this.tableNumber, this.orderType)
+    },
+    clearDine() {
+      this.tableNumber = 0
+      this.orderType = 'dine_in'
+      guestDineClear()
     },
   },
 })

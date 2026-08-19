@@ -34,6 +34,25 @@
         </section>
 
         <section>
+          <h2 class="section-title">用餐方式</h2>
+          <div class="shipping-panel glass-panel">
+            <div class="dine-toggle">
+              <button type="button" class="dine-btn" :class="{ active: dineType === 'dine_in' }" @click="dineType = 'dine_in'">
+                <span class="material-symbols-outlined">table_restaurant</span>內用
+              </button>
+              <button type="button" class="dine-btn" :class="{ active: dineType === 'takeout' }" @click="dineType = 'takeout'">
+                <span class="material-symbols-outlined">takeout_dining</span>外帶
+              </button>
+            </div>
+            <div v-if="dineType === 'dine_in'" class="field-group field-wide">
+              <label for="table-number">桌號</label>
+              <input id="table-number" v-model.number="tableNum" type="number" min="1" placeholder="輸入桌號（掃描桌牌 QR 已自動帶入）" />
+            </div>
+            <p v-else class="dine-note field-wide">外帶訂單不需桌號，建議填寫手機號碼方便取餐聯繫。</p>
+          </div>
+        </section>
+
+        <section>
           <h2 class="section-title">收件資訊</h2>
           <div class="shipping-panel glass-panel">
             <div class="field-group">
@@ -100,6 +119,8 @@ const orderStore = useOrderStore()
 const ordering = ref(false)
 const receiver = ref({ name: '', phone: '', address: '' })
 const remark = ref('')
+const dineType = ref(cartStore.orderType)
+const tableNum = ref(cartStore.tableNumber || '')
 
 const cart = computed(() => cartStore.items)
 const totalItems = computed(() => cartStore.count)
@@ -129,8 +150,9 @@ async function checkout() {
     return
   }
   ordering.value = true
+  cartStore.setDine(tableNum.value, dineType.value)
   const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
-  const res = await orderStore.placeOrder(items, receiver.value, remark.value)
+  const res = await orderStore.placeOrder(items, receiver.value, remark.value, cartStore.tableNumber, cartStore.orderType)
   if (res.success) {
     toastStore.success('訂單已建立！')
     router.push(`/orders/${res.data.order_id}`)
@@ -174,6 +196,12 @@ onMounted(async () => {
 .remove-button:hover { background: rgba(255, 180, 171, 0.12); color: var(--shop-error); }
 .remove-button .material-symbols-outlined { font-size: 20px; }
 .shipping-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 24px; border-radius: 12px; }
+.dine-toggle { display: flex; gap: 10px; grid-column: 1 / -1; }
+.dine-btn { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: 8px; height: 46px; border: 1px solid var(--shop-border); border-radius: 10px; background: var(--shop-input); color: var(--shop-text-muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.dine-btn .material-symbols-outlined { font-size: 20px; }
+.dine-btn:hover { border-color: var(--shop-primary); color: var(--shop-text); }
+.dine-btn.active { border-color: var(--shop-primary); background: color-mix(in srgb, var(--shop-primary) 14%, var(--shop-input)); color: var(--shop-primary); }
+.dine-note { margin: 0; color: var(--shop-text-muted); font-size: 13px; line-height: 1.6; }
 .field-wide { grid-column: 1 / -1; }
 .field-group label { display: block; margin-bottom: 8px; color: var(--shop-text-muted); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.05em; }
 .field-group input, .field-group textarea { width: 100%; border: 1px solid var(--shop-border); border-radius: 8px; outline: none; background: var(--shop-input); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); color: var(--shop-text); font-family: 'Hanken Grotesk', sans-serif; font-size: 15px; transition: border-color 0.2s, box-shadow 0.2s; }

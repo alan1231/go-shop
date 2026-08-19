@@ -1,6 +1,14 @@
 <template>
   <div class="min-h-screen bg-background text-on-background relative overflow-x-hidden">
     <main class="pt-4 px-margin-mobile max-w-container-max mx-auto">
+      <section v-if="diningContext" class="dining-banner" aria-label="用餐方式">
+        <span class="material-symbols-outlined">{{ diningContext.icon }}</span>
+        <div>
+          <strong>{{ diningContext.label }}</strong>
+          <small>已記錄，結帳時會帶入訂單</small>
+        </div>
+      </section>
+
       <section v-if="featuredProduct && showDiscovery" class="home-hero">
         <div class="hero-copy">
           <span class="hero-kicker">CURATED TECH · 2026</span>
@@ -92,11 +100,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useCatalogStore } from '../store/catalog.js'
+import { useCartStore } from '../store/cart.js'
 import ProductCard from '../components/ProductCard.vue'
 import { money } from '../utils/format.js'
 
+const route = useRoute()
 const catalog = useCatalogStore()
+const cartStore = useCartStore()
 const catalogEl = ref(null)
 const searchInput = ref(null)
 
@@ -114,6 +126,12 @@ const showDiscovery = computed(() => catalog.showDiscovery)
 const featuredProduct = computed(() => catalog.featuredProduct)
 const saleProducts = computed(() => catalog.saleProducts)
 const catalogTitle = computed(() => catalog.catalogTitle)
+
+const diningContext = computed(() => {
+  if (cartStore.orderType === 'takeout') return { icon: 'takeout_dining', label: '外帶點餐' }
+  if (cartStore.tableNumber > 0) return { icon: 'table_restaurant', label: `${cartStore.tableNumber} 號桌點餐` }
+  return null
+})
 
 function categoryCount(value) {
   return catalog.categoryCount(value)
@@ -139,11 +157,24 @@ function goPage(p) {
   catalog.goPage(p)
 }
 
-onMounted(() => catalog.init())
+onMounted(async () => {
+  catalog.init()
+  const takeout = route.query.takeout === '1' || route.query.mode === 'takeout'
+  const table = Number(route.query.table)
+  if (takeout) {
+    cartStore.setDine(0, 'takeout')
+  } else if (table > 0) {
+    cartStore.setDine(table, 'dine_in')
+  }
+})
 </script>
 
 <style scoped>
 .home-hero { display: grid; gap: 24px; margin: 12px 0 24px; padding: clamp(24px, 5vw, 56px); border: 1px solid var(--shop-border); border-radius: 24px; background: radial-gradient(circle at 80% 20%, rgba(117, 255, 158, .18), transparent 34%), linear-gradient(135deg, var(--shop-surface-low), var(--shop-background)); overflow: hidden; }
+.dining-banner { display: flex; align-items: center; gap: 14px; margin: 12px 0 4px; padding: 16px 18px; border: 1px solid var(--shop-primary); border-radius: 14px; background: color-mix(in srgb, var(--shop-primary) 10%, var(--shop-surface-low)); }
+.dining-banner .material-symbols-outlined { color: var(--shop-primary); font-size: 26px; }
+.dining-banner strong { display: block; color: var(--shop-text); font-size: 15px; }
+.dining-banner small { color: var(--shop-text-muted); font-size: 11px; }
 .hero-copy { align-self: center; }
 .hero-kicker, .section-heading span, .catalog-heading span { color: var(--shop-primary); font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: .16em; }
 .hero-copy h1 { max-width: 650px; margin: 12px 0; color: var(--shop-text); font-family: 'Sora', sans-serif; font-size: clamp(32px, 7vw, 64px); line-height: 1.08; letter-spacing: -.05em; }
