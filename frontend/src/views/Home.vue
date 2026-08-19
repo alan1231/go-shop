@@ -165,6 +165,8 @@ onMounted(async () => {
     cartStore.setDine(0, 'takeout')
   } else if (table > 0) {
     cartStore.setDine(table, 'dine_in')
+  } else {
+    cartStore.setDine(0, 'takeout')
   }
 })
 </script>
