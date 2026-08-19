@@ -34,7 +34,7 @@ export const useCartStore = defineStore('cart', {
     add(product, qty = 1) {
       upsertItem(this.items, product, qty)
       this.saveGuest()
-      return { ok: true, message: `「${product.name}」已加入購物車` }
+      return { ok: true, message: `「${product.name}」已加入訂單` }
     },
     changeQty(index, delta) {
       const item = this.items[index]

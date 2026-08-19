@@ -1,9 +1,9 @@
 <template>
   <div class="cart-page">
-    <h1 class="cart-heading">購物車</h1>
+    <h1 class="cart-heading">訂單內容</h1>
     <div v-if="!cart.length" class="empty-cart glass-panel">
       <span class="material-symbols-outlined">shopping_cart</span>
-      <h2>購物車是空的</h2>
+      <h2>尚未加入品項</h2>
       <p>挑選喜歡的商品後，再回來完成訂單。</p>
       <router-link to="/" class="checkout-button empty-action">繼續購物</router-link>
     </div>

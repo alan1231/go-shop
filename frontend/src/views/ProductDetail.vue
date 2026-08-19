@@ -34,7 +34,7 @@
           <div class="actions">
             <button class="cart-button" type="button" @click="joinCart">
               <span class="material-symbols-outlined">add_shopping_cart</span>
-              加入購物車
+              加入訂單
             </button>
             <button class="secondary-button" type="button" @click="goBack">繼續購物</button>
           </div>

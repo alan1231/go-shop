@@ -15,7 +15,7 @@
     </router-link>
     <button type="button" @click="addToCart">
       <span class="material-symbols-outlined">shopping_cart</span>
-      加入購物車
+      加入訂單
     </button>
   </article>
 </template>
