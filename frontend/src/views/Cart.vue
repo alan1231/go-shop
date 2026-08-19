@@ -49,27 +49,9 @@
               <input id="table-number" v-model.number="tableNum" type="number" min="1" placeholder="輸入桌號（掃描桌牌 QR 已自動帶入）" />
             </div>
             <p v-else class="dine-note field-wide">外帶訂單不需桌號，建議填寫手機號碼方便取餐聯繫。</p>
-          </div>
-        </section>
-
-        <section>
-          <h2 class="section-title">收件資訊</h2>
-          <div class="shipping-panel glass-panel">
-            <div class="field-group">
-              <label for="receiver-name">收件人姓名</label>
-              <input id="receiver-name" v-model="receiver.name" type="text" placeholder="輸入收件人姓名" />
-            </div>
-            <div class="field-group">
-              <label for="receiver-phone">手機號碼</label>
-              <input id="receiver-phone" v-model="receiver.phone" type="tel" placeholder="輸入手機號碼" />
-            </div>
-            <div class="field-group field-wide">
-              <label for="receiver-address">收件地址</label>
-              <textarea id="receiver-address" v-model="receiver.address" rows="3" placeholder="輸入完整收件地址"></textarea>
-            </div>
             <div class="field-group field-wide">
               <label for="order-remark">訂單備註</label>
-              <textarea id="order-remark" v-model="remark" rows="3" placeholder="需要特別說明的事項（選填）"></textarea>
+              <textarea id="order-remark" v-model="remark" rows="2" placeholder="特殊需求或備註（選填）"></textarea>
             </div>
           </div>
         </section>
@@ -117,7 +99,6 @@ const toastStore = useToastStore()
 const orderStore = useOrderStore()
 
 const ordering = ref(false)
-const receiver = ref({ name: '', phone: '', address: '' })
 const remark = ref('')
 const dineType = ref(cartStore.orderType)
 const tableNum = ref(cartStore.tableNumber || '')
@@ -145,21 +126,33 @@ async function loadCartImages() {
 }
 
 async function checkout() {
-  if (!receiver.value.name && !receiver.value.phone && !receiver.value.address) {
-    toastStore.error('請填寫收件資訊，方便店家確認訂單')
-    return
+  if (dineType.value === 'takeout') {
+    const phone = prompt('外帶請留手機號碼，方便取餐聯繫：');
+    if (!phone) return;
+    ordering.value = true;
+    cartStore.setDine(tableNum.value, dineType.value);
+    const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }));
+    const res = await orderStore.placeOrder(items, { name: '', phone, address: '' }, remark.value, cartStore.tableNumber, cartStore.orderType);
+    ordering.value = false;
+    if (res.success) {
+      toastStore.success('訂單已建立！');
+      router.push(`/orders/${res.data.order_id}`);
+    } else {
+      toastStore.error(res.message);
+    }
+    return;
   }
-  ordering.value = true
-  cartStore.setDine(tableNum.value, dineType.value)
-  const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
-  const res = await orderStore.placeOrder(items, receiver.value, remark.value, cartStore.tableNumber, cartStore.orderType)
+  ordering.value = true;
+  cartStore.setDine(tableNum.value, dineType.value);
+  const items = cartStore.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }));
+  const res = await orderStore.placeOrder(items, { name: '', phone: '', address: '' }, remark.value, cartStore.tableNumber, cartStore.orderType);
+  ordering.value = false;
   if (res.success) {
-    toastStore.success('訂單已建立！')
-    router.push(`/orders/${res.data.order_id}`)
+    toastStore.success('訂單已建立！');
+    router.push(`/orders/${res.data.order_id}`);
   } else {
-    toastStore.error(res.message)
+    toastStore.error(res.message);
   }
-  ordering.value = false
 }
 
 onMounted(async () => {
