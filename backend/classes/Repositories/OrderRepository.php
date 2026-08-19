@@ -9,14 +9,14 @@ use PDO;
 class OrderRepository {
     private PDO $pdo;
 
-    private const ORDER_COLS = 'o.id, o.user_id, o.total_amount, o.status, o.remark, o.member_remark, o.receiver_name, o.receiver_phone, o.receiver_address, o.linepay_transaction_id, o.payment_method, o.created_at';
+    private const ORDER_COLS = 'o.id, o.user_id, o.total_amount, o.status, o.remark, o.member_remark, o.receiver_name, o.receiver_phone, o.receiver_address, o.linepay_transaction_id, o.payment_method, o.table_number, o.created_at';
 
     public function __construct(?PDO $pdo = null) {
         $this->pdo = $pdo ?? Database::connect();
     }
 
     public function findAll(string $status = '', int $limit = 100, int $offset = 0): array {
-        $sql = 'SELECT ' . self::ORDER_COLS . ', u.username FROM orders o JOIN users u ON o.user_id = u.id';
+        $sql = 'SELECT ' . self::ORDER_COLS . ', u.username FROM orders o LEFT JOIN users u ON o.user_id = u.id';
         $args = [];
         if ($status !== '' && Support::validStatus($status)) {
             $sql .= ' WHERE o.status = ?';
@@ -44,7 +44,7 @@ class OrderRepository {
 
     public function findById(int $id): ?array {
         $stmt = $this->pdo->prepare(
-            'SELECT ' . self::ORDER_COLS . ', u.username, u.email, u.phone, u.address FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = ?'
+            'SELECT ' . self::ORDER_COLS . ', u.username, u.email, u.phone, u.address FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = ?'
         );
         $stmt->execute([$id]);
         $row = $stmt->fetch();
@@ -148,7 +148,7 @@ class OrderRepository {
                        (SELECT p.image FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1) AS item_image,
                        (SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS item_count,
                        (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_types
-                FROM orders o JOIN users u ON o.user_id = u.id WHERE o.user_id = ?';
+                FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.user_id = ?';
         $args = [$userId];
         if ($status !== '' && Support::validStatus($status)) {
             $sql .= ' AND o.status = ?';
@@ -160,18 +160,19 @@ class OrderRepository {
         return array_map([$this, 'normalize'], $stmt->fetchAll());
     }
 
-    public function createOrder(int $userId, float $total, string $receiverName, string $receiverPhone, string $receiverAddress, string $memberRemark): int {
+    public function createOrder(int $userId, float $total, string $receiverName, string $receiverPhone, string $receiverAddress, string $memberRemark, ?int $tableNumber = null): int {
         $stmt = $this->pdo->prepare(
-            "INSERT INTO orders (user_id, total_amount, status, receiver_name, receiver_phone, receiver_address, member_remark)
-             VALUES (?, ?, 'pending', ?, ?, ?, ?)"
+            "INSERT INTO orders (user_id, total_amount, status, receiver_name, receiver_phone, receiver_address, member_remark, table_number)
+             VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
-            $userId,
+            $userId > 0 ? $userId : null,
             $total,
             Support::nullIfEmpty($receiverName),
             Support::nullIfEmpty($receiverPhone),
             Support::nullIfEmpty($receiverAddress),
             Support::nullIfEmpty($memberRemark),
+            $tableNumber !== null && $tableNumber > 0 ? $tableNumber : null,
         ]);
         return (int)$this->pdo->lastInsertId();
     }
@@ -183,7 +184,7 @@ class OrderRepository {
 
     public function getRecent(int $limit = 5): array {
         $stmt = $this->pdo->prepare(
-            'SELECT ' . self::ORDER_COLS . ', u.username FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT ?'
+            'SELECT ' . self::ORDER_COLS . ', u.username FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT ?'
         );
         $stmt->execute([$limit]);
         return array_map([$this, 'normalize'], $stmt->fetchAll());
@@ -205,6 +206,7 @@ class OrderRepository {
         $o['id'] = (int)$o['id'];
         $o['user_id'] = (int)$o['user_id'];
         $o['total_amount'] = (float)$o['total_amount'];
+        $o['table_number'] = isset($o['table_number']) && $o['table_number'] !== null ? (int)$o['table_number'] : 0;
         foreach (['remark', 'member_remark', 'receiver_name', 'receiver_phone', 'receiver_address', 'linepay_transaction_id', 'payment_method', 'username', 'email', 'phone', 'address'] as $f) {
             $o[$f] = $o[$f] ?? '';
         }

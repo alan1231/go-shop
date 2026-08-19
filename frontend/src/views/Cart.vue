@@ -126,12 +126,8 @@ async function loadCartImages() {
 }
 
 async function checkout() {
-  if (!session.isLoggedIn) {
-    router.push('/login?redirect=/cart')
-    return
-  }
-  if (!receiver.value.name || !receiver.value.phone || !receiver.value.address) {
-    toastStore.error('請填寫完整的收件資訊')
+  if (!receiver.value.name && !receiver.value.phone && !receiver.value.address) {
+    toastStore.error('請填寫收件資訊，方便店家確認訂單')
     return
   }
   ordering.value = true
@@ -139,7 +135,11 @@ async function checkout() {
   const res = await orderStore.placeOrder(items, receiver.value, remark.value)
   if (res.success) {
     toastStore.success('訂單已建立！')
-    router.push(`/orders/${res.data.order_id}`)
+    if (session.isLoggedIn) {
+      router.push(`/orders/${res.data.order_id}`)
+    } else {
+      router.push({ path: `/orders/${res.data.order_id}/success`, state: { order: res.data.order } })
+    }
   } else {
     toastStore.error(res.message)
   }

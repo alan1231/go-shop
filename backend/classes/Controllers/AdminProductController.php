@@ -12,7 +12,8 @@ class AdminProductController extends BaseController {
         $q = (string)($_GET['q'] ?? '');
         $category = (string)($_GET['category'] ?? '');
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $paged = Registry::get('productSvc')->getFilteredPage($q, $category, $page, 10);
+        $perPage = min(1000, max(1, (int)($_GET['per_page'] ?? 10)));
+        $paged = Registry::get('productSvc')->getFilteredPage($q, $category, $page, $perPage);
         $items = array_map(fn($p) => self::adminProductPayload($p), $paged['items']);
         Response::success([
             'items' => $items,

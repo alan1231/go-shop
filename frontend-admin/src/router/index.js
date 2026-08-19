@@ -8,6 +8,8 @@ import OrderDetail from '../views/OrderDetail.vue'
 import Users from '../views/Users.vue'
 import UserForm from '../views/UserForm.vue'
 import Marquee from '../views/Marquee.vue'
+import Settings from '../views/Settings.vue'
+import PointOrder from '../views/PointOrder.vue'
 
 const routes = [
   { path: '/login', name: 'login', component: Login, meta: { title: '登入' } },
@@ -20,6 +22,8 @@ const routes = [
   { path: '/users', name: 'users', component: Users, meta: { title: '會員管理', requiresAuth: true } },
   { path: '/users/add', name: 'user-add', component: UserForm, meta: { title: '新增會員', requiresAuth: true } },
   { path: '/marquee', name: 'marquee', component: Marquee, meta: { title: '跑馬燈', requiresAuth: true } },
+  { path: '/settings', name: 'settings', component: Settings, meta: { title: '桌數設定', requiresAuth: true } },
+  { path: '/point-order', name: 'point-order', component: PointOrder, meta: { title: '新增訂單', requiresAuth: true } },
 ]
 
 const router = createRouter({

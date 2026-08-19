@@ -34,7 +34,7 @@ final class OrderServiceTest extends TestCase {
         )');
         $this->pdo->exec('CREATE TABLE orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            user_id INTEGER,
             total_amount REAL NOT NULL,
             status TEXT DEFAULT \'pending\',
             remark TEXT,
@@ -44,6 +44,7 @@ final class OrderServiceTest extends TestCase {
             receiver_address TEXT,
             linepay_transaction_id TEXT,
             payment_method TEXT DEFAULT \'\',
+            table_number INTEGER,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )');
         $this->pdo->exec('CREATE TABLE users (
@@ -188,5 +189,37 @@ final class OrderServiceTest extends TestCase {
             $this->assertStringContainsString('LINE Pay 尚未設定', $e->getMessage());
             throw $e;
         }
+    }
+
+    public function testCreateOrderWithTableNumber(): void {
+        $a = $this->product();
+        $orderId = $this->orderSvc->createOrder(1, [
+            ['product_id' => $a, 'quantity' => 2],
+        ], $this->receiver(), '', 5);
+        $order = $this->orderSvc->getWithItems($orderId);
+        $this->assertSame(5, $order['table_number']);
+    }
+
+    public function testCreateOrderAnonymous(): void {
+        $a = $this->product();
+        $orderId = $this->orderSvc->createOrder(0, [
+            ['product_id' => $a, 'quantity' => 1],
+        ], ['name' => '', 'phone' => '', 'address' => ''], '', 3);
+        $order = $this->orderSvc->getWithItems($orderId);
+        $this->assertNotNull($order);
+        $this->assertSame(0, $order['user_id']);
+        $this->assertSame('', $order['username']);
+        $this->assertSame(3, $order['table_number']);
+    }
+
+    public function testCashCheckout(): void {
+        $a = $this->product();
+        $orderId = $this->orderSvc->createOrder(0, [
+            ['product_id' => $a, 'quantity' => 1],
+        ], ['name' => '', 'phone' => '', 'address' => ''], '', 2);
+        $this->orderSvc->cashCheckout($orderId);
+        $order = $this->orderSvc->getWithItems($orderId);
+        $this->assertSame('paid', $order['status']);
+        $this->assertSame('cash', $order['payment_method']);
     }
 }

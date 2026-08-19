@@ -5,6 +5,7 @@ import ProductDetail from '../views/ProductDetail.vue'
 import Cart from '../views/Cart.vue'
 import Orders from '../views/Orders.vue'
 import OrderDetail from '../views/OrderDetail.vue'
+import OrderSuccess from '../views/OrderSuccess.vue'
 import Register from '../views/Register.vue'
 import OAuthCallback from '../views/OAuthCallback.vue'
 import { pinia } from '../pinia'
@@ -21,6 +22,7 @@ const routes = [
   { path: '/cart', name: 'cart', component: Cart, meta: { title: '購物車' } },
   { path: '/orders', name: 'orders', component: Orders, meta: { title: '我的訂單', requiresAuth: true } },
   { path: '/orders/:id', name: 'order', component: OrderDetail, meta: { title: '訂單', requiresAuth: true } },
+  { path: '/orders/:id/success', name: 'order-success', component: OrderSuccess, meta: { title: '訂購成功' } },
 ]
 
 const router = createRouter({

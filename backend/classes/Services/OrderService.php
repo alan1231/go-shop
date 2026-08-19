@@ -45,7 +45,7 @@ class OrderService {
         return $this->repo->findByUserId($userId, $status);
     }
 
-    public function createOrder(int $userId, array $items, array $receiver, string $remark): int {
+    public function createOrder(int $userId, array $items, array $receiver, string $remark, ?int $tableNumber = null): int {
         if (count($items) === 0) {
             throw new ServiceException('訂單不得為空');
         }
@@ -75,7 +75,8 @@ class OrderService {
                 $receiver['name'],
                 $receiver['phone'],
                 $receiver['address'],
-                $remark
+                $remark,
+                $tableNumber
             );
             foreach ($lines as $l) {
                 $this->repo->createItem($orderId, (int)$l['product']['id'], (float)$l['product']['price'], $l['quantity']);
@@ -191,6 +192,18 @@ class OrderService {
         }
         $this->repo->updatePaymentMethod($id, 'cod');
         $this->updateStatus($id, 'paid');
+    }
+
+    public function cashCheckout(int $id): void {
+        $order = $this->repo->findById($id);
+        if ($order === null) {
+            throw new ServiceException('訂單不存在', 404);
+        }
+        if ($order['status'] !== 'pending') {
+            throw new ServiceException('此訂單無法付款', 400);
+        }
+        $this->repo->updatePaymentMethod($id, 'cash');
+        $this->repo->updateStatus($id, 'paid');
     }
 
     private function requireUserOrder(int $id, int $userId): array {

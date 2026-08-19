@@ -90,6 +90,11 @@ class Migrate {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE KEY uniq_user_product (user_id, product_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+            'CREATE TABLE IF NOT EXISTS settings (
+                setting_key VARCHAR(64) PRIMARY KEY,
+                setting_value TEXT,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
         ];
 
         foreach ($statements as $sql) {
@@ -116,10 +121,13 @@ class Migrate {
         $alterIfMissing('orders', 'receiver_address', 'ALTER TABLE orders ADD COLUMN receiver_address VARCHAR(255) DEFAULT NULL');
         $alterIfMissing('orders', 'linepay_transaction_id', 'ALTER TABLE orders ADD COLUMN linepay_transaction_id VARCHAR(64) DEFAULT NULL');
         $alterIfMissing('orders', 'payment_method', 'ALTER TABLE orders ADD COLUMN payment_method VARCHAR(20) DEFAULT \'\'');
+        $alterIfMissing('orders', 'table_number', 'ALTER TABLE orders ADD COLUMN table_number INT DEFAULT NULL');
         $alterIfMissing('admin_users', 'token', 'ALTER TABLE admin_users ADD COLUMN token VARCHAR(64) DEFAULT NULL');
 
         $this->ensureProviderIndex();
         $this->seedDefaultAdmin();
+        $this->seedDefaultSettings();
+        $this->ensureOrdersUserIdNullable();
     }
 
     private function hasColumn(string $table, string $column): bool {
@@ -148,5 +156,21 @@ class Migrate {
         }
         $stmt = $this->pdo->prepare('INSERT INTO admin_users (username, password) VALUES (?, ?)');
         $stmt->execute(['admin', password_hash('123456', PASSWORD_DEFAULT)]);
+    }
+
+    private function seedDefaultSettings(): void {
+        $stmt = $this->pdo->prepare('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (\'table_count\', \'0\')');
+        $stmt->execute();
+    }
+
+    private function ensureOrdersUserIdNullable(): void {
+        $stmt = $this->pdo->prepare(
+            "SELECT IS_NULLABLE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'user_id'"
+        );
+        $stmt->execute();
+        $nullable = $stmt->fetchColumn();
+        if ($nullable !== false && strtoupper((string)$nullable) === 'NO') {
+            $this->pdo->exec('ALTER TABLE orders MODIFY user_id INT NULL');
+        }
     }
 }

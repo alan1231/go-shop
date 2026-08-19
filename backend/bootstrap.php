@@ -13,6 +13,7 @@ use App\Repositories\LoginAttemptRepository;
 use App\Repositories\MarqueeRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
+use App\Repositories\SettingsRepository;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\CartService;
@@ -22,6 +23,7 @@ use App\Services\OAuthService;
 use App\Services\OrderService;
 use App\Services\ProductService;
 use App\Services\RateLimitService;
+use App\Services\SettingsService;
 use App\Services\UserService;
 use LinePay\LinePayClient;
 use LinePay\LinePayConfig;
@@ -52,6 +54,7 @@ Registry::set('linePayGateway', new LinePayGateway(new LinePayClient(new LinePay
 Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo'), Registry::get('linePayGateway')));
 Registry::set('cartSvc', new CartService(Registry::get('cartRepo'), Registry::get('productRepo')));
 Registry::set('marqueeSvc', new MarqueeService(Registry::get('marqueeRepo')));
+Registry::set('settingsSvc', new SettingsService(new SettingsRepository()));
 Registry::set('dashboardSvc', new DashboardService(Registry::get('productRepo'), Registry::get('orderRepo'), Registry::get('userRepo')));
 Registry::set('rateLimitSvc', new RateLimitService(Registry::get('loginAttemptRepo')));
 Registry::set('oauthSvc', new OAuthService(

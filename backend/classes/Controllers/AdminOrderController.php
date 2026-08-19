@@ -36,4 +36,32 @@ class AdminOrderController extends BaseController {
         Registry::get('orderSvc')->updateRemark($id, (string)($body['remark'] ?? ''));
         Response::success(null, '備註已更新');
     }
+
+    public static function create(): void {
+        self::requireAdmin();
+        $body = Support::jsonBody();
+
+        $receiver = [
+            'name' => (string)($body['receiver_name'] ?? ''),
+            'phone' => (string)($body['receiver_phone'] ?? ''),
+            'address' => (string)($body['receiver_address'] ?? ''),
+        ];
+        $remark = (string)($body['remark'] ?? '');
+        $tableNumber = (int)($body['table_number'] ?? 0);
+
+        $settingsSvc = Registry::get('settingsSvc');
+        $tableCount = $settingsSvc->getTableCount();
+        if ($tableNumber > 0 && ($tableCount <= 0 || $tableNumber > $tableCount)) {
+            Response::fail('桌號無效，超出已設定的桌數範圍', 400);
+        }
+
+        $orderId = Registry::get('orderSvc')->createOrder(0, (array)($body['items'] ?? []), $receiver, $remark, $tableNumber > 0 ? $tableNumber : null);
+
+        $checkedOut = (bool)($body['checkout'] ?? false);
+        if ($checkedOut) {
+            Registry::get('orderSvc')->cashCheckout($orderId);
+        }
+
+        Response::success(['order_id' => $orderId], '訂單已建立');
+    }
 }

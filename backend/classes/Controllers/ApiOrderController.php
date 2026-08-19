@@ -8,22 +8,38 @@ use App\Support;
 
 class ApiOrderController extends BaseController {
     public static function create(): void {
-        $user = self::requireUser();
         $body = Support::jsonBody();
         $items = is_array($body['items'] ?? null) ? $body['items'] : [];
         $receiver = is_array($body['receiver'] ?? null) ? $body['receiver'] : [];
         $remark = trim((string)($body['remark'] ?? ''));
+        $tableNumber = (int)($body['table_number'] ?? 0);
+
+        if ($tableNumber > 0) {
+            $tableCount = Registry::get('settingsSvc')->getTableCount();
+            if ($tableCount <= 0 || $tableNumber > $tableCount) {
+                Response::fail('桌號無效，超出已設定的桌數範圍', 400);
+            }
+        }
+
+        $userId = 0;
+        $user = Registry::get('userRepo')->findByToken(Support::bearerToken());
+        if ($user !== null) {
+            $userId = (int)$user['id'];
+        }
+
         $orderId = Registry::get('orderSvc')->createOrder(
-            (int)$user['id'],
+            $userId,
             $items,
             [
                 'name' => trim((string)($receiver['name'] ?? '')),
                 'phone' => trim((string)($receiver['phone'] ?? '')),
                 'address' => trim((string)($receiver['address'] ?? '')),
             ],
-            $remark
+            $remark,
+            $tableNumber > 0 ? $tableNumber : null
         );
-        Response::success(['order_id' => $orderId], '訂單已建立');
+        $order = Registry::get('orderSvc')->getWithItems($orderId);
+        Response::success(['order_id' => $orderId, 'order' => $order], '訂單已建立');
     }
 
     public static function index(): void {

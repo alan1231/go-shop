@@ -6,6 +6,7 @@ use App\Controllers\AdminDashboardController;
 use App\Controllers\AdminMarqueeController;
 use App\Controllers\AdminOrderController;
 use App\Controllers\AdminProductController;
+use App\Controllers\AdminSettingsController;
 use App\Controllers\AdminUserController;
 use App\Controllers\ApiAuthController;
 use App\Controllers\ApiCartController;
@@ -66,6 +67,7 @@ $router->get('/api/admin/products/{id}', [AdminProductController::class, 'show']
 $router->post('/api/admin/products/{id}', [AdminProductController::class, 'update']);
 $router->get('/api/admin/categories', [AdminProductController::class, 'categories']);
 
+$router->post('/api/admin/orders', [AdminOrderController::class, 'create']);
 $router->get('/api/admin/orders', [AdminOrderController::class, 'index']);
 $router->get('/api/admin/orders/{id}', [AdminOrderController::class, 'show']);
 $router->post('/api/admin/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
@@ -79,6 +81,9 @@ $router->post('/api/admin/users/{id}/delete', [AdminUserController::class, 'dele
 
 $router->get('/api/admin/marquee', [AdminMarqueeController::class, 'show']);
 $router->post('/api/admin/marquee', [AdminMarqueeController::class, 'update']);
+
+$router->get('/api/admin/settings', [AdminSettingsController::class, 'show']);
+$router->post('/api/admin/settings/table-count', [AdminSettingsController::class, 'updateTableCount']);
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 $path = rawurldecode($path);

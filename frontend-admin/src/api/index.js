@@ -94,6 +94,7 @@ export const api = {
     if (params.q) qs.set('q', params.q)
     if (params.category) qs.set('category', params.category)
     if (params.page) qs.set('page', params.page)
+    if (params.per_page) qs.set('per_page', params.per_page)
     const s = qs.toString()
     return request('/admin/products' + (s ? '?' + s : ''))
   },
@@ -132,6 +133,12 @@ export const api = {
       body: JSON.stringify({ remark }),
     })
   },
+  createOrder(payload) {
+    return request('/admin/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
 
   users(q = '') {
     const s = q ? '?q=' + encodeURIComponent(q) : ''
@@ -163,6 +170,15 @@ export const api = {
     return request('/admin/marquee', {
       method: 'POST',
       body: JSON.stringify({ content }),
+    })
+  },
+  settings() {
+    return request('/admin/settings')
+  },
+  updateTableCount(tableCount) {
+    return request('/admin/settings/table-count', {
+      method: 'POST',
+      body: JSON.stringify({ table_count: tableCount }),
     })
   },
 }
