@@ -13,8 +13,12 @@ class ApiOrderController extends BaseController {
         $receiver = is_array($body['receiver'] ?? null) ? $body['receiver'] : [];
         $remark = trim((string)($body['remark'] ?? ''));
         $tableNumber = (int)($body['table_number'] ?? 0);
+        $orderType = (string)($body['order_type'] ?? 'dine_in');
+        if (!in_array($orderType, ['dine_in', 'takeout'], true)) {
+            $orderType = 'dine_in';
+        }
 
-        if ($tableNumber > 0) {
+        if ($orderType === 'dine_in' && $tableNumber > 0) {
             $tableCount = Registry::get('settingsSvc')->getTableCount();
             if ($tableCount <= 0 || $tableNumber > $tableCount) {
                 Response::fail('桌號無效，超出已設定的桌數範圍', 400);
@@ -36,7 +40,8 @@ class ApiOrderController extends BaseController {
                 'address' => trim((string)($receiver['address'] ?? '')),
             ],
             $remark,
-            $tableNumber > 0 ? $tableNumber : null
+            $orderType === 'takeout' ? null : ($tableNumber > 0 ? $tableNumber : null),
+            $orderType
         );
         $order = Registry::get('orderSvc')->getWithItems($orderId);
         Response::success(['order_id' => $orderId, 'order' => $order], '訂單已建立');
@@ -49,29 +54,39 @@ class ApiOrderController extends BaseController {
     }
 
     public static function show(int $id): void {
-        $user = self::requireUser();
         $order = Registry::get('orderSvc')->getWithItems($id);
-        if ($order === null || (int)$order['user_id'] !== (int)$user['id']) {
+        if ($order === null) {
             Response::fail('訂單不存在', 404);
         }
         Response::success($order, 'ok');
     }
 
     public static function pay(int $id): void {
-        $user = self::requireUser();
         $body = Support::jsonBody();
         $method = (string)($body['method'] ?? 'linepay');
         if ($method === 'cod') {
+            $user = self::requireUser();
             Registry::get('orderSvc')->payWithCashOnDelivery($id, (int)$user['id']);
             Response::success(null, '付款成功');
         }
-        $payment = Registry::get('orderSvc')->startLinePay($id, (int)$user['id']);
+        $userId = 0;
+        $token = Support::bearerToken();
+        $user = $token !== '' ? Registry::get('userRepo')->findByToken($token) : null;
+        if ($user !== null) {
+            $userId = (int)$user['id'];
+        }
+        $payment = Registry::get('orderSvc')->startLinePay($id, $userId);
         Response::success($payment, 'ok');
     }
 
     public static function payStatus(int $id): void {
-        $user = self::requireUser();
-        $status = Registry::get('orderSvc')->checkLinePay($id, (int)$user['id']);
+        $userId = 0;
+        $token = Support::bearerToken();
+        $user = $token !== '' ? Registry::get('userRepo')->findByToken($token) : null;
+        if ($user !== null) {
+            $userId = (int)$user['id'];
+        }
+        $status = Registry::get('orderSvc')->checkLinePay($id, $userId);
         Response::success($status, 'ok');
     }
 }

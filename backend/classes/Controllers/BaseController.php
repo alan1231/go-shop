@@ -49,6 +49,8 @@ class BaseController {
         return [
             'id' => (int)$a['id'],
             'username' => $a['username'] ?? '',
+            'provider' => Support::nullIfEmpty($a['provider'] ?? ''),
+            'provider_id' => Support::nullIfEmpty($a['provider_id'] ?? ''),
         ];
     }
 

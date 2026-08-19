@@ -79,6 +79,24 @@ export const api = {
       body: JSON.stringify({ username, password }),
     })
   },
+  oauthLogin(provider, code, redirectUri) {
+    return request('/admin/oauth', {
+      method: 'POST',
+      body: JSON.stringify({ provider, code, redirect_uri: redirectUri }),
+    })
+  },
+  oauthBind(provider, code, redirectUri) {
+    return request('/admin/oauth/bind', {
+      method: 'POST',
+      body: JSON.stringify({ provider, code, redirect_uri: redirectUri }),
+    })
+  },
+  oauthUnbind(provider) {
+    return request('/admin/oauth/unbind', {
+      method: 'POST',
+      body: JSON.stringify({ provider }),
+    })
+  },
   me() {
     return request('/admin/me')
   },

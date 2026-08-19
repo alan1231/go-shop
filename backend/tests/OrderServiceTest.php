@@ -45,6 +45,7 @@ final class OrderServiceTest extends TestCase {
             linepay_transaction_id TEXT,
             payment_method TEXT DEFAULT \'\',
             table_number INTEGER,
+            order_type TEXT DEFAULT \'dine_in\',
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )');
         $this->pdo->exec('CREATE TABLE users (
@@ -98,6 +99,7 @@ final class OrderServiceTest extends TestCase {
         $this->assertNotNull($order);
         $this->assertSame('pending', $order['status']);
         $this->assertEqualsWithDelta(351.5, $order['total_amount'], 1e-6);
+        $this->assertSame('dine_in', $order['order_type']);
         $this->assertCount(2, $order['items']);
     }
 
@@ -210,6 +212,28 @@ final class OrderServiceTest extends TestCase {
         $this->assertSame(0, $order['user_id']);
         $this->assertSame('', $order['username']);
         $this->assertSame(3, $order['table_number']);
+    }
+
+    public function testCreateOrderTakeoutClearsTable(): void {
+        $a = $this->product();
+        $orderId = $this->orderSvc->createOrder(1, [
+            ['product_id' => $a, 'quantity' => 1],
+        ], $this->receiver(), '', 5, 'takeout');
+        $order = $this->orderSvc->getWithItems($orderId);
+        $this->assertSame('takeout', $order['order_type']);
+        $this->assertSame(0, $order['table_number']);
+    }
+
+    public function testCreateOrderRejectsInvalidOrderType(): void {
+        $a = $this->product();
+        try {
+            $this->orderSvc->createOrder(1, [
+                ['product_id' => $a, 'quantity' => 1],
+            ], $this->receiver(), '', null, 'delivery');
+            $this->fail('應拋出 ServiceException');
+        } catch (ServiceException $e) {
+            $this->assertStringContainsString('用餐方式無效', $e->getMessage());
+        }
     }
 
     public function testCashCheckout(): void {

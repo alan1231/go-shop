@@ -38,7 +38,11 @@
 
       <div class="pos-right card">
         <div class="pos-right-head">
-          <div class="form-group" style="margin:0;">
+          <div class="pos-order-type">
+            <button class="chip" :class="{ active: orderType === 'dine_in' }" @click="orderType = 'dine_in'"><i class="fas fa-chair"></i> 內用</button>
+            <button class="chip" :class="{ active: orderType === 'takeout' }" @click="orderType = 'takeout'"><i class="fas fa-shopping-bag"></i> 外帶</button>
+          </div>
+          <div class="form-group" style="margin:0;" v-if="orderType === 'dine_in'">
             <label>桌號</label>
             <select v-model="tableNumber" style="width:110px;">
               <option :value="0">無</option>
@@ -95,6 +99,7 @@ export default {
       cartLines: [],
       tableNumber: 0,
       tableCount: 0,
+      orderType: 'dine_in',
       loading: true,
       msg: '',
       msgType: 'success',
@@ -154,6 +159,7 @@ export default {
       const res = await api.createOrder({
         items: this.cartLines.map((l) => ({ product_id: l.id, quantity: l.quantity })),
         table_number: this.tableNumber,
+        order_type: this.orderType,
         checkout,
       })
       this.loading = false
@@ -163,6 +169,7 @@ export default {
         this.cartLines = []
         this.selected = {}
         this.tableNumber = 0
+        this.orderType = 'dine_in'
       } else {
         this.msgType = 'error'
         this.msg = res.message
@@ -198,6 +205,7 @@ export default {
 .pos-item-name { padding: 8px 10px 0; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pos-item-price { padding: 0 10px 10px; font-size: 14px; color: #e53935; font-weight: 700; }
 .pos-right-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.pos-order-type { display: flex; gap: 8px; }
 .pos-total { text-align: right; }
 .pos-total span { display: block; font-size: 12px; color: #999; }
 .pos-total strong { font-size: 22px; color: #e53935; }

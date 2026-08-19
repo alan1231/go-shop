@@ -57,6 +57,9 @@ $router->post('/api/cart/merge', [ApiCartController::class, 'merge']);
 $router->add('DELETE', '/api/cart', [ApiCartController::class, 'clear']);
 
 $router->post('/api/admin/login', [AdminAuthController::class, 'login']);
+$router->post('/api/admin/oauth', [AdminAuthController::class, 'oauth']);
+$router->post('/api/admin/oauth/bind', [AdminAuthController::class, 'bind']);
+$router->post('/api/admin/oauth/unbind', [AdminAuthController::class, 'unbind']);
 $router->get('/api/admin/me', [AdminAuthController::class, 'me']);
 $router->post('/api/admin/logout', [AdminAuthController::class, 'logout']);
 $router->get('/api/admin/stats', [AdminDashboardController::class, 'index']);

@@ -20,6 +20,15 @@
           <i class="fas fa-sign-in-alt"></i> {{ loading ? '登入中...' : '登入' }}
         </button>
       </form>
+      <div class="divider"><span>或使用三方登入</span></div>
+      <div class="oauth-buttons">
+        <button class="oauth-button google-button" type="button" @click="startOAuth('google')">
+          <i class="fab fa-google"></i> Google 登入
+        </button>
+        <button class="oauth-button line-button" type="button" @click="startOAuth('line')">
+          <i class="fab fa-line"></i> LINE 登入
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -27,6 +36,7 @@
 <script>
 import { api } from '../api/index.js'
 import { authStore } from '../store/auth.js'
+import { buildOAuthUrl } from '../api/oauth.js'
 
 export default {
   name: 'LoginView',
@@ -58,6 +68,9 @@ export default {
       }
       this.loading = false
     },
+    startOAuth(provider) {
+      window.location.href = buildOAuthUrl(provider)
+    },
   },
 }
 </script>
@@ -81,4 +94,16 @@ export default {
 .login-box .logo i { font-size: 36px; color: #4CAF50; }
 .login-box .logo h1 { font-size: 20px; font-weight: 700; color: #1a1d29; margin-top: 8px; }
 .login-box .logo p { font-size: 13px; color: #888; margin-top: 4px; }
+.divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; color: #999; font-size: 12px; }
+.divider::before, .divider::after { flex: 1; height: 1px; background: #e5e5e5; content: ''; }
+.oauth-buttons { display: grid; gap: 10px; }
+.oauth-button {
+  display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 8px;
+  border: 1px solid #e0e0e0; background: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.oauth-button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); }
+.google-button { color: #333; }
+.google-button i { color: #4285F4; font-size: 18px; }
+.line-button { color: #333; }
+.line-button i { color: #06c755; font-size: 18px; }
 </style>

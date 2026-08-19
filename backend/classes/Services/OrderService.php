@@ -45,7 +45,13 @@ class OrderService {
         return $this->repo->findByUserId($userId, $status);
     }
 
-    public function createOrder(int $userId, array $items, array $receiver, string $remark, ?int $tableNumber = null): int {
+    public function createOrder(int $userId, array $items, array $receiver, string $remark, ?int $tableNumber = null, string $orderType = 'dine_in'): int {
+        if (!in_array($orderType, ['dine_in', 'takeout'], true)) {
+            throw new ServiceException('用餐方式無效');
+        }
+        if ($orderType === 'takeout') {
+            $tableNumber = null;
+        }
         if (count($items) === 0) {
             throw new ServiceException('訂單不得為空');
         }
@@ -76,7 +82,8 @@ class OrderService {
                 $receiver['phone'],
                 $receiver['address'],
                 $remark,
-                $tableNumber
+                $tableNumber,
+                $orderType
             );
             foreach ($lines as $l) {
                 $this->repo->createItem($orderId, (int)$l['product']['id'], (float)$l['product']['price'], $l['quantity']);

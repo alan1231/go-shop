@@ -24,6 +24,10 @@
           <div class="info-row"><span>收件人</span><b>{{ order.receiver_name || '—' }}</b></div>
           <div class="info-row"><span>收件電話</span><b>{{ order.receiver_phone || '—' }}</b></div>
           <div class="info-row"><span>收件地址</span><b>{{ order.receiver_address || '—' }}</b></div>
+          <div class="info-row">
+            <span>用餐方式</span>
+            <b>{{ orderTypeLabel(order.order_type) }}<span v-if="order.order_type === 'dine_in' && order.table_number"> · {{ order.table_number }} 號桌</span></b>
+          </div>
           <div class="info-row"><span>付款方式</span><b>{{ payLabel(order.payment_method) }}</b></div>
           <div class="info-row"><span>訂單時間</span><b>{{ formatDate(order.created_at) }}</b></div>
         </div>
@@ -122,6 +126,9 @@ export default {
     },
     payLabel(m) {
       return { linepay: 'LINE Pay', cod: '貨到付款' }[m] || '—'
+    },
+    orderTypeLabel(t) {
+      return { dine_in: '內用', takeout: '外帶' }[t] || '—'
     },
     formatDate(s) {
       if (!s) return '—'

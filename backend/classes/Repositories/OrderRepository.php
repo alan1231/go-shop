@@ -9,7 +9,7 @@ use PDO;
 class OrderRepository {
     private PDO $pdo;
 
-    private const ORDER_COLS = 'o.id, o.user_id, o.total_amount, o.status, o.remark, o.member_remark, o.receiver_name, o.receiver_phone, o.receiver_address, o.linepay_transaction_id, o.payment_method, o.table_number, o.created_at';
+    private const ORDER_COLS = 'o.id, o.user_id, o.total_amount, o.status, o.remark, o.member_remark, o.receiver_name, o.receiver_phone, o.receiver_address, o.linepay_transaction_id, o.payment_method, o.table_number, o.order_type, o.created_at';
 
     public function __construct(?PDO $pdo = null) {
         $this->pdo = $pdo ?? Database::connect();
@@ -160,10 +160,10 @@ class OrderRepository {
         return array_map([$this, 'normalize'], $stmt->fetchAll());
     }
 
-    public function createOrder(int $userId, float $total, string $receiverName, string $receiverPhone, string $receiverAddress, string $memberRemark, ?int $tableNumber = null): int {
+    public function createOrder(int $userId, float $total, string $receiverName, string $receiverPhone, string $receiverAddress, string $memberRemark, ?int $tableNumber = null, string $orderType = 'dine_in'): int {
         $stmt = $this->pdo->prepare(
-            "INSERT INTO orders (user_id, total_amount, status, receiver_name, receiver_phone, receiver_address, member_remark, table_number)
-             VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)"
+            "INSERT INTO orders (user_id, total_amount, status, receiver_name, receiver_phone, receiver_address, member_remark, table_number, order_type)
+             VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $userId > 0 ? $userId : null,
@@ -173,6 +173,7 @@ class OrderRepository {
             Support::nullIfEmpty($receiverAddress),
             Support::nullIfEmpty($memberRemark),
             $tableNumber !== null && $tableNumber > 0 ? $tableNumber : null,
+            $orderType,
         ]);
         return (int)$this->pdo->lastInsertId();
     }
@@ -207,6 +208,7 @@ class OrderRepository {
         $o['user_id'] = (int)$o['user_id'];
         $o['total_amount'] = (float)$o['total_amount'];
         $o['table_number'] = isset($o['table_number']) && $o['table_number'] !== null ? (int)$o['table_number'] : 0;
+        $o['order_type'] = $o['order_type'] ?? 'dine_in';
         foreach (['remark', 'member_remark', 'receiver_name', 'receiver_phone', 'receiver_address', 'linepay_transaction_id', 'payment_method', 'username', 'email', 'phone', 'address'] as $f) {
             $o[$f] = $o[$f] ?? '';
         }

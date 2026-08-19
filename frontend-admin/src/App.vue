@@ -11,6 +11,7 @@
         <router-link to="/users"><i class="fas fa-users"></i>會員管理</router-link>
         <router-link to="/marquee"><i class="fas fa-scroll"></i>跑馬燈</router-link>
         <router-link to="/settings"><i class="fas fa-chair"></i>桌數設定</router-link>
+        <router-link to="/account" class="nav-account"><i class="fas fa-user-shield"></i>帳號設定</router-link>
       </nav>
       <div class="user-section">
         <div class="username"><i class="fas fa-user-circle"></i> {{ authStore.admin?.username }}</div>

@@ -91,13 +91,11 @@ import { api } from '../api/index.js'
 import { useCartStore } from '../store/cart.js'
 import { useToastStore } from '../store/toast.js'
 import { useOrderStore } from '../store/order.js'
-import { useSessionStore } from '../store/session.js'
 
 const router = useRouter()
 const cartStore = useCartStore()
 const toastStore = useToastStore()
 const orderStore = useOrderStore()
-const session = useSessionStore()
 
 const ordering = ref(false)
 const receiver = ref({ name: '', phone: '', address: '' })
@@ -135,11 +133,7 @@ async function checkout() {
   const res = await orderStore.placeOrder(items, receiver.value, remark.value)
   if (res.success) {
     toastStore.success('訂單已建立！')
-    if (session.isLoggedIn) {
-      router.push(`/orders/${res.data.order_id}`)
-    } else {
-      router.push({ path: `/orders/${res.data.order_id}/success`, state: { order: res.data.order } })
-    }
+    router.push(`/orders/${res.data.order_id}`)
   } else {
     toastStore.error(res.message)
   }
@@ -147,16 +141,7 @@ async function checkout() {
 }
 
 onMounted(async () => {
-  if (session.isLoggedIn) await session.fetch()
   await loadCartImages()
-  if (session.user) {
-    const u = session.user
-    receiver.value = {
-      name: u.username || '',
-      phone: u.phone || '',
-      address: u.address || '',
-    }
-  }
 })
 </script>
 

@@ -25,6 +25,7 @@
             <tr>
               <th>訂單編號</th>
               <th>會員</th>
+              <th>用餐方式</th>
               <th style="text-align:center;">金額</th>
               <th style="text-align:center;">付款方式</th>
               <th style="text-align:center;">狀態</th>
@@ -37,6 +38,10 @@
             <tr v-for="o in items" :key="o.id" style="cursor:pointer;" @click="goDetail(o.id)">
               <td style="color:#4CAF50;font-weight:600;">#{{ o.id }}</td>
               <td>{{ o.username || '—' }}</td>
+              <td>
+                <span :class="'badge ' + (o.order_type === 'takeout' ? 'badge-takeout' : 'badge-dinein')">{{ o.order_type === 'takeout' ? '外帶' : '內用' }}</span>
+                <span v-if="o.order_type === 'dine_in' && o.table_number" style="color:#888;font-size:12px;margin-left:6px;">{{ o.table_number }} 號桌</span>
+              </td>
               <td style="text-align:center;font-weight:600;">{{ fmt(o.total_amount) }}</td>
               <td style="text-align:center;">{{ payLabel(o.payment_method) }}</td>
               <td style="text-align:center;"><span :class="'badge badge-' + o.status">{{ STATUS[o.status] || o.status }}</span></td>

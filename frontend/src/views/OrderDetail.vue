@@ -8,15 +8,15 @@
     <div v-else-if="!order" class="state-card glass-card">
       <span class="material-symbols-outlined state-icon">receipt_long</span>
       <h1>訂單不存在</h1>
-      <router-link to="/orders" class="secondary-button">返回訂單列表</router-link>
+      <router-link to="/" class="secondary-button">回首頁</router-link>
     </div>
 
     <template v-else>
       <div class="detail-header">
         <div>
-          <router-link to="/orders" class="back-link">
+          <router-link to="/" class="back-link">
             <span class="material-symbols-outlined">arrow_back</span>
-            返回訂單列表
+            回首頁
           </router-link>
           <h1>訂單詳情</h1>
           <p>訂單編號：#ORD-{{ order.id }}</p>
@@ -61,6 +61,10 @@
             <div>
               <dt>付款方式</dt>
               <dd>{{ paymentMethodLabel(order.payment_method) }}</dd>
+            </div>
+            <div>
+              <dt>用餐方式</dt>
+              <dd>{{ orderTypeLabel(order.order_type) }}<template v-if="order.order_type === 'dine_in' && order.table_number"> · {{ order.table_number }} 號桌</template></dd>
             </div>
             <div>
               <dt>備註</dt>
@@ -129,13 +133,6 @@
           <span class="pm-copy">
             <span class="pm-name">LINE Pay</span>
             <span class="pm-desc">QR Code 掃碼付款</span>
-          </span>
-        </button>
-        <button class="pay-method-btn" type="button" :disabled="paying" @click="pay('cod')">
-          <span class="material-symbols-outlined">local_shipping</span>
-          <span class="pm-copy">
-            <span class="pm-name">貨到付款</span>
-            <span class="pm-desc">收取商品時付款</span>
           </span>
         </button>
       </div>
@@ -209,6 +206,10 @@ const productTotal = computed(() =>
 
 function statusLabel(status) {
   return orderStatusLabel(status, '配送中')
+}
+
+function orderTypeLabel(type) {
+  return { dine_in: '內用', takeout: '外帶' }[type] || '—'
 }
 
 function formatDate(value) {

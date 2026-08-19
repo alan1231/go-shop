@@ -48,14 +48,18 @@ class AdminOrderController extends BaseController {
         ];
         $remark = (string)($body['remark'] ?? '');
         $tableNumber = (int)($body['table_number'] ?? 0);
+        $orderType = (string)($body['order_type'] ?? 'dine_in');
+        if (!in_array($orderType, ['dine_in', 'takeout'], true)) {
+            $orderType = 'dine_in';
+        }
 
         $settingsSvc = Registry::get('settingsSvc');
         $tableCount = $settingsSvc->getTableCount();
-        if ($tableNumber > 0 && ($tableCount <= 0 || $tableNumber > $tableCount)) {
+        if ($orderType === 'dine_in' && $tableNumber > 0 && ($tableCount <= 0 || $tableNumber > $tableCount)) {
             Response::fail('桌號無效，超出已設定的桌數範圍', 400);
         }
 
-        $orderId = Registry::get('orderSvc')->createOrder(0, (array)($body['items'] ?? []), $receiver, $remark, $tableNumber > 0 ? $tableNumber : null);
+        $orderId = Registry::get('orderSvc')->createOrder(0, (array)($body['items'] ?? []), $receiver, $remark, $orderType === 'takeout' ? null : ($tableNumber > 0 ? $tableNumber : null), $orderType);
 
         $checkedOut = (bool)($body['checkout'] ?? false);
         if ($checkedOut) {

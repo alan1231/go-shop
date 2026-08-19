@@ -40,4 +40,22 @@ class AuthService {
         }
         return $this->repo->findByToken($token);
     }
+
+    public function findByProvider(string $provider, string $providerId): ?array {
+        if ($provider === '' || $providerId === '') {
+            return null;
+        }
+        return $this->repo->findByProvider(strtolower($provider), $providerId);
+    }
+
+    public function bindOAuth(int $adminId, string $provider, string $providerId): void {
+        if ($provider === '' || $providerId === '') {
+            throw new ServiceException('三方登入驗證失敗', 401);
+        }
+        $existing = $this->repo->findByProvider(strtolower($provider), $providerId);
+        if ($existing !== null && (int)$existing['id'] !== $adminId) {
+            throw new ServiceException('此三方帳號已被其他帳號綁定');
+        }
+        $this->repo->setProvider($adminId, strtolower($provider), $providerId);
+    }
 }
