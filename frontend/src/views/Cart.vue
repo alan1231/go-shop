@@ -34,21 +34,13 @@
         </section>
 
         <section>
-          <h2 class="section-title">用餐方式</h2>
+          <h2 class="section-title">訂單資訊</h2>
           <div class="shipping-panel glass-panel">
-            <div class="dine-toggle">
-              <button type="button" class="dine-btn" :class="{ active: dineType === 'dine_in' }" @click="dineType = 'dine_in'">
-                <span class="material-symbols-outlined">table_restaurant</span>內用
-              </button>
-              <button type="button" class="dine-btn" :class="{ active: dineType === 'takeout' }" @click="dineType = 'takeout'">
-                <span class="material-symbols-outlined">takeout_dining</span>外帶
-              </button>
+            <div class="dine-display">
+              <span class="material-symbols-outlined" v-if="cartStore.orderType === 'dine_in'">table_restaurant</span>
+              <span class="material-symbols-outlined" v-else>takeout_dining</span>
+              <span>{{ cartStore.orderType === 'dine_in' ? `內用 · ${cartStore.tableNumber} 號桌` : '外帶' }}</span>
             </div>
-            <div v-if="dineType === 'dine_in'" class="field-group field-wide">
-              <label for="table-number">桌號</label>
-              <input id="table-number" v-model.number="tableNum" type="number" min="1" placeholder="輸入桌號（掃描桌牌 QR 已自動帶入）" />
-            </div>
-            <p v-else class="dine-note field-wide">外帶訂單不需桌號，建議填寫手機號碼方便取餐聯繫。</p>
             <div class="field-group field-wide">
               <label for="order-remark">訂單備註</label>
               <textarea id="order-remark" v-model="remark" rows="2" placeholder="特殊需求或備註（選填）"></textarea>
@@ -100,9 +92,6 @@ const orderStore = useOrderStore()
 
 const ordering = ref(false)
 const remark = ref('')
-const dineType = ref(cartStore.orderType)
-const tableNum = ref(cartStore.tableNumber || '')
-
 const cart = computed(() => cartStore.items)
 const totalItems = computed(() => cartStore.count)
 const totalPrice = computed(() => cartStore.items.reduce((s, i) => s + i.price * i.quantity, 0))
@@ -188,6 +177,8 @@ onMounted(async () => {
 .remove-button { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: transparent; color: var(--shop-text-muted); cursor: pointer; transition: color 0.2s, background 0.2s; }
 .remove-button:hover { background: rgba(255, 180, 171, 0.12); color: var(--shop-error); }
 .remove-button .material-symbols-outlined { font-size: 20px; }
+.dine-display { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid var(--shop-border); border-radius: 10px; background: var(--shop-input); color: var(--shop-text); font-size: 14px; font-weight: 600; }
+.dine-display .material-symbols-outlined { font-size: 20px; color: var(--shop-primary); }
 .shipping-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 24px; border-radius: 12px; }
 .dine-toggle { display: flex; gap: 10px; grid-column: 1 / -1; }
 .dine-btn { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: 8px; height: 46px; border: 1px solid var(--shop-border); border-radius: 10px; background: var(--shop-input); color: var(--shop-text-muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
