@@ -8,21 +8,17 @@ use App\Images;
 use App\Migrate;
 use App\Registry;
 use App\Repositories\AdminUserRepository;
-use App\Repositories\CartRepository;
-use App\Repositories\LoginAttemptRepository;
 use App\Repositories\MarqueeRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\SettingsRepository;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
-use App\Services\CartService;
 use App\Services\DashboardService;
 use App\Services\MarqueeService;
 use App\Services\OAuthService;
 use App\Services\OrderService;
 use App\Services\ProductService;
-use App\Services\RateLimitService;
 use App\Services\SettingsService;
 use App\Services\UserService;
 use LinePay\LinePayClient;
@@ -38,9 +34,7 @@ Registry::set('userRepo', new UserRepository());
 Registry::set('adminRepo', new AdminUserRepository());
 Registry::set('productRepo', new ProductRepository());
 Registry::set('orderRepo', new OrderRepository());
-Registry::set('cartRepo', new CartRepository());
 Registry::set('marqueeRepo', new MarqueeRepository());
-Registry::set('loginAttemptRepo', new LoginAttemptRepository());
 
 Registry::set('images', new Images(Config::get('UPLOADS_DIR')));
 Registry::set('authSvc', new AuthService(Registry::get('adminRepo')));
@@ -52,11 +46,9 @@ Registry::set('linePayGateway', new LinePayGateway(new LinePayClient(new LinePay
     Config::get('LINE_PAY_SANDBOX', 'true') !== 'false'
 ))));
 Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo'), Registry::get('linePayGateway')));
-Registry::set('cartSvc', new CartService(Registry::get('cartRepo'), Registry::get('productRepo')));
 Registry::set('marqueeSvc', new MarqueeService(Registry::get('marqueeRepo')));
 Registry::set('settingsSvc', new SettingsService(new SettingsRepository()));
 Registry::set('dashboardSvc', new DashboardService(Registry::get('productRepo'), Registry::get('orderRepo'), Registry::get('userRepo')));
-Registry::set('rateLimitSvc', new RateLimitService(Registry::get('loginAttemptRepo')));
 Registry::set('oauthSvc', new OAuthService(
     Config::get('GOOGLE_CLIENT_ID'),
     Config::get('GOOGLE_CLIENT_SECRET'),

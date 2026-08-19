@@ -1,9 +1,34 @@
 import { defineStore } from 'pinia'
 import { api } from '../api/index.js'
-import { useCartStore } from './cart.js'
+import { guestCart } from './guestCart.js'
+import { guestDineLoad, guestDineSave, guestDineClear } from './guestDine.js'
+
+let placedOrderId = null
+
+function upsertItem(items, product, qty, itemRemark) {
+  const remarkProvided = itemRemark !== undefined
+  const exist = items.find(i => i.product_id === product.id)
+  if (exist) {
+    if (!exist.image && product.image) exist.image = product.image
+    exist.quantity += qty
+    if (remarkProvided) exist.remark = itemRemark
+    return exist
+  }
+  items.push({
+    product_id: product.id,
+    name: product.name,
+    image: product.image,
+    price: product.price,
+    quantity: qty,
+    ...(remarkProvided ? { remark: itemRemark } : {}),
+  })
+}
 
 export const useOrderStore = defineStore('order', {
   state: () => ({
+    items: guestCart.load(),
+    tableNumber: guestDineLoad().tableNumber,
+    orderType: guestDineLoad().orderType,
     detail: null,
     detailLoading: true,
     paying: false,
@@ -11,7 +36,52 @@ export const useOrderStore = defineStore('order', {
     pollTimer: null,
     polling: false,
   }),
+  getters: {
+    count: state => state.items.reduce((s, i) => s + i.quantity, 0),
+  },
   actions: {
+    saveGuest() {
+      guestCart.save(this.items)
+    },
+    add(product, qty = 1, itemRemark = undefined) {
+      upsertItem(this.items, product, qty, itemRemark)
+      this.saveGuest()
+      return { ok: true, message: `「${product.name}」已加入訂單` }
+    },
+    changeQty(index, delta) {
+      const item = this.items[index]
+      if (!item) return { ok: false }
+      const next = item.quantity + delta
+      if (next < 1) return { ok: false }
+      item.quantity = next
+      this.saveGuest()
+      return { ok: true }
+    },
+    remove(index) {
+      this.items.splice(index, 1)
+      this.saveGuest()
+    },
+    pruneInvalid(products) {
+      const ids = new Set(products.map(p => p.id))
+      const before = this.items.length
+      this.items = this.items.filter(i => ids.has(i.product_id))
+      if (this.items.length !== before) this.saveGuest()
+      return before - this.items.length
+    },
+    clear() {
+      this.items.splice(0, this.items.length)
+      guestCart.clear()
+    },
+    setDine(tableNumber, orderType) {
+      this.tableNumber = Number(tableNumber) || 0
+      this.orderType = orderType === 'takeout' ? 'takeout' : 'dine_in'
+      guestDineSave(this.tableNumber, this.orderType)
+    },
+    clearDine() {
+      this.tableNumber = 0
+      this.orderType = 'dine_in'
+      guestDineClear()
+    },
     async loadDetail(id) {
       this.detail = null
       this.detailLoading = true
@@ -58,10 +128,14 @@ export const useOrderStore = defineStore('order', {
     async placeOrder(items, receiver, remark, tableNumber, orderType) {
       const res = await api.createOrder(items, receiver, remark, tableNumber, orderType)
       if (res.success) {
-        await useCartStore().clear()
-        useCartStore().clearDine()
+        placedOrderId = Number(res.data?.order_id) || null
+        this.clear()
+        this.clearDine()
       }
       return res
+    },
+    isJustPlaced(id) {
+      return placedOrderId === Number(id)
     },
   },
 })

@@ -20,7 +20,7 @@ class ApiOrderController extends BaseController {
 
         if ($orderType === 'dine_in' && $tableNumber > 0) {
             $tableCount = Registry::get('settingsSvc')->getTableCount();
-            if ($tableCount <= 0 || $tableNumber > $tableCount) {
+            if ($tableCount > 0 && $tableNumber > $tableCount) {
                 Response::fail('桌號無效，超出已設定的桌數範圍', 400);
             }
         }
@@ -68,6 +68,10 @@ class ApiOrderController extends BaseController {
             $user = self::requireUser();
             Registry::get('orderSvc')->payWithCashOnDelivery($id, (int)$user['id']);
             Response::success(null, '付款成功');
+        }
+        if ($method === 'cash') {
+            Registry::get('orderSvc')->cashCheckout($id);
+            Response::success(null, '已選擇到櫃檯付款');
         }
         $userId = 0;
         $token = Support::bearerToken();

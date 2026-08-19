@@ -23,28 +23,6 @@ class BaseController {
         return $admin;
     }
 
-    protected static function rateLimited(string $type): bool {
-        [$allowed, $minutes] = Registry::get('rateLimitSvc')->check(Support::clientIP(), $type);
-        if (!$allowed) {
-            Response::fail(sprintf('嘗試次數過多，請 %d 分鐘後再試', $minutes), 429);
-            return true;
-        }
-        return false;
-    }
-
-    protected static function userPayload(array $u): array {
-        return [
-            'id' => (int)$u['id'],
-            'username' => $u['username'] ?? '',
-            'email' => $u['email'] ?? '',
-            'provider' => Support::nullIfEmpty($u['provider'] ?? ''),
-            'created_at' => $u['created_at'] ?? '',
-            'phone' => Support::nullIfEmpty($u['phone'] ?? ''),
-            'address' => Support::nullIfEmpty($u['address'] ?? ''),
-            'avatar' => Support::avatarUrl($u['avatar'] ?? ''),
-        ];
-    }
-
     protected static function adminPayload(array $a): array {
         return [
             'id' => (int)$a['id'],

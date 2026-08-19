@@ -116,7 +116,7 @@ export default {
       return 'NT$ ' + Number(n).toLocaleString()
     },
     payLabel(m) {
-      return { linepay: 'LINE Pay', cod: '貨到付款' }[m] || '—'
+      return { linepay: 'LINE Pay', cod: '貨到付款', cash: '現金' }[m] || '—'
     },
     orderTypeLabel(t) {
       return { dine_in: '內用', takeout: '外帶' }[t] || '—'

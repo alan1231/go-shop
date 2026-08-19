@@ -11,3 +11,4 @@ uploads.rar
 backend/vendor/
 .phpunit.result.cache
 *.log
+.dev.pids

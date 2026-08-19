@@ -42,43 +42,45 @@
 
 ## 認證機制（重要）
 
-前後台帳號與認證**完全分離**：
+- 僅**後台**有帳號登入；前台**無會員登入 / 無註冊**，下單為訪客身分（`POST /api/orders` 若帶 Bearer token 會自動關聯對應會員）
 
-| | 後台 | 前台 |
-|---|---|---|
-| 資料表 | `admin_users` | `users` |
-| 認證方式 | Bearer Token（存 `admin_users.token`） | Bearer Token（存 `users.token`） |
-| 登入 | `POST /api/admin/login` | `POST /api/auth/login` |
-| 登出 | `POST /api/admin/logout` | `POST /api/auth/logout` |
+| | 後台 |
+|---|---|
+| 資料表 | `admin_users` |
+| 認證方式 | Bearer Token（存 `admin_users.token`） |
+| 登入 | `POST /api/admin/login` |
+| 登出 | `POST /api/admin/logout` |
 
-- 前台 token 存 `localStorage.token`；後台存 `localStorage.admin_token`
+- 後台 token 存 `localStorage.admin_token`
 - 前端每次請求由 `api/index.js` 自動帶 `Authorization: Bearer <token>`
-- controller 用 `BaseController::requireUser()` / `requireAdmin()` 驗證
+- controller 用 `BaseController::requireAdmin()` 驗證後台；`requireUser()` 保留給前台可選會員關聯
 - token 每次登入重新產生、登出即失效；無過期機制
 - 密碼用 `password_hash()` / `password_verify()`（bcrypt，相容舊的 Go bcrypt hash）
 
 ## 資料表結構（自動遷移集中在 `classes/Migrate.php`）
 
-**users（前台會員）**：id、username、email、password、role（預設 'user'）、token、provider、provider_id、phone、address、avatar、created_at；UNIQUE(provider, provider_id)
+**users（前台會員，僅後台管理）**：id、username、email、password、role（預設 'user'）、token、provider、provider_id、phone、address、avatar、created_at；UNIQUE(provider, provider_id)
 
 **admin_users（後台管理員）**：id、username、password、token、created_at
 
 **products**：id、name、image（檔名）、description、category、price、list_price、status（預設 'active'）、created_at
 
-**orders**：id、user_id、total_amount、status（預設 'pending'）、remark、member_remark、receiver_name、receiver_phone、receiver_address、created_at
+**orders**：id、user_id、total_amount、status（預設 'pending'）、remark、member_remark、receiver_name、receiver_phone、receiver_address、table_number、order_type、linepay_transaction_id、payment_method、created_at
 
 **order_items**：id、order_id、product_id、price、quantity
 
 **marquee**：id（固定 1）、content、updated_at
 
-**login_attempts**：ip、type、attempts、locked_until、updated_at；UNIQUE(ip, type)
+**settings**：setting_key、setting_value、updated_at
+
+> 已移除電商殘留：`/api/cart/*`、`/api/auth/*`、`cart_items`、`login_attempts`（含 RateLimitService / ApiCartController / ApiAuthController / CartService / CartRepository）。不要重新引入。
 
 ## 資料流向
 
-### 前台下單
+### 前台訪客下單
 ```
-Cart.vue → POST /api/orders (Bearer token)
-  → ApiOrderController::create → requireUser()
+Order.vue（訂單內容）→ POST /api/orders
+  → ApiOrderController::create → 若帶 Bearer 且 matched 則關聯 user_id（否則 0）
   → OrderService::createOrder → PDO transaction → 檢查 product 存在且 active
   → 建單 + 明細 → commit
 ```
@@ -87,12 +89,6 @@ Cart.vue → POST /api/orders (Bearer token)
 ```
 /api/admin/login → AdminAuthController::login → AuthService::authenticate
   → 查 admin_users → password_verify 比對 → 產生 token 存 admin_users.token → 回傳 token
-```
-
-### 前台登入
-```
-/api/auth/login → ApiAuthController::login
-  → 查 users → password_verify 比對 → 產生 token 存 users.token → 回傳 token
 ```
 
 ## 訂單狀態機
@@ -115,7 +111,6 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 
 - Service 遇到「要給使用者看的錯誤」就 `throw new ServiceException('訊息', 400/401/404/429)`
 - `index.php` 的例外處理器：`ServiceException` → 回傳其訊息與狀態碼；其他例外 → log + `500 伺服器錯誤`
-- 登入/註冊的「帳號或密碼錯誤」「帳號或 Email 已存在」等失敗**要**先 `rateLimitSvc->recordFail` 再 `Response::fail`（所以在 ApiAuthController 內 try/catch）
 - API 統一 JSON 格式：`{"success":bool, "message":string, "data":...}`（`Response::success` 在 data 為 null 時省略 data 欄位，與舊 Go 版 `omitempty` 一致）
 - 圖片 URL 組裝用 `Support::uploadUrl()` / `Support::avatarUrl()`
 
@@ -135,20 +130,20 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 
 - 後端：
   - controller 不直接碰 DB，一律走 Service → Repository
-  - 前台 controller 用 `requireUser()`；後台用 `requireAdmin()`（`Controllers/BaseController.php`）
+  - 後台 controller 用 `requireAdmin()`（`Controllers/BaseController.php`）；`requireUser()` 保留給前台可選會員關聯
   - 服務物件由 `bootstrap.php` 建好後放 `Registry`，controller 用 `Registry::get('orderSvc')` 等取用
   - 路由集中在 `backend/index.php`，handler 為 `[Controller::class, 'method']`，路由參數（如 {id}）會以位置參數傳入
-  - 前台 `ApiAuthController` 用 `rateLimited('login'/'register')` 做登入防護
 - 前端：
   - 使用 vanilla fetch，**不用 Axios**
-  - 共享狀態用 Pinia store（`store/cart.js`、`store/session.js`、`store/toast.js` 等）
-  - 購物車的 guest（localStorage）與 server（API）雙軌邏輯集中在 `store/cart.js`，localStorage 讀寫抽在 `store/guestCart.js`
+  - 共享狀態用 Pinia store（`store/order.js`、`store/session.js`、`store/toast.js` 等）
+  - 訂單 guest（localStorage）集中在 `store/order.js`，localStorage 讀寫抽在 `store/guestCart.js`（品項，key `shop_cart`）與 `store/guestDine.js`（桌別/內外用，key `shp_dine`）
   - 圖片路徑需經 Vite proxy（`/uploads` 規則）
   - 不做任何加註解（程式碼不需要 comment）
 
 ## 常用指令
 
 - 安裝後端依賴（第一次 clone 後）：`cd backend && composer install`
+- 一鍵啟動（MySQL 需自行開啟）：`./dev.sh`（backend :8080 + frontend :5173 + frontend-admin :5174）；停止 `./dev.sh stop`；狀態 `./dev.sh status`；看log `./dev.sh logs`（記錄在專案根目錄 `.dev.log`）
 - 啟動 PHP server：`cd backend && php -S localhost:8080 index.php`（http://localhost:8080）
 - 啟動前台 dev server：`cd frontend && npm run dev`（http://localhost:5173/）
 - 啟動後台 dev server：`cd frontend-admin && npm run dev`（http://localhost:5174/admin/）

@@ -8,8 +8,6 @@ use App\Controllers\AdminOrderController;
 use App\Controllers\AdminProductController;
 use App\Controllers\AdminSettingsController;
 use App\Controllers\AdminUserController;
-use App\Controllers\ApiAuthController;
-use App\Controllers\ApiCartController;
 use App\Controllers\ApiMarqueeController;
 use App\Controllers\ApiOrderController;
 use App\Controllers\ApiProductController;
@@ -31,14 +29,6 @@ $router = new Router();
 
 $router->get('/api/marquee', [ApiMarqueeController::class, 'index']);
 
-$router->post('/api/auth/register', [ApiAuthController::class, 'register']);
-$router->post('/api/auth/login', [ApiAuthController::class, 'login']);
-$router->post('/api/auth/oauth', [ApiAuthController::class, 'oauth']);
-$router->post('/api/auth/logout', [ApiAuthController::class, 'logout']);
-$router->get('/api/auth/me', [ApiAuthController::class, 'me']);
-$router->post('/api/auth/update', [ApiAuthController::class, 'updateContact']);
-$router->post('/api/auth/password', [ApiAuthController::class, 'changePassword']);
-
 $router->get('/api/products', [ApiProductController::class, 'index']);
 $router->get('/api/categories', [ApiProductController::class, 'categories']);
 $router->get('/api/products/{id}', [ApiProductController::class, 'show']);
@@ -48,13 +38,6 @@ $router->get('/api/orders', [ApiOrderController::class, 'index']);
 $router->get('/api/orders/{id}', [ApiOrderController::class, 'show']);
 $router->get('/api/orders/{id}/pay/status', [ApiOrderController::class, 'payStatus']);
 $router->post('/api/orders/{id}/pay', [ApiOrderController::class, 'pay']);
-
-$router->get('/api/cart', [ApiCartController::class, 'index']);
-$router->post('/api/cart/items', [ApiCartController::class, 'add']);
-$router->add('PUT', '/api/cart/items/{id}', [ApiCartController::class, 'update']);
-$router->add('DELETE', '/api/cart/items/{id}', [ApiCartController::class, 'remove']);
-$router->post('/api/cart/merge', [ApiCartController::class, 'merge']);
-$router->add('DELETE', '/api/cart', [ApiCartController::class, 'clear']);
 
 $router->post('/api/admin/login', [AdminAuthController::class, 'login']);
 $router->post('/api/admin/oauth', [AdminAuthController::class, 'oauth']);

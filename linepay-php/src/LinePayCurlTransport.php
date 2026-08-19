@@ -16,7 +16,9 @@ final class LinePayCurlTransport implements LinePayTransport {
         }
         $resp = curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
+        if (is_resource($ch)) {
+            curl_close($ch);
+        }
         $json = $resp === false ? [] : json_decode($resp, true);
         if (!is_array($json)) {
             $json = [];

@@ -72,24 +72,6 @@ class Migrate {
                 content TEXT NOT NULL,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-            'CREATE TABLE IF NOT EXISTS login_attempts (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                ip VARCHAR(45) NOT NULL,
-                type VARCHAR(20) NOT NULL,
-                attempts INT NOT NULL DEFAULT 0,
-                locked_until DATETIME NULL,
-                updated_at DATETIME NOT NULL,
-                UNIQUE KEY uniq_ip_type (ip, type)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-            'CREATE TABLE IF NOT EXISTS cart_items (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id INT NOT NULL,
-                product_id INT NOT NULL,
-                quantity INT NOT NULL DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                UNIQUE KEY uniq_user_product (user_id, product_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
             'CREATE TABLE IF NOT EXISTS settings (
                 setting_key VARCHAR(64) PRIMARY KEY,
                 setting_value TEXT,

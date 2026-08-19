@@ -63,10 +63,6 @@ class Support {
         return is_array($data) ? $data : [];
     }
 
-    public static function clientIP(): string {
-        return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    }
-
     public static function randomToken(): string {
         return bin2hex(random_bytes(32));
     }

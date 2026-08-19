@@ -178,18 +178,10 @@ cd ../frontend-admin && npm install && npm run build
 
 | Method | Endpoint | 說明 |
 |--------|----------|------|
-| POST | `/api/auth/register` | 會員註冊 |
-| POST | `/api/auth/login` | 會員登入 |
-| POST | `/api/auth/oauth` | Google / LINE 登入 |
-| POST | `/api/auth/logout` | 會員登出 |
-| GET | `/api/auth/me` | 目前登入會員 |
-| POST | `/api/auth/update` | 更新會員聯絡資料 |
-| POST | `/api/auth/password` | 更改會員密碼 |
 | GET | `/api/products` | 商品列表與搜尋 |
 | GET | `/api/products/{id}` | 商品明細 |
 | GET | `/api/categories` | 商品分類 |
-| POST | `/api/orders` | 建立訂單 |
-| GET | `/api/orders` | 會員訂單列表 |
+| POST | `/api/orders` | 建立訂單（訪客） |
 | GET | `/api/orders/{id}` | 訂單明細 |
 | POST | `/api/orders/{id}/pay` | 付款（LINE Pay / 貨到付款） |
 | GET | `/api/orders/{id}/pay/status` | 查詢 LINE Pay 付款狀態 |

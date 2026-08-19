@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Database;
-use App\Support;
 use PDO;
 
 class UserRepository {
@@ -11,20 +10,6 @@ class UserRepository {
 
     public function __construct(?PDO $pdo = null) {
         $this->pdo = $pdo ?? Database::connect();
-    }
-
-    public function findByProvider(string $provider, string $providerId): ?array {
-        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE provider = ? AND provider_id = ? LIMIT 1');
-        $stmt->execute([$provider, $providerId]);
-        $row = $stmt->fetch();
-        return $row ?: null;
-    }
-
-    public function findByEmail(string $email): ?array {
-        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
-        $stmt->execute([$email]);
-        $row = $stmt->fetch();
-        return $row ?: null;
     }
 
     public function findByToken(string $token): ?array {
@@ -35,20 +20,6 @@ class UserRepository {
     }
 
     public function findById(int $id): ?array {
-        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE id = ?');
-        $stmt->execute([$id]);
-        $row = $stmt->fetch();
-        return $row ?: null;
-    }
-
-    public function findForAuth(string $username): ?array {
-        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1');
-        $stmt->execute([$username, $username]);
-        $row = $stmt->fetch();
-        return $row ?: null;
-    }
-
-    public function findForAuthById(int $id): ?array {
         $stmt = $this->pdo->prepare('SELECT * FROM users WHERE id = ?');
         $stmt->execute([$id]);
         $row = $stmt->fetch();
@@ -68,29 +39,6 @@ class UserRepository {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($args);
         return $stmt->fetchAll();
-    }
-
-    public function setProvider(int $id, string $provider, string $providerId): void {
-        $stmt = $this->pdo->prepare('UPDATE users SET provider = ?, provider_id = ? WHERE id = ?');
-        $stmt->execute([$provider, $providerId, $id]);
-    }
-
-    public function createOAuthUser(string $username, string $email, string $provider, string $providerId, ?string $avatar): int {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO users (username, email, password, role, provider, provider_id, avatar) VALUES (?, ?, ?, \'user\', ?, ?, ?)'
-        );
-        $stmt->execute([$username, $email, bin2hex(random_bytes(16)), $provider, $providerId, Support::nullIfEmpty($avatar)]);
-        return (int)$this->pdo->lastInsertId();
-    }
-
-    public function setToken(int $id, string $token): void {
-        if ($token === '') {
-            $stmt = $this->pdo->prepare('UPDATE users SET token = NULL WHERE id = ?');
-            $stmt->execute([$id]);
-            return;
-        }
-        $stmt = $this->pdo->prepare('UPDATE users SET token = ? WHERE id = ?');
-        $stmt->execute([$token, $id]);
     }
 
     public function existsByUsernameOrEmail(string $username, string $email, int $excludeId = 0): bool {
@@ -129,16 +77,6 @@ class UserRepository {
     public function updatePassword(int $id, string $passwordHash): void {
         $stmt = $this->pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
         $stmt->execute([$passwordHash, $id]);
-    }
-
-    public function updateContact(int $id, string $phone, string $address): void {
-        $stmt = $this->pdo->prepare('UPDATE users SET phone = ?, address = ? WHERE id = ?');
-        $stmt->execute([$phone, $address, $id]);
-    }
-
-    public function updateAvatar(int $id, string $avatar): void {
-        $stmt = $this->pdo->prepare('UPDATE users SET avatar = ? WHERE id = ?');
-        $stmt->execute([$avatar, $id]);
     }
 
     public function delete(int $id): void {

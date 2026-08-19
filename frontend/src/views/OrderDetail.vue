@@ -1,219 +1,212 @@
 <template>
-  <section class="detail-page">
-    <div v-if="loading" class="state-card glass-card">
-      <span class="loader loader-lg"></span>
-      <span>載入訂單中</span>
-    </div>
-
-    <div v-else-if="!order" class="state-card glass-card">
-      <span class="material-symbols-outlined state-icon">receipt_long</span>
-      <h1>訂單不存在</h1>
-      <router-link to="/" class="secondary-button">回首頁</router-link>
-    </div>
-
-    <template v-else>
-      <div class="detail-header">
-        <div>
-          <router-link to="/" class="back-link">
+  <div class="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
+    <header class="fixed top-0 left-0 right-0 mx-auto w-full max-w-md z-50 bg-surface pt-safe md:top-8">
+      <div class="h-16 flex justify-between items-center px-container-margin border-b border-outline-variant">
+        <div class="flex items-center gap-xs">
+          <button type="button" aria-label="返回" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-variant transition-colors" @click="goMenu">
             <span class="material-symbols-outlined">arrow_back</span>
-            回首頁
-          </router-link>
-          <h1>訂單詳情</h1>
-          <p>訂單編號：#ORD-{{ order.id }}</p>
+          </button>
+          <h1 class="font-headline-md text-headline-md text-on-surface">訂單狀態</h1>
         </div>
-        <span class="status-badge" :class="order.status">
-          <span class="status-dot"></span>
-          {{ statusLabel(order.status) }}
-        </span>
+        <span class="bg-surface-container-high px-sm py-xs rounded-full font-label-lg text-label-lg text-on-surface">{{ dineLabel }}</span>
       </div>
+    </header>
 
-      <section v-if="order.status !== 'cancelled'" class="panel progress-panel glass-card">
-        <div class="timeline">
-          <div v-for="(step, i) in steps" :key="step.key" class="timeline-step" :class="{ done: orderIndex > i, active: orderIndex === i, reached: orderIndex >= i }">
-            <div class="timeline-dot">
-              <span class="material-symbols-outlined">{{ orderIndex > i ? 'check' : step.icon }}</span>
-            </div>
-            <span>{{ step.label }}</span>
+    <main class="flex-1 mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg">
+      <div v-if="loading" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">載入訂單中...</div>
+      <div v-else-if="!order" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">訂單不存在</div>
+
+      <template v-else>
+        <section class="status-card px-md pt-lg pb-md rounded-2xl flex flex-col items-center text-center" :class="statusClass">
+          <span class="material-symbols-outlined status-icon mb-sm" :class="{ 'is-active': isCookingStatus }" style="font-size: 48px;">{{ statusIcon }}</span>
+          <h2 class="font-headline-lg text-headline-lg mb-xs">{{ statusTitle }}</h2>
+          <p class="font-body-md text-body-md opacity-80 mb-md max-w-[280px]">{{ statusSub }}</p>
+        </section>
+
+        <section v-if="order.status === 'pending' && !payment" class="bg-surface-bright rounded-xl border border-outline-variant p-md flex flex-col gap-sm">
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-xs flex items-center gap-xs">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">payments</span>
+            付款方式
+          </h2>
+          <div class="w-full h-14 rounded-lg bg-surface-container border border-outline-variant flex items-center justify-between px-md">
+            <span class="flex items-center gap-sm">
+              <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 24px;">storefront</span>
+              <span class="flex flex-col items-start">
+                <span class="font-label-lg text-label-lg text-on-surface">請至櫃檯結帳</span>
+                <span class="font-label-sm text-label-sm text-on-surface-variant">於餐廳櫃檯以現金付款</span>
+              </span>
+            </span>
           </div>
-        </div>
-      </section>
+          <button type="button" class="w-full h-14 rounded-lg bg-[#06C755] text-white border border-[#06C755] flex items-center justify-between px-md hover:opacity-90 active:scale-[0.98] transition-all duration-150 disabled:opacity-60 disabled:pointer-events-none" :disabled="paying" @click="pay('linepay')">
+            <span class="flex items-center gap-sm">
+              <span class="material-symbols-outlined" style="font-size: 24px;">brand_awareness</span>
+              <span class="flex flex-col items-start">
+                <span class="font-label-lg text-label-lg">LINE Pay 線上支付</span>
+                <span class="font-label-sm text-label-sm text-white/85">線上支付</span>
+              </span>
+            </span>
+            <span class="material-symbols-outlined" style="font-size: 20px;">chevron_right</span>
+          </button>
+        </section>
 
-      <section v-else class="panel cancelled-panel glass-card">
-        <span class="material-symbols-outlined">cancel</span>
-        <div>
-          <h2>訂單已取消</h2>
-          <p>這筆訂單已取消，不會繼續進入付款或配送流程。</p>
-        </div>
-      </section>
+        <section v-if="payment" class="bg-surface-bright rounded-xl border border-outline-variant p-md flex flex-col items-center gap-sm">
+          <h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-xs self-start">
+            <span class="material-symbols-outlined text-tertiary" style="font-size: 20px;">qr_code_2</span>
+            LINE Pay 付款
+          </h2>
+          <p class="font-body-md text-body-md text-on-surface-variant text-center">
+            請點下方按鈕前往 LINE Pay 完成付款。
+          </p>
+          <div v-if="payment.sandbox" class="w-full rounded-lg bg-surface-container border border-outline-variant px-md py-sm flex items-center gap-sm">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">info</span>
+            <span class="font-body-sm text-body-sm text-on-surface-variant">目前為沙箱測試環境，請於開啟的網頁中完成付款。</span>
+          </div>
+          <button type="button" class="w-full h-12 bg-[#06C755] text-white rounded-lg font-headline-md text-headline-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-xs" @click="openPayment">
+            <span class="material-symbols-outlined" style="font-size: 20px;">open_in_new</span>
+            {{ payment.sandbox ? '前往 LINE Pay 付款' : '開啟 LINE Pay 付款' }}
+          </button>
+          <button type="button" class="font-label-md text-label-md text-on-surface-variant pb-sm hover:text-error transition-colors flex items-center gap-xs" @click="cancelPay">
+            <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+            取消付款
+          </button>
+        </section>
 
-      <div class="info-grid">
-        <section class="panel info-card glass-card">
-          <h2><span class="material-symbols-outlined">receipt</span>訂單資訊</h2>
-          <dl>
-            <div>
-              <dt>建立時間</dt>
-              <dd>{{ formatDate(order.created_at) }}</dd>
+        <section class="bg-surface-bright rounded-xl border border-outline-variant p-md">
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-sm flex items-center gap-xs">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">receipt_long</span>
+            訂單資訊
+          </h2>
+          <dl class="flex flex-col gap-sm">
+            <div class="flex justify-between gap-4">
+              <dt class="font-label-md text-label-md text-on-surface-variant shrink-0">訂單編號</dt>
+              <dd class="font-body-md text-body-md text-on-surface">#ORD-{{ order.id }}</dd>
             </div>
-            <div>
-              <dt>訂單狀態</dt>
-              <dd>{{ statusLabel(order.status) }}</dd>
+            <div class="flex justify-between gap-4">
+              <dt class="font-label-md text-label-md text-on-surface-variant shrink-0">建立時間</dt>
+              <dd class="font-body-md text-body-md text-on-surface">{{ formatDate(order.created_at) }}</dd>
             </div>
-            <div>
-              <dt>付款方式</dt>
-              <dd>{{ paymentMethodLabel(order.payment_method) }}</dd>
+            <div class="flex justify-between gap-4">
+              <dt class="font-label-md text-label-md text-on-surface-variant shrink-0">用餐方式</dt>
+              <dd class="font-body-md text-body-md text-on-surface">{{ orderTypeLabel }}<template v-if="order.order_type === 'dine_in' && order.table_number"> · 第 {{ order.table_number }} 桌</template></dd>
             </div>
-            <div>
-              <dt>用餐方式</dt>
-              <dd>{{ orderTypeLabel(order.order_type) }}<template v-if="order.order_type === 'dine_in' && order.table_number"> · {{ order.table_number }} 號桌</template></dd>
-            </div>
-            <div>
-              <dt>備註</dt>
-              <dd>{{ order.member_remark || '無備註' }}</dd>
+            <div v-if="order.member_remark" class="flex justify-between gap-4">
+              <dt class="font-label-md text-label-md text-on-surface-variant shrink-0">備註</dt>
+              <dd class="font-body-md text-body-md text-on-surface text-right whitespace-pre-wrap">{{ order.member_remark }}</dd>
             </div>
           </dl>
         </section>
 
-        <section class="panel info-card glass-card">
-          <h2><span class="material-symbols-outlined">pin_drop</span>配送資訊</h2>
-          <dl>
-            <div>
-              <dt>收件人</dt>
-              <dd>{{ order.receiver_name || '未提供' }}</dd>
-            </div>
-            <div>
-              <dt>聯絡電話</dt>
-              <dd>{{ order.receiver_phone || '未提供' }}</dd>
-            </div>
-            <div>
-              <dt>配送地址</dt>
-              <dd>{{ order.receiver_address || '未提供' }}</dd>
-            </div>
-          </dl>
+        <section class="bg-surface-bright rounded-xl border border-outline-variant p-md">
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-sm flex items-center gap-xs">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">fastfood</span>
+            餐點明細
+          </h2>
+          <ul class="flex flex-col gap-md">
+            <li v-for="item in order.items" :key="item.id" class="flex gap-sm pb-md border-b border-outline-variant/30">
+              <div class="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-surface-variant">
+                <img v-if="item.image" :src="imageUrl(item.image)" :alt="item.name" class="w-full h-full object-cover" />
+                <div v-else class="w-full h-full flex items-center justify-center">
+                  <span class="material-symbols-outlined text-on-surface-variant">restaurant_menu</span>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between gap-2">
+                  <h3 class="font-label-lg text-label-lg text-on-surface truncate">{{ item.name }}</h3>
+                  <span class="font-price-display text-price-display-sm text-on-surface shrink-0">NT$ {{ money(item.price * item.quantity) }}</span>
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">NT$ {{ money(item.price) }} × {{ item.quantity }}</p>
+              </div>
+            </li>
+          </ul>
+          <div class="flex justify-between items-center pt-md mt-sm">
+            <span class="font-body-md text-body-md text-on-surface-variant">共 {{ totalQuantity }} 項餐點</span>
+            <span class="font-price-display text-price-display text-primary">NT$ {{ money(order.total_amount) }}</span>
+          </div>
         </section>
-      </div>
 
-      <section class="panel items-panel glass-card">
-        <div class="section-heading">
-          <h2>商品明細</h2>
-          <span>{{ totalQuantity }} 件商品</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>商品</th><th>單價</th><th>數量</th><th>小計</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in order.items" :key="item.id">
-                <td>
-                  <div class="item-cell">
-                    <div class="thumb">
-                      <img v-if="item.image" :src="imageUrl(item.image)" :alt="item.name" />
-                      <span v-else class="material-symbols-outlined">inventory_2</span>
-                    </div>
-                    <span>{{ item.name }}</span>
-                  </div>
-                </td>
-                <td>NT$ {{ money(item.price) }}</td>
-                <td>{{ item.quantity }}</td>
-                <td class="subtotal">NT$ {{ money(item.price * item.quantity) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="totals">
-          <div><span>商品總計</span><strong>NT$ {{ money(productTotal) }}</strong></div>
-          <div class="grand-total"><span>總金額</span><strong>NT$ {{ money(order.total_amount) }}</strong></div>
-        </div>
-      </section>
-
-      <div v-if="order.status === 'pending' && !payment" class="action-area">
-        <span class="action-title">選擇付款方式</span>
-        <button class="pay-method-btn" type="button" :disabled="paying" @click="pay('linepay')">
-          <span class="material-symbols-outlined">label_important</span>
-          <span class="pm-copy">
-            <span class="pm-name">LINE Pay</span>
-            <span class="pm-desc">QR Code 掃碼付款</span>
-          </span>
-        </button>
-      </div>
-
-      <section v-if="payment" class="panel payment-panel glass-card">
-        <h2><span class="material-symbols-outlined">qr_code_2</span>LINE Pay 付款</h2>
-        <div class="payment-body">
-          <div class="qr-wrap">
-            <img v-if="qrDataUrl" :src="qrDataUrl" alt="LINE Pay QR Code" />
-            <span v-else class="loader loader-lg"></span>
-          </div>
-          <div class="payment-info">
-            <p v-if="payment.sandbox" class="sandbox-hint">
-              Sandbox 環境不支援 LINE App 掃描 QR Code，請點下方按鈕開啟網頁付款。
-            </p>
-            <p class="payment-tip">請使用 <strong>LINE App</strong> 掃描左側 QR Code，或點下方按鈕前往付款。</p>
-            <button class="pay-button" type="button" @click="openPayment">
-              <span class="material-symbols-outlined">open_in_new</span>
-              {{ payment.sandbox ? '開啟 LINE Pay 付款' : '前往 LINE Pay 付款' }}
-            </button>
-            <p class="waiting-hint">
-              <span class="loader loader-sm"></span>
-              等待付款完成...
-            </p>
-            <button class="secondary-button cancel-pay" type="button" @click="cancelPay">取消付款</button>
-          </div>
-        </div>
-      </section>
-    </template>
-  </section>
+        <section v-if="order.receiver_phone" class="bg-surface-bright rounded-xl border border-outline-variant p-md">
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-sm flex items-center gap-xs">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">phone_iphone</span>
+            聯絡資訊
+          </h2>
+          <p class="font-body-md text-body-md text-on-surface">{{ order.receiver_phone }}</p>
+        </section>
+      </template>
+    </main>
+  </div>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useOrderStore } from '../store/order.js'
 import { useToastStore } from '../store/toast.js'
-import { formatDate as formatDateValue, imageUrl, money, orderStatusLabel, paymentMethodLabel } from '../utils/format.js'
-import QRCode from 'qrcode'
+import { formatDate as formatDateValue, imageUrl, money } from '../utils/format.js'
 
 const route = useRoute()
+const router = useRouter()
 const orderStore = useOrderStore()
 const toastStore = useToastStore()
 
 const order = computed(() => orderStore.detail)
 const loading = computed(() => orderStore.detailLoading)
-const paying = computed(() => orderStore.paying)
 const payment = computed(() => orderStore.payment)
-const qrDataUrl = ref('')
+const paying = computed(() => orderStore.paying)
 const payWin = ref(null)
-
-const steps = [
-  { key: 'pending', label: '待付款', icon: 'pending_actions' },
-  { key: 'paid', label: '已付款', icon: 'credit_card' },
-  { key: 'shipped', label: '配送中', icon: 'local_shipping' },
-  { key: 'completed', label: '已完成', icon: 'task_alt' },
-]
-
-const orderIndex = computed(() => {
-  if (!order.value) return -1
-  return steps.findIndex(s => s.key === order.value.status)
-})
 
 const totalQuantity = computed(() =>
   (order.value?.items || []).reduce((sum, item) => sum + Number(item.quantity), 0)
 )
 
-const productTotal = computed(() =>
-  (order.value?.items || []).reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0)
-)
+const orderTypeLabel = computed(() => {
+  if (!order.value) return '—'
+  return order.value.order_type === 'takeout' ? '外帶' : '內用'
+})
 
-function statusLabel(status) {
-  return orderStatusLabel(status, '配送中')
-}
+const dineLabel = computed(() => {
+  if (order.value?.order_type === 'takeout') return '外帶'
+  return `內用 · 第 ${order.value?.table_number || '—'} 桌`
+})
 
-function orderTypeLabel(type) {
-  return { dine_in: '內用', takeout: '外帶' }[type] || '—'
-}
+const statusClass = computed(() => {
+  const s = order.value?.status
+  if (s === 'cancelled') return 'bg-error-container text-on-error-container'
+  if (s === 'completed') return 'bg-tertiary-container text-on-tertiary-container'
+  return 'bg-primary-container text-on-primary-container'
+})
+
+const statusIcon = computed(() => {
+  const s = order.value?.status
+  if (s === 'cancelled') return 'cancel'
+  if (s === 'completed') return 'task_alt'
+  return 'cooking'
+})
+
+const isCookingStatus = computed(() => {
+  const s = order.value?.status
+  return s !== 'completed' && s !== 'cancelled'
+})
+
+const statusTitle = computed(() => {
+  const s = order.value?.status
+  if (s === 'completed') return '已完成'
+  if (s === 'cancelled') return '已取消'
+  return '製作中'
+})
+
+const statusSub = computed(() => {
+  const s = order.value?.status
+  if (s === 'cancelled') return '這筆訂單已取消，不會繼續付款或製作。'
+  if (s === 'completed') return '訂單已完成，感謝您的用餐！'
+  return '您的餐點正在製作中，請稍候。'
+})
 
 function formatDate(value) {
-  return formatDateValue(value, { separator: '/', time: true, empty: '未提供' })
+  return formatDateValue(value, { separator: '/', time: true, empty: '—' })
+}
+
+function goMenu() {
+  router.push('/')
 }
 
 async function pay(method) {
@@ -224,7 +217,6 @@ async function pay(method) {
     return
   }
   if (res.data?.payment_access_token) {
-    await generateQr()
     orderStore.startPolling(order.value.id, (poll) => {
       if (poll.data?.status === 'paid') {
         toastStore.success('付款成功！')
@@ -239,13 +231,7 @@ async function pay(method) {
   }
 }
 
-async function generateQr() {
-  const token = payment.value?.payment_access_token
-  if (!token) return
-  qrDataUrl.value = await QRCode.toDataURL(token, { width: 220, margin: 1 })
-}
-
-function openPayment() {
+async function openPayment() {
   if (!payment.value) return
   const appUrl = payment.value.payment_url_app
   const webUrl = payment.value.payment_url
@@ -267,7 +253,6 @@ function openPayment() {
 
 function cancelPay() {
   orderStore.stopPolling()
-  qrDataUrl.value = ''
   orderStore.payment = null
   if (payWin.value) {
     payWin.value.close()
@@ -282,7 +267,13 @@ watch(() => order.value?.status, (status) => {
   }
 })
 
-onMounted(() => orderStore.loadDetail(route.params.id))
+onMounted(() => {
+  if (orderStore.isJustPlaced(route.params.id)) {
+    orderStore.loadDetail(route.params.id)
+  } else {
+    router.replace('/')
+  }
+})
 onUnmounted(() => {
   orderStore.stopPolling()
   if (payWin.value) payWin.value.close()
@@ -290,441 +281,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.detail-page {
-  position: relative;
-  max-width: 960px;
-  min-height: 65vh;
-  margin: 0 auto;
-  padding-bottom: 48px;
+.status-card {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
-.detail-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--shop-border);
+.status-icon.is-active {
+  animation: sizzle 1.6s ease-in-out infinite;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.28));
 }
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 16px;
-  color: var(--shop-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: color .2s;
-}
-.back-link:hover { color: var(--shop-primary); }
-.back-link .material-symbols-outlined { font-size: 18px; }
-.detail-header h1 {
-  margin: 0 0 6px;
-  color: var(--shop-text);
-  font-family: 'Sora', sans-serif;
-  font-size: clamp(28px, 5vw, 40px);
-  letter-spacing: -.04em;
-}
-.detail-header p {
-  margin: 0;
-  color: var(--shop-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .05em;
-}
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  border: 1px solid var(--shop-border);
-  border-radius: 999px;
-  background: var(--shop-glass);
-  color: var(--shop-text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.status-badge.pending,
-.status-badge.cancelled { color: var(--shop-error); }
-.status-badge.paid,
-.status-badge.shipped { color: var(--shop-primary); }
-.panel,
-.state-card {
-  border-radius: 16px;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, .18);
-}
-.progress-panel { margin-bottom: 24px; padding: 26px 20px; }
-.timeline { display: flex; align-items: flex-start; }
-.timeline-step {
-  position: relative;
-  flex: 1;
-  color: var(--shop-text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-}
-.timeline-step::before {
-  position: absolute;
-  top: 23px;
-  right: 50%;
-  width: 100%;
-  height: 2px;
-  background: var(--shop-surface-highest);
-  content: '';
-}
-.timeline-step:first-child::before { display: none; }
-.timeline-step.reached::before { background: var(--shop-primary-strong); }
-.timeline-dot {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 12px;
-  place-items: center;
-  border: 4px solid var(--shop-surface-low);
-  border-radius: 50%;
-  background: var(--shop-surface-highest);
-  color: var(--shop-text-muted);
-}
-.timeline-dot .material-symbols-outlined { font-size: 21px; }
-.timeline-step.done,
-.timeline-step.active { color: var(--shop-primary); }
-.timeline-step.done .timeline-dot,
-.timeline-step.active .timeline-dot {
-  background: var(--shop-primary);
-  color: var(--shop-on-primary);
-}
-.timeline-step.active .timeline-dot { box-shadow: 0 0 18px color-mix(in srgb, var(--shop-primary) 35%, transparent); }
-.cancelled-panel {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding: 22px;
-  color: var(--shop-error);
-}
-.cancelled-panel > .material-symbols-outlined { font-size: 36px; }
-.cancelled-panel h2 { margin: 0 0 4px; color: var(--shop-error); font-size: 18px; }
-.cancelled-panel p { margin: 0; color: var(--shop-text-muted); font-size: 13px; }
-.info-grid {
-  display: grid;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.info-card {
-  padding: 22px;
-  transition: border-color .2s;
-}
-.info-card:hover { border-color: color-mix(in srgb, var(--shop-primary) 35%, transparent); }
-.info-card h2,
-.section-heading h2 {
-  margin: 0;
-  color: var(--shop-text);
-  font-family: 'Sora', sans-serif;
-  font-size: 18px;
-}
-.info-card h2 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-.info-card h2 .material-symbols-outlined { color: var(--shop-primary); }
-.info-card dl { margin: 0; }
-.info-card dl > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--shop-border);
-}
-.info-card dl > div:last-child { border-bottom: 0; }
-.info-card dt {
-  flex: 0 0 auto;
-  color: var(--shop-text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .06em;
-}
-.info-card dd {
-  margin: 0;
-  color: var(--shop-text);
-  font-size: 13px;
-  text-align: right;
-  white-space: pre-wrap;
-}
-.items-panel { overflow: hidden; }
-.section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 22px;
-  border-bottom: 1px solid var(--shop-border);
-  background: var(--shop-glass);
-}
-.section-heading > span {
-  color: var(--shop-text-muted);
-  font-size: 12px;
-}
-.table-wrap { overflow-x: auto; }
-table {
-  width: 100%;
-  min-width: 620px;
-  border-collapse: collapse;
-}
-th,
-td {
-  padding: 16px;
-  border-bottom: 1px solid var(--shop-border);
-  color: var(--shop-text);
-  font-size: 13px;
-  text-align: right;
-}
-th {
-  background: color-mix(in srgb, var(--shop-surface-highest) 20%, transparent);
-  color: var(--shop-text-muted);
-  font-size: 11px;
-  letter-spacing: .06em;
-}
-th:first-child,
-td:first-child { text-align: left; }
-th:nth-child(3),
-td:nth-child(3) { text-align: center; }
-.item-cell {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 250px;
-  font-weight: 600;
-}
-.thumb {
-  display: grid;
-  flex: 0 0 64px;
-  width: 64px;
-  height: 64px;
-  place-items: center;
-  border: 1px solid var(--shop-border);
-  border-radius: 9px;
-  background: var(--shop-surface-lowest);
-  color: var(--shop-text-muted);
-  overflow: hidden;
-}
-.thumb img { width: 100%; height: 100%; object-fit: cover; }
-.subtotal { color: var(--shop-primary); font-weight: 700; }
-.totals {
-  display: grid;
-  justify-content: end;
-  gap: 12px;
-  padding: 22px;
-  background: var(--shop-glass);
-}
-.totals > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 40px;
-  width: min(100%, 280px);
-  color: var(--shop-text-muted);
-  font-size: 12px;
-}
-.totals strong { color: var(--shop-text); }
-.grand-total {
-  padding-top: 14px;
-  border-top: 1px solid var(--shop-border);
-  font-size: 15px !important;
-}
-.grand-total strong { color: var(--shop-primary); font-family: 'Sora', sans-serif; font-size: 19px; }
-.action-area {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding-top: 20px;
-}
-.action-title {
-  width: 100%;
-  color: var(--shop-text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .06em;
-}
-.pay-method-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  border: 1px solid var(--shop-border);
-  border-radius: 12px;
-  background: var(--shop-surface-highest);
-  color: var(--shop-text);
-  font: inherit;
-  cursor: pointer;
-  transition: border-color .2s, background .2s, color .2s, transform .2s;
-}
-.pay-method-btn:hover {
-  border-color: var(--shop-primary);
-  background: rgba(117, 255, 158, .12);
-  color: var(--shop-primary);
-}
-.pay-method-btn:disabled { cursor: wait; opacity: .6; }
-.pay-method-btn .material-symbols-outlined { font-size: 26px; color: var(--shop-primary); }
-.pm-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  text-align: left;
-}
-.pm-name {
-  font-size: 14px;
-  font-weight: 800;
-}
-.pm-desc {
-  color: var(--shop-text-muted);
-  font-size: 11px;
-}
-.payment-panel { margin-top: 24px; padding: 24px; }
-.payment-panel h2 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 20px;
-  color: var(--shop-text);
-  font-family: 'Sora', sans-serif;
-  font-size: 18px;
-}
-.payment-panel h2 .material-symbols-outlined { color: var(--shop-primary); }
-.payment-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-  flex-wrap: wrap;
-}
-.qr-wrap {
-  display: grid;
-  width: 240px;
-  height: 240px;
-  flex: 0 0 240px;
-  place-items: center;
-  border: 1px solid var(--shop-border);
-  border-radius: 14px;
-  background: #fff;
-  padding: 8px;
-}
-.qr-wrap img { width: 100%; height: 100%; }
-.payment-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  max-width: 300px;
-  text-align: center;
-}
-.payment-tip { margin: 0; color: var(--shop-text-muted); font-size: 13px; line-height: 1.7; }
-.payment-tip strong { color: var(--shop-text); }
-.sandbox-hint {
-  margin: 0;
-  padding: 10px 14px;
-  border: 1px solid color-mix(in srgb, var(--shop-error) 45%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--shop-error) 10%, transparent);
-  color: var(--shop-error);
-  font-size: 12px;
-  line-height: 1.6;
-}
-.waiting-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--shop-text-muted);
-  font-size: 12px;
-}
-.cancel-pay { margin: 0; }
-.pay-button,
-.secondary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 10px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  text-decoration: none;
-  cursor: pointer;
-}
-.pay-button {
-  padding: 14px 28px;
-  border: 1px solid var(--shop-primary);
-  background: var(--shop-primary);
-  box-shadow: 0 0 22px color-mix(in srgb, var(--shop-primary) 25%, transparent);
-  color: var(--shop-on-primary);
-}
-.pay-button:hover { background: var(--shop-primary-strong); }
-.pay-button:disabled { cursor: wait; opacity: .6; }
-.secondary-button {
-  margin-top: 8px;
-  padding: 10px 16px;
-  border: 1px solid var(--shop-border);
-  background: var(--shop-surface-highest);
-  color: var(--shop-text);
-}
-.state-card {
-  display: grid;
-  min-height: 260px;
-  padding: 40px 20px;
-  place-items: center;
-  align-content: center;
-  gap: 12px;
-  color: var(--shop-text-muted);
-  text-align: center;
-}
-.state-card h1 { margin: 0; color: var(--shop-text); font-size: 22px; }
-.state-icon { color: var(--shop-primary); font-size: 48px; }
-@media (min-width: 760px) {
-  .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-}
-@media (max-width: 620px) {
-  .detail-header { align-items: flex-start; flex-direction: column; }
-  .timeline {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 0;
-    padding-left: 4px;
-  }
-  .timeline-step {
-    display: grid;
-    grid-template-columns: 48px 1fr;
-    align-items: center;
-    gap: 14px;
-    min-height: 76px;
-    text-align: left;
-  }
-  .timeline-step::before {
-    top: -14px;
-    right: auto;
-    left: 23px;
-    width: 2px;
-    height: 28px;
-  }
-  .timeline-dot { margin: 0; }
-  .info-card dl > div { align-items: flex-start; flex-direction: column; gap: 5px; }
-  .info-card dd { text-align: left; }
-  .totals { justify-content: stretch; }
-  .totals > div { width: 100%; }
-  .action-area,
-  .pay-button { width: 100%; }
+@keyframes sizzle {
+  0%, 100% { transform: scale(1) rotate(0deg) translateY(0); opacity: 1; }
+  50% { transform: scale(1.14) rotate(-6deg) translateY(-3px); opacity: 0.82; }
 }
 </style>
