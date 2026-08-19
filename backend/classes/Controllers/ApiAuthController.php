@@ -51,7 +51,11 @@ class ApiAuthController extends BaseController {
         if (($provider !== 'google' && $provider !== 'line') || $code === '') {
             Response::fail('無效的三方登入請求', 400);
         }
-        $info = Registry::get('oauthSvc')->getUserInfo($provider, $code);
+        $info = Registry::get('oauthSvc')->getUserInfo(
+            $provider,
+            $code,
+            trim((string)($body['redirect_uri'] ?? ''))
+        );
         $userRepo = Registry::get('userRepo');
         $user = $userRepo->findByProvider($provider, $info['provider_id']);
         $avatar = $user !== null && ($user['avatar'] ?? '') !== '' ? $user['avatar'] : self::saveAvatar($info['avatar']);

@@ -64,7 +64,11 @@ export const api = {
   async oauthLogin(provider, code) {
     const res = await request('/auth/oauth', {
       method: 'POST',
-      body: JSON.stringify({ provider, code }),
+      body: JSON.stringify({
+        provider,
+        code,
+        redirect_uri: window.location.origin + '/auth/callback',
+      }),
     })
     if (res.success && res.data.token) {
       localStorage.setItem('token', res.data.token)

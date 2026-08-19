@@ -25,23 +25,26 @@ class OAuthService {
         $this->oauthRedirectUri = $oauthRedirectUri;
     }
 
-    public function getUserInfo(string $provider, string $code): array {
+    public function getUserInfo(string $provider, string $code, string $redirectUri = ''): array {
         $provider = strtolower($provider);
+        if ($redirectUri === '') {
+            $redirectUri = $this->oauthRedirectUri;
+        }
         if ($provider === 'google') {
-            return $this->google($code);
+            return $this->google($code, $redirectUri);
         }
         if ($provider === 'line') {
-            return $this->line($code);
+            return $this->line($code, $redirectUri);
         }
         throw new ServiceException('三方登入驗證失敗', 401);
     }
 
-    private function google(string $code): array {
+    private function google(string $code, string $redirectUri): array {
         $token = $this->httpPostForm('https://oauth2.googleapis.com/token', [
             'code' => $code,
             'client_id' => $this->googleClientId,
             'client_secret' => $this->googleClientSecret,
-            'redirect_uri' => $this->oauthRedirectUri,
+            'redirect_uri' => $redirectUri,
             'grant_type' => 'authorization_code',
         ]);
         if (empty($token['access_token'])) {
@@ -60,12 +63,12 @@ class OAuthService {
         ];
     }
 
-    private function line(string $code): array {
+    private function line(string $code, string $redirectUri): array {
         $token = $this->httpPostForm('https://api.line.me/oauth2/v2.1/token', [
             'code' => $code,
             'client_id' => $this->lineChannelId,
             'client_secret' => $this->lineChannelSecret,
-            'redirect_uri' => $this->oauthRedirectUri,
+            'redirect_uri' => $redirectUri,
             'grant_type' => 'authorization_code',
         ]);
         if (empty($token['access_token'])) {
