@@ -11,7 +11,11 @@ class AdminOrderController extends BaseController {
         self::requireAdmin();
         $status = (string)($_GET['status'] ?? '');
         $page = max(1, (int)($_GET['page'] ?? 1));
-        Response::success(Registry::get('orderSvc')->getAll($status, $page, 10), 'ok');
+        $perPage = min(1000, max(1, (int)($_GET['per_page'] ?? 10)));
+        $withItems = (string)($_GET['with_items'] ?? '') === '1';
+        $start = (string)($_GET['start'] ?? '');
+        $end = (string)($_GET['end'] ?? '');
+        Response::success(Registry::get('orderSvc')->getAll($status, $page, $perPage, $withItems, $start, $end), 'ok');
     }
 
     public static function show(int $id): void {
@@ -35,6 +39,13 @@ class AdminOrderController extends BaseController {
         $body = Support::jsonBody();
         Registry::get('orderSvc')->updateRemark($id, (string)($body['remark'] ?? ''));
         Response::success(null, '備註已更新');
+    }
+
+    public static function updateItems(int $id): void {
+        self::requireAdmin();
+        $body = Support::jsonBody();
+        Registry::get('orderSvc')->updateItems($id, (array)($body['items'] ?? []));
+        Response::success(null, '訂單已更新');
     }
 
     public static function create(): void {

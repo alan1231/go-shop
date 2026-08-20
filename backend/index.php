@@ -52,12 +52,14 @@ $router->get('/api/admin/products/{id}', [AdminProductController::class, 'show']
 $router->post('/api/admin/products/{id}', [AdminProductController::class, 'update']);
 $router->post('/api/admin/products/{id}/delete', [AdminProductController::class, 'delete']);
 $router->get('/api/admin/categories', [AdminProductController::class, 'categories']);
+$router->post('/api/admin/categories/move', [AdminProductController::class, 'moveCategory']);
 
 $router->post('/api/admin/orders', [AdminOrderController::class, 'create']);
 $router->get('/api/admin/orders', [AdminOrderController::class, 'index']);
 $router->get('/api/admin/orders/{id}', [AdminOrderController::class, 'show']);
 $router->post('/api/admin/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
 $router->post('/api/admin/orders/{id}/remark', [AdminOrderController::class, 'updateRemark']);
+$router->post('/api/admin/orders/{id}/items', [AdminOrderController::class, 'updateItems']);
 
 $router->get('/api/admin/accounts', [AdminAccountController::class, 'index']);
 $router->post('/api/admin/accounts', [AdminAccountController::class, 'create']);
@@ -68,6 +70,7 @@ $router->post('/api/admin/marquee', [AdminMarqueeController::class, 'update']);
 
 $router->get('/api/admin/settings', [AdminSettingsController::class, 'show']);
 $router->post('/api/admin/settings/table-count', [AdminSettingsController::class, 'updateTableCount']);
+$router->post('/api/admin/settings/linepay', [AdminSettingsController::class, 'updateLinePay']);
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 $path = rawurldecode($path);

@@ -56,6 +56,14 @@ class AdminProductController extends BaseController {
         Response::success(Registry::get('productSvc')->getAllCategories(), 'ok');
     }
 
+    public static function moveCategory(): void {
+        self::requireAdmin();
+        $in = json_decode((string)file_get_contents('php://input'), true) ?: [];
+        $name = trim((string)($in['name'] ?? ''));
+        $direction = (string)($in['direction'] ?? '');
+        Response::success(Registry::get('productSvc')->moveCategory($name, $direction), '分類順序已更新');
+    }
+
     private static function productInputFromForm(): array {
         $in = [
             'name' => (string)($_POST['name'] ?? ''),

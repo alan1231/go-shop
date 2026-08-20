@@ -2,7 +2,12 @@
   <div>
     <div class="page-header">
       <h1><i class="fas fa-shopping-cart"></i> 訂單 #{{ order?.id }}</h1>
-      <router-link to="/orders" class="btn btn-default"><i class="fas fa-arrow-left"></i> 返回列表</router-link>
+      <div class="header-actions">
+        <button v-if="order && editable" class="btn btn-primary" @click="showEdit = true">
+          <i class="fas fa-edit"></i> 修改訂單
+        </button>
+        <router-link to="/orders" class="btn btn-default"><i class="fas fa-arrow-left"></i> 返回列表</router-link>
+      </div>
     </div>
 
     <div v-if="loading" class="card" style="text-align:center;color:#888;padding:48px;"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
@@ -86,17 +91,21 @@
         </div>
       </div>
     </div>
+
+    <OrderEdit v-if="showEdit" :order="order" @close="showEdit = false" @saved="onOrderSaved" />
   </div>
 </template>
 
 <script>
 import { api } from '../api/index.js'
+import OrderEdit from '../components/OrderEdit.vue'
 
 export default {
   name: 'OrderDetailView',
+  components: { OrderEdit },
   data() {
     return {
-      STATUS: { pending: '待付款', paid: '已付款', shipped: '出貨中', completed: '已完成', cancelled: '已取消' },
+      STATUS: { pending: '待付款', paid: '已付款', shipped: '製作中', completed: '已完成', cancelled: '已取消' },
       order: null,
       loading: true,
       msg: '',
@@ -106,7 +115,13 @@ export default {
       savingRemark: false,
       showStatusConfirm: false,
       pendingStatus: '',
+      showEdit: false,
     }
+  },
+  computed: {
+    editable() {
+      return this.order && !['completed', 'cancelled'].includes(this.order.status)
+    },
   },
   async created() {
     await this.load()
@@ -165,11 +180,17 @@ export default {
       this.msg = res.message
       if (res.success) this.order.remark = this.remark
     },
+    onOrderSaved(message) {
+      this.msgType = 'success'
+      this.msg = message
+      this.load()
+    },
   },
 }
 </script>
 
 <style scoped>
+.header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
 .card h3 { font-size: 15px; margin-bottom: 14px; color: #333; }

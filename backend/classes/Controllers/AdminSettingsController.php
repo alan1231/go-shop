@@ -18,4 +18,15 @@ class AdminSettingsController extends BaseController {
         Registry::get('settingsSvc')->setTableCount((int)($body['table_count'] ?? 0));
         Response::success(null, '桌數已更新');
     }
+
+    public static function updateLinePay(): void {
+        self::requireAdmin();
+        $body = Support::jsonBody();
+        Registry::get('settingsSvc')->setLinePay(
+            (string)($body['channel_id'] ?? ''),
+            (string)($body['channel_secret'] ?? ''),
+            (string)($body['sandbox'] ?? '0')
+        );
+        Response::success(null, '三方支付設定已更新');
+    }
 }

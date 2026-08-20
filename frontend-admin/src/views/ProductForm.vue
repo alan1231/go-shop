@@ -19,7 +19,7 @@
         </div>
         <div class="form-group">
           <label>分類</label>
-          <input type="text" v-model="form.category" placeholder="例如：3C、服飾、生活用品" list="catList" />
+          <input type="text" v-model="form.category" placeholder="例如：主餐、甜點、飲料" list="catList" />
           <datalist id="catList">
             <option v-for="c in categories" :key="c" :value="c"></option>
           </datalist>
@@ -117,9 +117,8 @@ export default {
         this.msgType = 'success'
         this.msg = res.message
         if (!this.isEdit) {
-          this.form = { name: '', description: '', category: '', price: 0, list_price: '', status: 'active' }
-          this.file = null
-          this.preview = ''
+          this.$router.push('/products')
+          return
         }
       } else {
         this.msgType = 'error'

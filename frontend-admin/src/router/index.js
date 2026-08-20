@@ -4,6 +4,7 @@ import Dashboard from '../views/Dashboard.vue'
 import Products from '../views/Products.vue'
 import ProductForm from '../views/ProductForm.vue'
 import Orders from '../views/Orders.vue'
+import OrderHistory from '../views/OrderHistory.vue'
 import OrderDetail from '../views/OrderDetail.vue'
 import Marquee from '../views/Marquee.vue'
 import Settings from '../views/Settings.vue'
@@ -18,6 +19,7 @@ const routes = [
   { path: '/products/add', name: 'product-add', component: ProductForm, meta: { title: '新增菜單', requiresAuth: true } },
   { path: '/products/:id/edit', name: 'product-edit', component: ProductForm, meta: { title: '修改菜單', requiresAuth: true } },
   { path: '/orders', name: 'orders', component: Orders, meta: { title: '訂單管理', requiresAuth: true } },
+  { path: '/orders/history', name: 'order-history', component: OrderHistory, meta: { title: '訂單歷程', requiresAuth: true } },
   { path: '/orders/:id', name: 'order', component: OrderDetail, meta: { title: '訂單明細', requiresAuth: true } },
   { path: '/marquee', name: 'marquee', component: Marquee, meta: { title: '跑馬燈', requiresAuth: true } },
   { path: '/settings', name: 'settings', component: Settings, meta: { title: '桌數設定', requiresAuth: true } },
@@ -32,7 +34,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = (to.meta.title ? to.meta.title + ' - ' : '') + 'SHOP 後台'
+  document.title = (to.meta.title ? to.meta.title + ' - ' : '') + '點餐 後台'
   const token = localStorage.getItem('admin_token')
   if (to.meta.requiresAuth && !token) {
     next({ path: '/login' })

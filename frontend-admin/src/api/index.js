@@ -104,6 +104,12 @@ export const api = {
   categories() {
     return request('/admin/categories')
   },
+  moveCategory(name, direction) {
+    return request('/admin/categories/move', {
+      method: 'POST',
+      body: JSON.stringify({ name, direction }),
+    })
+  },
   createProduct(form) {
     return requestForm('/admin/products', form)
   },
@@ -118,6 +124,10 @@ export const api = {
     const qs = new URLSearchParams()
     if (params.status) qs.set('status', params.status)
     if (params.page) qs.set('page', params.page)
+    if (params.per_page) qs.set('per_page', params.per_page)
+    if (params.with_items) qs.set('with_items', '1')
+    if (params.start) qs.set('start', params.start)
+    if (params.end) qs.set('end', params.end)
     const s = qs.toString()
     return request('/admin/orders' + (s ? '?' + s : ''))
   },
@@ -134,6 +144,12 @@ export const api = {
     return request(`/admin/orders/${id}/remark`, {
       method: 'POST',
       body: JSON.stringify({ remark }),
+    })
+  },
+  updateOrderItems(id, items) {
+    return request(`/admin/orders/${id}/items`, {
+      method: 'POST',
+      body: JSON.stringify({ items }),
     })
   },
   createOrder(payload) {
@@ -172,6 +188,12 @@ export const api = {
     return request('/admin/settings/table-count', {
       method: 'POST',
       body: JSON.stringify({ table_count: tableCount }),
+    })
+  },
+  updateLinePay(linepay) {
+    return request('/admin/settings/linepay', {
+      method: 'POST',
+      body: JSON.stringify(linepay),
     })
   },
 }

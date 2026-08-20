@@ -44,9 +44,55 @@ class ProductRepository {
 
     public function getAllCategories(): array {
         $stmt = $this->pdo->query(
-            "SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != '' ORDER BY category"
+            "SELECT p.category FROM products p "
+            . "LEFT JOIN product_categories pc ON pc.name = p.category "
+            . "WHERE p.category IS NOT NULL AND p.category != '' "
+            . 'GROUP BY p.category '
+            . 'ORDER BY (pc.sort_order IS NULL), pc.sort_order, p.category'
         );
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    public function getCategories(): array {
+        $stmt = $this->pdo->query(
+            "SELECT p.category FROM products p "
+            . "LEFT JOIN product_categories pc ON pc.name = p.category "
+            . "WHERE p.status = 'active' AND p.category IS NOT NULL AND p.category != '' "
+            . 'GROUP BY p.category '
+            . 'ORDER BY (pc.sort_order IS NULL), pc.sort_order, p.category'
+        );
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    public function ensureCategory(string $name): void {
+        $name = trim($name);
+        if ($name === '') {
+            return;
+        }
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM product_categories WHERE name = ?');
+        $stmt->execute([$name]);
+        if ((int)$stmt->fetchColumn() > 0) {
+            return;
+        }
+        $max = (int)$this->pdo->query('SELECT COALESCE(MAX(sort_order), 0) FROM product_categories')->fetchColumn();
+        $stmt = $this->pdo->prepare('INSERT INTO product_categories (name, sort_order) VALUES (?, ?)');
+        $stmt->execute([$name, $max + 1]);
+    }
+
+    public function moveCategory(string $name, string $direction): void {
+        $stmt = $this->pdo->query('SELECT name, sort_order FROM product_categories ORDER BY sort_order');
+        $rows = $stmt->fetchAll();
+        $pos = array_search($name, array_column($rows, 'name'), true);
+        if ($pos === false) {
+            return;
+        }
+        $target = $direction === 'down' ? $pos + 1 : $pos - 1;
+        if ($target < 0 || $target >= count($rows)) {
+            return;
+        }
+        $stmt = $this->pdo->prepare('UPDATE product_categories SET sort_order = ? WHERE name = ?');
+        $stmt->execute([$rows[$target]['sort_order'], $rows[$pos]['name']]);
+        $stmt->execute([$rows[$pos]['sort_order'], $rows[$target]['name']]);
     }
 
     public function getById(int $id): ?array {
@@ -78,6 +124,12 @@ class ProductRepository {
         $stmt->execute([$id]);
     }
 
+    public function hasOrderItems(int $id): bool {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM order_items WHERE product_id = ?');
+        $stmt->execute([$id]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     public function findActive(string $keyword = '', string $category = '', int $limit = 100, int $offset = 0): array {
         [$sql, $args] = $this->buildFilterSql(
             $keyword,
@@ -101,13 +153,6 @@ class ProductRepository {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($args);
         return (int)$stmt->fetchColumn();
-    }
-
-    public function getCategories(): array {
-        $stmt = $this->pdo->query(
-            "SELECT DISTINCT category FROM products WHERE status = 'active' AND category IS NOT NULL AND category != '' ORDER BY category"
-        );
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     public function update(int $id, string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, string $status): void {

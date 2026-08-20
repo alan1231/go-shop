@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
-    <header class="fixed top-0 left-0 right-0 mx-auto w-full max-w-md z-50 bg-surface pt-safe md:top-8">
+    <header class="fixed top-0 left-0 right-0 mx-auto w-full max-w-md z-50 bg-surface pt-safe md:top-[8px] md:rounded-t-[8px]">
       <div class="h-16 flex justify-between items-center px-container-margin border-b border-outline-variant">
         <div class="flex items-center gap-xs">
           <button type="button" aria-label="返回" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-variant transition-colors" @click="goBack">
@@ -10,9 +10,10 @@
         </div>
         <span class="bg-surface-container-high px-sm py-xs rounded-full font-label-lg text-label-lg text-on-surface">{{ dineLabel }}</span>
       </div>
+      <Marquee />
     </header>
 
-    <main class="flex-1 mx-auto w-full max-w-md mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg">
+    <main class="flex-1 mx-auto w-full max-w-md pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg" :class="hasMarquee ? 'mt-[calc(6rem+env(safe-area-inset-top,0px))] md:mt-[6rem]' : 'mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[4rem]'">
       <div v-if="!items.length" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">尚未加入餐點</div>
 
       <section v-else class="flex flex-col gap-md">
@@ -32,7 +33,7 @@
               <span class="font-price-display text-price-display text-on-surface">NT$ {{ money(item.price) }}</span>
               <div class="flex items-center bg-surface-container px-xs py-xs rounded-full gap-1">
                 <button type="button" class="w-6 h-6 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" aria-label="減少數量" @click="change(i, -1)"><span class="material-symbols-outlined" style="font-size: 16px;">remove</span></button>
-                <span class="font-label-lg text-label-lg text-on-surface px-1">{{ item.quantity }}</span>
+                <span class="font-label-lg text-label-lg text-on-surface w-7 text-center">{{ item.quantity }}</span>
                 <button type="button" class="w-6 h-6 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" aria-label="增加數量" @click="change(i, 1)"><span class="material-symbols-outlined" style="font-size: 16px;">add</span></button>
                 <button type="button" class="w-6 h-6 flex items-center justify-center text-error hover:bg-error-container rounded-full transition-colors" aria-label="移除" @click="orderStore.remove(i)"><span class="material-symbols-outlined" style="font-size: 16px;">delete</span></button>
               </div>
@@ -76,13 +77,17 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrderStore } from '../store/order.js'
 import { useToastStore } from '../store/toast.js'
+import { useSiteStore } from '../store/site.js'
 import { money } from '../utils/format.js'
+import Marquee from '../components/Marquee.vue'
 
 const router = useRouter()
 const orderStore = useOrderStore()
 const toastStore = useToastStore()
+const site = useSiteStore()
 
 const ordering = ref(false)
+const hasMarquee = computed(() => site.marqueeText !== '')
 
 const items = computed(() => orderStore.items)
 const count = computed(() => orderStore.count)

@@ -46,6 +46,13 @@ class Migrate {
                 status VARCHAR(50) DEFAULT \'active\',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+            'CREATE TABLE IF NOT EXISTS product_categories (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                sort_order INT NOT NULL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_pc_name (name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
             'CREATE TABLE IF NOT EXISTS orders (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -111,6 +118,7 @@ class Migrate {
         $this->ensureProviderIndex();
         $this->seedDefaultAdmin();
         $this->seedDefaultSettings();
+        $this->seedExistingCategories();
         $this->ensureOrdersUserIdNullable();
     }
 
@@ -145,6 +153,17 @@ class Migrate {
     private function seedDefaultSettings(): void {
         $stmt = $this->pdo->prepare('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (\'table_count\', \'0\')');
         $stmt->execute();
+    }
+
+    private function seedExistingCategories(): void {
+        $this->pdo->exec(
+            'INSERT INTO product_categories (name, sort_order) '
+            . 'SELECT category, (SELECT COALESCE(MAX(sort_order), 0) FROM product_categories) + ROW_NUMBER() OVER (ORDER BY MIN(id)) '
+            . 'FROM products '
+            . "WHERE category IS NOT NULL AND category != '' "
+            . 'AND category NOT IN (SELECT name FROM product_categories) '
+            . 'GROUP BY category'
+        );
     }
 
     private function ensureOrdersUserIdNullable(): void {

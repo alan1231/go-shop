@@ -65,6 +65,8 @@
 
 **products**：id、name、image（檔名）、description、category、price、list_price、status（預設 'active'）、created_at
 
+**product_categories**：id、name（UNIQUE）、sort_order、created_at（分類顯示順序；products.category 仍存文字，ORDER BY 用 LEFT JOIN 此表）
+
 **orders**：id、user_id、total_amount、status（預設 'pending'）、remark、member_remark、receiver_name、receiver_phone、receiver_address、table_number、order_type、linepay_transaction_id、payment_method、created_at
 
 **order_items**：id、order_id、product_id、price、quantity
@@ -108,6 +110,17 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 
 - 會員：只能 pending → paid（`POST /api/orders/{id}/pay`）
 - 管理員：後台手動更新任一狀態；completed 為終態不可再變更
+
+### 後台出單看板（KDS）
+
+- 後台訂單頁 `/admin/orders` 為 KDS 三欄看板（待付款／製作中／已完成，可切換顯示已取消），每 10 秒輪詢 `GET /api/admin/orders?per_page=300&with_items=1`，一次帶回 headers＋items。
+- 卡片用 `frontend-admin/src/components/KdsCard.vue`：狀態左色條、一鍵推進（pending→paid、paid/shipped→completed）、取消、看明細跳 `/orders/:id`。
+- 新增訂單不改頁：`frontend-admin/src/components/KdsAddOrder.vue` 同頁卡片式彈窗（搜尋＋分類 chips＋可點選商品、內用/外帶＋桌號、僅建立／現金結帳），送出 `POST /api/admin/orders`。
+- 後端：`OrderRepository::findAllWithItems()` 用批次查詢 items 後合併（避免 N+1）；OrderService 內用 `$orderId > 0` 區分「有商品的下單」與「空單直接建單」。
+- 新單 90 秒內計為「新訂單」：卡片高亮＋插入已有訂單時 toast。
+- 歷史訂單：側邊欄「訂單歷程」`/orders/history`（`OrderHistory.vue`），依狀態篩選＋日期範圍＋分頁；`GET /api/admin/orders` 支援 `start/end`（Y-m-d），回應含 `income`（依目前篩選條件的 `SUM(total_amount)`）。
+- 修改訂單：`OrderDetail.vue` 對 pending/paid/shipped 顯示「修改訂單」按鈕，開啟 `components/OrderEdit.vue` 彈窗改明細（增刪/調量），送出 `POST /api/admin/orders/{id}/items`，後端 `OrderService::updateItems` 以 transaction 重建 `order_items` 並重算 `total_amount`；completed/cancelled 不可修改。
+- 三方支付設定：後台「系統設定」`/settings`（`Settings.vue`，側邊欄「系統設定」）可填 LINE Pay Channel ID/Secret/Sandbox，存 `settings` 表（`linepay_channel_id`/`linepay_channel_secret`/`linepay_sandbox`），API `POST /api/admin/settings/linepay`；`bootstrap.php` 啟動時從 DB 讀取並 fallback 到 `.env`（含 IsConfigured 判定），不需改 `.env`。
 
 ## 資料庫規則
 

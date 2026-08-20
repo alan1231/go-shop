@@ -1,16 +1,17 @@
 <template>
   <div v-if="requiresAuth" class="layout">
     <aside class="sidebar">
-      <div class="logo"><i class="fas fa-store"></i>SHOP 後台</div>
+      <div class="logo"><i class="fas fa-store"></i>點餐 後台</div>
       <nav>
         <router-link to="/"><i class="fas fa-tachometer-alt"></i>儀表板</router-link>
         <router-link to="/point-order"><i class="fas fa-plus-circle"></i>新增訂單</router-link>
         <router-link to="/orders"><i class="fas fa-shopping-cart"></i>訂單管理</router-link>
+        <router-link to="/orders/history"><i class="fas fa-history"></i>訂單歷程</router-link>
         <router-link to="/products"><i class="fas fa-utensils"></i>菜單管理</router-link>
         <router-link to="/products/add"><i class="fas fa-plus-circle"></i>新增菜單</router-link>
         <router-link to="/accounts"><i class="fas fa-user-cog"></i>後台帳號</router-link>
         <router-link to="/marquee"><i class="fas fa-scroll"></i>跑馬燈</router-link>
-        <router-link to="/settings"><i class="fas fa-chair"></i>桌數設定</router-link>
+        <router-link to="/settings"><i class="fas fa-cog"></i>系統設定</router-link>
         <router-link to="/account" class="nav-account"><i class="fas fa-user-shield"></i>帳號設定</router-link>
       </nav>
       <div class="user-section">

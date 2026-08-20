@@ -6,7 +6,7 @@ import OrderDetail from '../views/OrderDetail.vue'
 const routes = [
   { path: '/idnex', redirect: '/' },
   { path: '/index', redirect: '/' },
-  { path: '/', name: 'home', component: Home, meta: { title: '首頁' } },
+  { path: '/', name: 'home', component: Home, meta: { title: '點餐' } },
   { path: '/menu', name: 'menu', component: Home, meta: { title: '菜單' } },
   { path: '/order', name: 'order', component: Order, meta: { title: '訂單' } },
   { path: '/orders/:id', name: 'order-detail', component: OrderDetail, meta: { title: '訂單' } },
@@ -18,7 +18,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  document.title = (to.meta.title ? to.meta.title + ' - ' : '') + 'SHOP'
+  document.title = to.meta.title || ''
   return true
 })
 

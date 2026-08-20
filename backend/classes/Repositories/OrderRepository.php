@@ -15,13 +15,14 @@ class OrderRepository {
         $this->pdo = $pdo ?? Database::connect();
     }
 
-    public function findAll(string $status = '', int $limit = 100, int $offset = 0): array {
+    public function findAll(string $status = '', int $limit = 100, int $offset = 0, string $start = '', string $end = ''): array {
         $sql = 'SELECT ' . self::ORDER_COLS . ', u.username FROM orders o LEFT JOIN users u ON o.user_id = u.id';
         $args = [];
         if ($status !== '' && Support::validStatus($status)) {
             $sql .= ' WHERE o.status = ?';
             $args[] = $status;
         }
+        $this->appendDateRange($sql, $args, $start, $end, $status === '', 'o.created_at');
         $sql .= ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
         $args[] = $limit;
         $args[] = $offset;
@@ -30,16 +31,71 @@ class OrderRepository {
         return array_map([$this, 'normalize'], $stmt->fetchAll());
     }
 
-    public function countFindAll(string $status = ''): int {
+    public function findAllWithItems(string $status = '', int $limit = 200, int $offset = 0, string $start = '', string $end = ''): array {
+        $orders = $this->findAll($status, $limit, $offset, $start, $end);
+        if (count($orders) === 0) {
+            return $orders;
+        }
+        $ids = array_map('intval', array_column($orders, 'id'));
+        $in = implode(',', $ids);
+        $stmt = $this->pdo->query(
+            'SELECT oi.order_id, oi.product_id, oi.price, oi.quantity, p.name, p.image '
+            . 'FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id IN (' . $in . ') ORDER BY oi.id'
+        );
+        $byOrder = [];
+        foreach ($stmt->fetchAll() as $r) {
+            $byOrder[(int)$r['order_id']][] = [
+                'product_id' => (int)$r['product_id'],
+                'price' => (float)$r['price'],
+                'quantity' => (int)$r['quantity'],
+                'name' => (string)($r['name'] ?? ''),
+                'image' => (string)($r['image'] ?? ''),
+            ];
+        }
+        foreach ($orders as &$o) {
+            $o['items'] = $byOrder[$o['id']] ?? [];
+        }
+        unset($o);
+        return $orders;
+    }
+
+    public function countFindAll(string $status = '', string $start = '', string $end = ''): int {
         $sql = 'SELECT COUNT(*) FROM orders';
         $args = [];
         if ($status !== '' && Support::validStatus($status)) {
             $sql .= ' WHERE status = ?';
             $args[] = $status;
         }
+        $this->appendDateRange($sql, $args, $start, $end, $status === '');
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($args);
         return (int)$stmt->fetchColumn();
+    }
+
+    public function sumTotal(string $status = '', string $start = '', string $end = ''): float {
+        $sql = 'SELECT COALESCE(SUM(total_amount), 0) FROM orders';
+        $args = [];
+        if ($status !== '' && Support::validStatus($status)) {
+            $sql .= ' WHERE status = ?';
+            $args[] = $status;
+        }
+        $this->appendDateRange($sql, $args, $start, $end, $status === '');
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($args);
+        return (float)$stmt->fetchColumn();
+    }
+
+    private function appendDateRange(string &$sql, array &$args, string $start, string $end, bool $first = false, string $col = 'created_at'): void {
+        $where = $first ? ' WHERE' : '';
+        if ($start !== '') {
+            $sql .= $where . ($args ? ' AND' : '') . ' ' . $col . ' >= ?';
+            $args[] = $start . ' 00:00:00';
+            $where = '';
+        }
+        if ($end !== '') {
+            $sql .= $where . ($args ? ' AND' : '') . ' ' . $col . ' <= ?';
+            $args[] = $end . ' 23:59:59';
+        }
     }
 
     public function findById(int $id): ?array {
@@ -86,6 +142,16 @@ class OrderRepository {
     public function updateRemark(int $id, string $remark): void {
         $stmt = $this->pdo->prepare('UPDATE orders SET remark = ? WHERE id = ?');
         $stmt->execute([$remark, $id]);
+    }
+
+    public function deleteItems(int $orderId): void {
+        $stmt = $this->pdo->prepare('DELETE FROM order_items WHERE order_id = ?');
+        $stmt->execute([$orderId]);
+    }
+
+    public function updateTotal(int $id, float $total): void {
+        $stmt = $this->pdo->prepare('UPDATE orders SET total_amount = ? WHERE id = ?');
+        $stmt->execute([$total, $id]);
     }
 
     public function count(): int {

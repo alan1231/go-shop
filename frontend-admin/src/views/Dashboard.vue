@@ -25,13 +25,6 @@
           </div>
         </router-link>
         <div class="stat-card">
-          <div class="stat-icon" style="color:#9C27B0;"><i class="fas fa-users"></i></div>
-          <div>
-            <div class="stat-num">{{ stats.totalUsers || 0 }}</div>
-            <div class="stat-label">會員總數</div>
-          </div>
-        </div>
-        <div class="stat-card">
           <div class="stat-icon" style="color:#e44d26;"><i class="fas fa-dollar-sign"></i></div>
           <div>
             <div class="stat-num">NT$ {{ Number(stats.revenue || 0).toLocaleString() }}</div>
@@ -86,7 +79,7 @@
 import Chart from 'chart.js/auto'
 import { api } from '../api/index.js'
 
-const STATUS = { pending: '待付款', paid: '已付款', shipped: '出貨中', completed: '已完成', cancelled: '已取消' }
+const STATUS = { pending: '待付款', paid: '已付款', shipped: '製作中', completed: '已完成', cancelled: '已取消' }
 const STATUS_COLORS = { pending: '#9e9e9e', paid: '#2196F3', shipped: '#FF9800', completed: '#4CAF50', cancelled: '#f44336' }
 
 export default {

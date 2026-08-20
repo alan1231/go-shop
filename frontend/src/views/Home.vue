@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-surface relative">
-    <header class="fixed top-0 left-0 right-0 mx-auto max-w-md w-full z-50 bg-surface pt-safe md:top-8">
+    <header class="fixed top-0 left-0 right-0 mx-auto max-w-md w-full z-50 bg-surface pt-safe md:top-[8px] md:rounded-t-[8px]">
       <div class="h-16 flex justify-between items-center px-container-margin border-b border-outline-variant">
         <div class="flex items-center gap-2">
           <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">restaurant</span>
@@ -8,20 +8,23 @@
         </div>
         <span class="font-label-lg text-label-lg px-3 py-1.5 bg-surface-container-high text-on-surface-variant rounded-full">{{ dineLabel }}</span>
       </div>
+      <Marquee />
     </header>
 
-    <main class="mx-auto w-full max-w-md pt-[calc(4rem+env(safe-area-inset-top,0px))] md:pt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))]">
-      <div class="sticky top-[calc(4rem+env(safe-area-inset-top,0px))] md:top-[6rem] z-40 bg-surface/95 backdrop-blur-sm px-container-margin pt-4 pb-2 border-b border-surface-variant">
+    <main class="mx-auto w-full max-w-md pb-[calc(110px+env(safe-area-inset-bottom,20px))]" :class="hasMarquee ? 'pt-[calc(6rem+env(safe-area-inset-top,0px))] md:pt-[6rem]' : 'pt-[calc(4rem+env(safe-area-inset-top,0px))] md:pt-[4rem]'">
+      <div class="sticky z-40 bg-surface/95 backdrop-blur-sm px-container-margin pt-4 pb-2 border-b border-surface-variant" :class="hasMarquee ? 'top-[calc(6rem+env(safe-area-inset-top,0px))] md:top-[6rem]' : 'top-[calc(4rem+env(safe-area-inset-top,0px))] md:top-[4rem]'">
         <div class="flex overflow-x-auto gap-6 hide-scrollbar snap-x">
           <button type="button" class="snap-start whitespace-nowrap pb-2 font-label-lg text-label-lg transition-colors" :class="activeCategory === '' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface-variant font-medium border-b-2 border-transparent hover:text-on-surface'" @click="selectCategory('')">全部</button>
           <button v-for="c in categories" :key="c" type="button" class="snap-start whitespace-nowrap pb-2 font-label-lg text-label-lg transition-colors" :class="activeCategory === c ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface-variant font-medium border-b-2 border-transparent hover:text-on-surface'" @click="selectCategory(c)">{{ c }}</button>
         </div>
       </div>
 
-      <div class="px-container-margin py-6 flex flex-col gap-6">
+      <div class="px-container-margin py-6 flex flex-col gap-3">
         <div v-if="loading" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">載入中...</div>
         <div v-else-if="!visibleProducts.length" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">此分類暫無餐點</div>
-        <ProductCard v-for="p in visibleProducts" :key="p.id" :product="p" />
+        <template v-else>
+          <ProductCard v-for="p in visibleProducts" :key="p.id" :product="p" />
+        </template>
       </div>
     </main>
 
@@ -44,16 +47,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCatalogStore } from '../store/catalog.js'
 import { useOrderStore } from '../store/order.js'
 import { useToastStore } from '../store/toast.js'
+import { useSiteStore } from '../store/site.js'
 import { api } from '../api/index.js'
 import ProductCard from '../components/ProductCard.vue'
+import Marquee from '../components/Marquee.vue'
 
 const route = useRoute()
 const router = useRouter()
 const catalog = useCatalogStore()
 const orderStore = useOrderStore()
 const toastStore = useToastStore()
+const site = useSiteStore()
 
 const activeCategory = ref('')
+const hasMarquee = computed(() => site.marqueeText !== '')
 const categories = computed(() => catalog.categories)
 const loading = computed(() => catalog.loading)
 const visibleProducts = computed(() => {

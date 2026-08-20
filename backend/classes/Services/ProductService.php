@@ -36,6 +36,19 @@ class ProductService {
         return $this->repo->getCategories();
     }
 
+    public function moveCategory(string $name, string $direction): array {
+        if ($direction !== 'up' && $direction !== 'down') {
+            throw new ServiceException('無效的排序方向');
+        }
+        $name = trim($name);
+        if ($name === '') {
+            throw new ServiceException('分類名稱不能為空');
+        }
+        $this->repo->ensureCategory($name);
+        $this->repo->moveCategory($name, $direction);
+        return $this->repo->getAllCategories();
+    }
+
     public function getById(int $id): ?array {
         return $this->repo->getById($id);
     }
@@ -44,11 +57,13 @@ class ProductService {
         if (trim($in['name']) === '' || $in['price'] <= 0) {
             throw new ServiceException('請填寫商品名稱且售價需大於 0');
         }
+        $category = trim($in['category']);
+        $this->repo->ensureCategory($category);
         $id = $this->repo->create(
             trim($in['name']),
             '',
             $in['description'],
-            trim($in['category']),
+            $category,
             $in['price'],
             $in['list_price'],
             $in['status']
@@ -68,6 +83,8 @@ class ProductService {
         if (trim($in['name']) === '' || $in['price'] <= 0) {
             throw new ServiceException('請填寫商品名稱且售價需大於 0');
         }
+        $category = trim($in['category']);
+        $this->repo->ensureCategory($category);
         $imageName = $p['image'];
         if ($in['image'] !== '') {
             if ($p['image'] !== '') {
@@ -91,6 +108,9 @@ class ProductService {
         $p = $this->repo->getById($id);
         if ($p === null) {
             throw new ServiceException('商品不存在');
+        }
+        if ($this->repo->hasOrderItems($id)) {
+            throw new ServiceException('此商品已有訂單紀錄，無法刪除，可改用下架', 400);
         }
         if ($p['image'] !== '') {
             $this->images->delete($p['image']);

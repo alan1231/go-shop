@@ -34,17 +34,19 @@ Registry::set('adminRepo', new AdminUserRepository());
 Registry::set('productRepo', new ProductRepository());
 Registry::set('orderRepo', new OrderRepository());
 Registry::set('marqueeRepo', new MarqueeRepository());
+Registry::set('settingsRepo', new SettingsRepository());
 
 Registry::set('images', new Images(Config::get('UPLOADS_DIR')));
 Registry::set('authSvc', new AuthService(Registry::get('adminRepo')));
 Registry::set('adminAccountSvc', new AdminAccountService(Registry::get('adminRepo')));
 Registry::set('productSvc', new ProductService(Registry::get('productRepo'), Registry::get('images')));
+Registry::set('settingsSvc', new SettingsService(Registry::get('settingsRepo')));
+$lp = Registry::get('settingsSvc')->getLinePay();
 Registry::set('linePayGateway', new LinePayGateway(new LinePayClient(new LinePayConfig(
-    Config::get('LINE_PAY_CHANNEL_ID'),
-    Config::get('LINE_PAY_CHANNEL_SECRET'),
-    Config::get('LINE_PAY_SANDBOX', 'true') !== 'false'
+    $lp['channel_id'],
+    $lp['channel_secret'],
+    $lp['sandbox'] === '1'
 ))));
 Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo'), Registry::get('linePayGateway')));
 Registry::set('marqueeSvc', new MarqueeService(Registry::get('marqueeRepo')));
-Registry::set('settingsSvc', new SettingsService(new SettingsRepository()));
 Registry::set('dashboardSvc', new DashboardService(Registry::get('productRepo'), Registry::get('orderRepo'), Registry::get('userRepo')));

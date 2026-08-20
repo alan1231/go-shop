@@ -15,6 +15,23 @@
       <button v-if="q || category" class="btn btn-default" @click="reset">清除</button>
     </div>
 
+    <div class="card category-sort" v-if="categories.length">
+      <div class="category-sort-header">
+        <h3><i class="fas fa-sort"></i> 分類排序</h3>
+        <span>調整前台菜單的分類顯示順序</span>
+      </div>
+      <div class="category-sort-list">
+        <div v-for="(c, i) in categories" :key="c" class="category-sort-row">
+          <span class="category-sort-index">{{ i + 1 }}</span>
+          <span class="category-sort-name">{{ c }}</span>
+          <span class="category-sort-actions">
+            <button type="button" :disabled="i === 0" title="上移" @click="moveCategory(c, 'up')"><i class="fas fa-chevron-up"></i></button>
+            <button type="button" :disabled="i === categories.length - 1" title="下移" @click="moveCategory(c, 'down')"><i class="fas fa-chevron-down"></i></button>
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="card" style="padding:0;overflow:hidden;">
       <div v-if="loading" style="text-align:center;padding:48px;color:#888;"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
       <p v-else-if="!items.length" style="text-align:center;padding:48px;color:#888;">尚無菜單</p>
@@ -120,6 +137,14 @@ export default {
         alert(res.message)
       }
     },
+    async moveCategory(name, direction) {
+      const res = await api.moveCategory(name, direction)
+      if (res.success) {
+        this.categories = res.data || this.categories
+      } else {
+        alert(res.message)
+      }
+    },
   },
 }
 </script>
@@ -132,4 +157,22 @@ export default {
 .filter-bar input:focus, .filter-bar select:focus { border-color: #4CAF50; box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.12); }
 .filter-bar select { padding: 10px 12px; border: 1px solid #d0d5dd; border-radius: 8px; font-size: 14px; outline: none; }
 .tag { background: #f0f0f0; padding: 2px 10px; border-radius: 10px; font-size: 12px; color: #666; }
+.category-sort { padding: 16px 24px; }
+.category-sort-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.category-sort-header h3 { font-size: 16px; margin: 0; }
+.category-sort-header span { font-size: 12px; color: #888; }
+.category-sort-list { display: flex; flex-direction: column; gap: 6px; }
+.category-sort-row {
+  display: flex; align-items: center; gap: 12px;
+  background: #fafafa; border: 1px solid #ececec; border-radius: 8px; padding: 8px 12px;
+}
+.category-sort-index { width: 22px; height: 22px; border-radius: 50%; background: #4CAF50; color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.category-sort-name { flex: 1; font-weight: 600; }
+.category-sort-actions { display: flex; gap: 4px; }
+.category-sort-actions button {
+  width: 28px; height: 28px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff;
+  color: #555; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
+}
+.category-sort-actions button:hover:not(:disabled) { background: #f0f0f0; color: #4CAF50; }
+.category-sort-actions button:disabled { opacity: 0.35; cursor: not-allowed; }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
-    <header class="fixed top-0 left-0 right-0 mx-auto w-full max-w-md z-50 bg-surface pt-safe md:top-8">
+    <header class="fixed top-0 left-0 right-0 mx-auto w-full max-w-md z-50 bg-surface pt-safe md:top-[8px] md:rounded-t-[8px]">
       <div class="h-16 flex justify-between items-center px-container-margin border-b border-outline-variant">
         <div class="flex items-center gap-xs">
           <button type="button" aria-label="返回" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-variant transition-colors" @click="goMenu">
@@ -10,9 +10,10 @@
         </div>
         <span class="bg-surface-container-high px-sm py-xs rounded-full font-label-lg text-label-lg text-on-surface">{{ dineLabel }}</span>
       </div>
+      <Marquee />
     </header>
 
-    <main class="flex-1 mx-auto w-full max-w-md mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg">
+    <main class="flex-1 mx-auto w-full max-w-md pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg" :class="hasMarquee ? 'mt-[calc(6rem+env(safe-area-inset-top,0px))] md:mt-[6rem]' : 'mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[4rem]'">
       <div v-if="loading" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">載入訂單中...</div>
       <div v-else-if="!order" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">訂單不存在</div>
 
@@ -141,18 +142,22 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOrderStore } from '../store/order.js'
 import { useToastStore } from '../store/toast.js'
+import { useSiteStore } from '../store/site.js'
 import { formatDate as formatDateValue, imageUrl, money } from '../utils/format.js'
+import Marquee from '../components/Marquee.vue'
 
 const route = useRoute()
 const router = useRouter()
 const orderStore = useOrderStore()
 const toastStore = useToastStore()
+const site = useSiteStore()
 
 const order = computed(() => orderStore.detail)
 const loading = computed(() => orderStore.detailLoading)
 const payment = computed(() => orderStore.payment)
 const paying = computed(() => orderStore.paying)
 const payWin = ref(null)
+const hasMarquee = computed(() => site.marqueeText !== '')
 
 const totalQuantity = computed(() =>
   (order.value?.items || []).reduce((sum, item) => sum + Number(item.quantity), 0)

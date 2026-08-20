@@ -26,10 +26,12 @@ class OrderService {
         $this->linePay = $linePay;
     }
 
-    public function getAll(string $status, int $page, int $perPage): array {
-        $total = $this->repo->countFindAll($status);
-        $items = $this->repo->findAll($status, $perPage, ($page - 1) * $perPage);
-        return Support::page($items, $total, $page, $perPage);
+    public function getAll(string $status, int $page, int $perPage, bool $withItems = false, string $start = '', string $end = ''): array {
+        $total = $this->repo->countFindAll($status, $start, $end);
+        $method = $withItems ? 'findAllWithItems' : 'findAll';
+        $items = $this->repo->{$method}($status, $perPage, ($page - 1) * $perPage, $start, $end);
+        $income = $this->repo->sumTotal($status, $start, $end);
+        return Support::page($items, $total, $page, $perPage) + ['income' => $income];
     }
 
     public function getWithItems(int $id): ?array {
@@ -129,6 +131,46 @@ class OrderService {
             throw new ServiceException('訂單不存在');
         }
         $this->repo->updateRemark($id, trim($remark));
+    }
+
+    public function updateItems(int $id, array $items): void {
+        $order = $this->repo->findById($id);
+        if ($order === null) {
+            throw new ServiceException('訂單不存在', 404);
+        }
+        if (in_array($order['status'], ['completed', 'cancelled'], true)) {
+            throw new ServiceException('此狀態的訂單不可修改');
+        }
+        $total = 0.0;
+        $lines = [];
+        foreach ($items as $item) {
+            $productId = (int)($item['product_id'] ?? 0);
+            $qty = (int)($item['quantity'] ?? 0);
+            if ($productId <= 0 || $qty <= 0) {
+                continue;
+            }
+            $p = $this->productRepo->getById($productId);
+            if ($p === null || $p['status'] !== 'active') {
+                throw new ServiceException('商品不存在或已下架');
+            }
+            $lines[] = ['product' => $p, 'quantity' => $qty];
+            $total += (float)$p['price'] * $qty;
+        }
+        if (count($lines) === 0) {
+            throw new ServiceException('訂單至少需保留一項餐點');
+        }
+        $this->repo->beginTransaction();
+        try {
+            $this->repo->deleteItems($id);
+            foreach ($lines as $l) {
+                $this->repo->createItem($id, (int)$l['product']['id'], (float)$l['product']['price'], $l['quantity']);
+            }
+            $this->repo->updateTotal($id, $total);
+            $this->repo->commit();
+        } catch (\Throwable $e) {
+            $this->repo->rollBack();
+            throw $e;
+        }
     }
 
     public function startLinePay(int $id, int $userId): array {
