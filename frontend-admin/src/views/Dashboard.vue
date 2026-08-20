@@ -24,13 +24,13 @@
             <div class="stat-label">商品總數</div>
           </div>
         </router-link>
-        <router-link to="/users" class="stat-card">
+        <div class="stat-card">
           <div class="stat-icon" style="color:#9C27B0;"><i class="fas fa-users"></i></div>
           <div>
             <div class="stat-num">{{ stats.totalUsers || 0 }}</div>
             <div class="stat-label">會員總數</div>
           </div>
-        </router-link>
+        </div>
         <div class="stat-card">
           <div class="stat-icon" style="color:#e44d26;"><i class="fas fa-dollar-sign"></i></div>
           <div>

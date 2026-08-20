@@ -32,7 +32,7 @@
 │       ├── ServiceException.php  # 給使用者看的錯誤（含 HTTP 狀態碼）
 │       ├── Images.php         # 商品圖片儲存
 │       ├── Repositories/      # 資料存取（6 個 Repository）
-│       ├── Services/          # 商業邏輯（9 個 Service）
+│       ├── Services/          # 商業邏輯（7 個 Service）
 │       └── Controllers/       # 前台/後台 handler + BaseController
 ├── frontend/                  # Vue 3 前台 SPA
 ├── frontend-admin/            # Vue 3 後台 SPA
@@ -61,7 +61,7 @@
 
 **users（前台會員，僅後台管理）**：id、username、email、password、role（預設 'user'）、token、provider、provider_id、phone、address、avatar、created_at；UNIQUE(provider, provider_id)
 
-**admin_users（後台管理員）**：id、username、password、token、created_at
+**admin_users（後台管理員）**：id、username、password、token、role（選填，權限）、created_at
 
 **products**：id、name、image（檔名）、description、category、price、list_price、status（預設 'active'）、created_at
 
@@ -74,6 +74,7 @@
 **settings**：setting_key、setting_value、updated_at
 
 > 已移除電商殘留：`/api/cart/*`、`/api/auth/*`、`cart_items`、`login_attempts`（含 RateLimitService / ApiCartController / ApiAuthController / CartService / CartRepository）。不要重新引入。
+> 後台不再有三方登入與會員管理：`/api/admin/oauth/*`、`/api/admin/users/*`、OAuthService、UserService、AdminUserController 已移除；`admin_users.provider/provider_id` 欄位不再使用。會員（`users` 表）仍保留給前台訂單關聯與儀表板統計。後台帳號管理走 `/api/admin/accounts`（`AdminAccountController` + `AdminAccountService`，`role` 為選填權限欄位）。
 
 ## 資料流向
 
@@ -89,6 +90,13 @@ Order.vue（訂單內容）→ POST /api/orders
 ```
 /api/admin/login → AdminAuthController::login → AuthService::authenticate
   → 查 admin_users → password_verify 比對 → 產生 token 存 admin_users.token → 回傳 token
+```
+
+### 後台帳號管理
+```
+Accounts.vue → /api/admin/accounts
+  → AdminAccountController::index/create/delete → AdminAccountService
+  → 新增帳號可帶選填 role（權限）；刪除不得刪除自己，且至少保留一個帳號
 ```
 
 ## 訂單狀態機
@@ -116,7 +124,7 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 
 ## 已知陷阱（務必遵守）
 
-1. **curl `CURLOPT_TIMEOUT` 是秒**：OAuth / LINE Pay 的 `CURLOPT_TIMEOUT => 15` 是 15 秒（與 Go 版 `15 * time.Second` 一致），不要寫成毫秒。見 `Services/OAuthService.php`、`linepay-php/src/LinePayCurlTransport.php`。
+1. **curl `CURLOPT_TIMEOUT` 是秒**：LINE Pay 的 `CURLOPT_TIMEOUT => 15` 是 15 秒（與 Go 版 `15 * time.Second` 一致），不要寫成毫秒。見 `linepay-php/src/LinePayCurlTransport.php`。
 2. **商品**：本系統為點餐系統，`products` 無庫存欄位（stock 已全面移除），前台列表/明細不帶任何 stock 資訊，也不做庫存/超賣檢查。不要重新引入庫存欄位。
 3. **商品圖片路徑**：前台 API 回 `/uploads/xxx`；`order_items.image` 只有檔名，前端需自行組 `/uploads/` + 檔名。
 4. **金流用 float**：價格計算全用 float，可能產生小數誤差，如需嚴謹可改 int（分）。

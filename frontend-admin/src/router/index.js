@@ -5,28 +5,24 @@ import Products from '../views/Products.vue'
 import ProductForm from '../views/ProductForm.vue'
 import Orders from '../views/Orders.vue'
 import OrderDetail from '../views/OrderDetail.vue'
-import Users from '../views/Users.vue'
-import UserForm from '../views/UserForm.vue'
 import Marquee from '../views/Marquee.vue'
 import Settings from '../views/Settings.vue'
 import PointOrder from '../views/PointOrder.vue'
-import OAuthCallback from '../views/OAuthCallback.vue'
+import Accounts from '../views/Accounts.vue'
 import Account from '../views/Account.vue'
 
 const routes = [
   { path: '/login', name: 'login', component: Login, meta: { title: '登入' } },
-  { path: '/auth/callback', name: 'oauth-callback', component: OAuthCallback, meta: { title: '登入中' } },
   { path: '/', name: 'dashboard', component: Dashboard, meta: { title: '儀表板', requiresAuth: true } },
   { path: '/products', name: 'products', component: Products, meta: { title: '菜單管理', requiresAuth: true } },
   { path: '/products/add', name: 'product-add', component: ProductForm, meta: { title: '新增菜單', requiresAuth: true } },
   { path: '/products/:id/edit', name: 'product-edit', component: ProductForm, meta: { title: '修改菜單', requiresAuth: true } },
   { path: '/orders', name: 'orders', component: Orders, meta: { title: '訂單管理', requiresAuth: true } },
   { path: '/orders/:id', name: 'order', component: OrderDetail, meta: { title: '訂單明細', requiresAuth: true } },
-  { path: '/users', name: 'users', component: Users, meta: { title: '會員管理', requiresAuth: true } },
-  { path: '/users/add', name: 'user-add', component: UserForm, meta: { title: '新增會員', requiresAuth: true } },
   { path: '/marquee', name: 'marquee', component: Marquee, meta: { title: '跑馬燈', requiresAuth: true } },
   { path: '/settings', name: 'settings', component: Settings, meta: { title: '桌數設定', requiresAuth: true } },
   { path: '/point-order', name: 'point-order', component: PointOrder, meta: { title: '新增訂單', requiresAuth: true } },
+  { path: '/accounts', name: 'accounts', component: Accounts, meta: { title: '後台帳號', requiresAuth: true } },
   { path: '/account', name: 'account', component: Account, meta: { title: '帳號設定', requiresAuth: true } },
 ]
 

@@ -79,24 +79,6 @@ export const api = {
       body: JSON.stringify({ username, password }),
     })
   },
-  oauthLogin(provider, code, redirectUri) {
-    return request('/admin/oauth', {
-      method: 'POST',
-      body: JSON.stringify({ provider, code, redirect_uri: redirectUri }),
-    })
-  },
-  oauthBind(provider, code, redirectUri) {
-    return request('/admin/oauth/bind', {
-      method: 'POST',
-      body: JSON.stringify({ provider, code, redirect_uri: redirectUri }),
-    })
-  },
-  oauthUnbind(provider) {
-    return request('/admin/oauth/unbind', {
-      method: 'POST',
-      body: JSON.stringify({ provider }),
-    })
-  },
   me() {
     return request('/admin/me')
   },
@@ -161,27 +143,17 @@ export const api = {
     })
   },
 
-  users(q = '') {
-    const s = q ? '?q=' + encodeURIComponent(q) : ''
-    return request('/admin/users' + s)
+  accounts() {
+    return request('/admin/accounts')
   },
-  user(id) {
-    return request(`/admin/users/${id}`)
-  },
-  createUser(user) {
-    return request('/admin/users', {
+  createAccount(user) {
+    return request('/admin/accounts', {
       method: 'POST',
       body: JSON.stringify(user),
     })
   },
-  updateUserPassword(id, password) {
-    return request(`/admin/users/${id}`, {
-      method: 'POST',
-      body: JSON.stringify({ password }),
-    })
-  },
-  deleteUser(id) {
-    return request(`/admin/users/${id}/delete`, { method: 'POST' })
+  deleteAccount(id) {
+    return request(`/admin/accounts/${id}/delete`, { method: 'POST' })
   },
 
   marquee() {

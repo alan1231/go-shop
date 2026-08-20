@@ -1,13 +1,13 @@
 <?php
 
 use App\Config;
+use App\Controllers\AdminAccountController;
 use App\Controllers\AdminAuthController;
 use App\Controllers\AdminDashboardController;
 use App\Controllers\AdminMarqueeController;
 use App\Controllers\AdminOrderController;
 use App\Controllers\AdminProductController;
 use App\Controllers\AdminSettingsController;
-use App\Controllers\AdminUserController;
 use App\Controllers\ApiMarqueeController;
 use App\Controllers\ApiOrderController;
 use App\Controllers\ApiProductController;
@@ -42,9 +42,6 @@ $router->get('/api/orders/{id}/pay/status', [ApiOrderController::class, 'payStat
 $router->post('/api/orders/{id}/pay', [ApiOrderController::class, 'pay']);
 
 $router->post('/api/admin/login', [AdminAuthController::class, 'login']);
-$router->post('/api/admin/oauth', [AdminAuthController::class, 'oauth']);
-$router->post('/api/admin/oauth/bind', [AdminAuthController::class, 'bind']);
-$router->post('/api/admin/oauth/unbind', [AdminAuthController::class, 'unbind']);
 $router->get('/api/admin/me', [AdminAuthController::class, 'me']);
 $router->post('/api/admin/logout', [AdminAuthController::class, 'logout']);
 $router->get('/api/admin/stats', [AdminDashboardController::class, 'index']);
@@ -62,11 +59,9 @@ $router->get('/api/admin/orders/{id}', [AdminOrderController::class, 'show']);
 $router->post('/api/admin/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
 $router->post('/api/admin/orders/{id}/remark', [AdminOrderController::class, 'updateRemark']);
 
-$router->get('/api/admin/users', [AdminUserController::class, 'index']);
-$router->post('/api/admin/users', [AdminUserController::class, 'create']);
-$router->get('/api/admin/users/{id}', [AdminUserController::class, 'show']);
-$router->post('/api/admin/users/{id}', [AdminUserController::class, 'updatePassword']);
-$router->post('/api/admin/users/{id}/delete', [AdminUserController::class, 'delete']);
+$router->get('/api/admin/accounts', [AdminAccountController::class, 'index']);
+$router->post('/api/admin/accounts', [AdminAccountController::class, 'create']);
+$router->post('/api/admin/accounts/{id}/delete', [AdminAccountController::class, 'delete']);
 
 $router->get('/api/admin/marquee', [AdminMarqueeController::class, 'show']);
 $router->post('/api/admin/marquee', [AdminMarqueeController::class, 'update']);

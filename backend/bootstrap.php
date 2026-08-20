@@ -13,14 +13,13 @@ use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\SettingsRepository;
 use App\Repositories\UserRepository;
+use App\Services\AdminAccountService;
 use App\Services\AuthService;
 use App\Services\DashboardService;
 use App\Services\MarqueeService;
-use App\Services\OAuthService;
 use App\Services\OrderService;
 use App\Services\ProductService;
 use App\Services\SettingsService;
-use App\Services\UserService;
 use LinePay\LinePayClient;
 use LinePay\LinePayConfig;
 use LinePay\LinePayGateway;
@@ -38,7 +37,7 @@ Registry::set('marqueeRepo', new MarqueeRepository());
 
 Registry::set('images', new Images(Config::get('UPLOADS_DIR')));
 Registry::set('authSvc', new AuthService(Registry::get('adminRepo')));
-Registry::set('userSvc', new UserService(Registry::get('userRepo')));
+Registry::set('adminAccountSvc', new AdminAccountService(Registry::get('adminRepo')));
 Registry::set('productSvc', new ProductService(Registry::get('productRepo'), Registry::get('images')));
 Registry::set('linePayGateway', new LinePayGateway(new LinePayClient(new LinePayConfig(
     Config::get('LINE_PAY_CHANNEL_ID'),
@@ -49,10 +48,3 @@ Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Reg
 Registry::set('marqueeSvc', new MarqueeService(Registry::get('marqueeRepo')));
 Registry::set('settingsSvc', new SettingsService(new SettingsRepository()));
 Registry::set('dashboardSvc', new DashboardService(Registry::get('productRepo'), Registry::get('orderRepo'), Registry::get('userRepo')));
-Registry::set('oauthSvc', new OAuthService(
-    Config::get('GOOGLE_CLIENT_ID'),
-    Config::get('GOOGLE_CLIENT_SECRET'),
-    Config::get('LINE_CHANNEL_ID'),
-    Config::get('LINE_CHANNEL_SECRET'),
-    Config::get('OAUTH_REDIRECT_URI', 'http://localhost:5173/auth/callback')
-));
