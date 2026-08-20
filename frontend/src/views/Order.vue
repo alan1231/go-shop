@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <main class="flex-1 mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg">
+    <main class="flex-1 mx-auto w-full max-w-md mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg">
       <div v-if="!items.length" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">尚未加入餐點</div>
 
       <section v-else class="flex flex-col gap-md">

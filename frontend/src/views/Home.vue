@@ -10,7 +10,7 @@
       </div>
     </header>
 
-    <main class="pt-[calc(4rem+env(safe-area-inset-top,0px))] pb-[calc(110px+env(safe-area-inset-bottom,20px))]">
+    <main class="mx-auto w-full max-w-md pt-[calc(4rem+env(safe-area-inset-top,0px))] md:pt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))]">
       <div class="sticky top-[calc(4rem+env(safe-area-inset-top,0px))] md:top-[6rem] z-40 bg-surface/95 backdrop-blur-sm px-container-margin pt-4 pb-2 border-b border-surface-variant">
         <div class="flex overflow-x-auto gap-6 hide-scrollbar snap-x">
           <button type="button" class="snap-start whitespace-nowrap pb-2 font-label-lg text-label-lg transition-colors" :class="activeCategory === '' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface-variant font-medium border-b-2 border-transparent hover:text-on-surface'" @click="selectCategory('')">全部</button>
