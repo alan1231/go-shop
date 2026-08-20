@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <main class="flex-1 mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg">
+    <main class="flex-1 mx-auto w-full max-w-md mt-[calc(4rem+env(safe-area-inset-top,0px))] md:mt-[6rem] pb-[calc(110px+env(safe-area-inset-bottom,20px))] px-container-margin pt-md flex flex-col gap-lg">
       <div v-if="loading" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">載入訂單中...</div>
       <div v-else-if="!order" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">訂單不存在</div>
 
