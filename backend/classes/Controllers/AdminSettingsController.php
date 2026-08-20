@@ -29,4 +29,11 @@ class AdminSettingsController extends BaseController {
         );
         Response::success(null, '三方支付設定已更新');
     }
+
+    public static function updateMenuLayout(): void {
+        self::requireAdmin();
+        $body = Support::jsonBody();
+        Registry::get('settingsSvc')->setMenuLayout((string)($body['menu_layout'] ?? 'grid'));
+        Response::success(null, '菜單顯示方式已更新');
+    }
 }

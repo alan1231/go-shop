@@ -196,4 +196,10 @@ export const api = {
       body: JSON.stringify(linepay),
     })
   },
+  updateMenuLayout(menuLayout) {
+    return request('/admin/settings/menu-layout', {
+      method: 'POST',
+      body: JSON.stringify({ menu_layout: menuLayout }),
+    })
+  },
 }

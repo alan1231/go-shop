@@ -11,6 +11,7 @@ use App\Controllers\AdminSettingsController;
 use App\Controllers\ApiMarqueeController;
 use App\Controllers\ApiOrderController;
 use App\Controllers\ApiProductController;
+use App\Controllers\ApiSettingsController;
 use App\Response;
 use App\Router;
 use App\ServiceException;
@@ -28,6 +29,8 @@ set_exception_handler(function (Throwable $e): void {
 $router = new Router();
 
 $router->get('/api/marquee', [ApiMarqueeController::class, 'index']);
+
+$router->get('/api/settings', [ApiSettingsController::class, 'index']);
 
 $router->get('/api/products', [ApiProductController::class, 'index']);
 $router->get('/api/categories', [ApiProductController::class, 'categories']);
@@ -71,6 +74,7 @@ $router->post('/api/admin/marquee', [AdminMarqueeController::class, 'update']);
 $router->get('/api/admin/settings', [AdminSettingsController::class, 'show']);
 $router->post('/api/admin/settings/table-count', [AdminSettingsController::class, 'updateTableCount']);
 $router->post('/api/admin/settings/linepay', [AdminSettingsController::class, 'updateLinePay']);
+$router->post('/api/admin/settings/menu-layout', [AdminSettingsController::class, 'updateMenuLayout']);
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 $path = rawurldecode($path);

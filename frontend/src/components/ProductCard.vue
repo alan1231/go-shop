@@ -1,13 +1,48 @@
 <template>
+  <template v-if="mode === 'grid'">
+    <article
+      class="flex flex-col rounded-xl overflow-hidden border border-outline-variant bg-surface-container-lowest cursor-pointer active:scale-[0.99] transition-all duration-150"
+      @click="open = true"
+    >
+      <div v-if="product.image" class="aspect-[4/3] bg-surface-variant">
+        <img :src="product.image" :alt="product.name" class="w-full h-full object-cover" loading="lazy" />
+      </div>
+      <div v-else class="aspect-[4/3] bg-surface-variant flex items-center justify-center">
+        <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 40px; opacity: 0.6;">image</span>
+      </div>
+      <div class="p-3 flex flex-col gap-1.5 flex-1">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface truncate">{{ product.name }}</h2>
+        <p v-if="product.description" class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">{{ product.description }}</p>
+        <div class="flex items-center justify-between gap-2 mt-auto pt-2">
+          <span class="font-price-display text-price-display-sm text-on-surface">NT$ {{ money(product.price) }}</span>
+          <div v-if="qty > 0" class="flex items-center bg-surface-container-high rounded-lg overflow-hidden border border-outline-variant">
+            <button type="button" class="w-7 h-7 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors active:scale-90 duration-150" aria-label="減少數量" @click.stop="bump(-1)">
+              <span class="material-symbols-outlined leading-none" style="font-size: 16px;">remove</span>
+            </button>
+            <span class="font-label-lg text-label-lg text-on-surface w-6 text-center">{{ qty }}</span>
+            <button type="button" class="w-7 h-7 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors active:scale-90 duration-150" aria-label="增加數量" @click.stop="bump(1)">
+              <span class="material-symbols-outlined leading-none" style="font-size: 16px;">add</span>
+            </button>
+          </div>
+          <button v-else type="button" class="bg-primary text-on-primary px-3 py-1.5 rounded-lg flex items-center gap-1 font-label-lg text-label-lg hover:opacity-90 transition-colors active:scale-95 duration-150" @click.stop="bump(1)">
+            <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+            加入
+          </button>
+        </div>
+      </div>
+    </article>
+  </template>
+
   <article
+    v-else
     class="flex items-center justify-between gap-3 p-3 rounded-xl border border-outline-variant bg-surface-container-lowest cursor-pointer active:scale-[0.99] transition-all duration-150"
     @click="open = true"
   >
     <div class="flex-1 min-w-0">
-      <h2 class="font-headline-md text-headline-md text-on-surface truncate">{{ product.name }}</h2>
+      <h2 class="font-headline-sm text-headline-sm text-on-surface truncate">{{ product.name }}</h2>
     </div>
     <div class="flex items-center gap-1 shrink-0">
-      <span class="font-price-display text-price-display text-on-surface">NT$ {{ money(product.price) }}</span>
+      <span class="font-price-display text-price-display-sm text-on-surface">NT$ {{ money(product.price) }}</span>
       <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">chevron_right</span>
     </div>
   </article>
@@ -58,6 +93,7 @@ import { money } from '../utils/format.js'
 
 const props = defineProps({
   product: { type: Object, required: true },
+  mode: { type: String, default: 'list' },
 })
 
 const open = ref(false)

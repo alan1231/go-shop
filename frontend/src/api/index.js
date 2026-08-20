@@ -71,4 +71,9 @@ export const api = {
   marquee() {
     return request('/marquee')
   },
+
+  // Public settings
+  settings() {
+    return request('/settings')
+  },
 }

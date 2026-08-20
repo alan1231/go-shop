@@ -17,6 +17,7 @@ class SettingsService {
         return [
             'table_count' => $this->getTableCount(),
             'linepay' => $this->getLinePay(),
+            'menu_layout' => $this->getMenuLayout(),
         ];
     }
 
@@ -44,5 +45,17 @@ class SettingsService {
         $this->repo->set('linepay_channel_id', trim($channelId));
         $this->repo->set('linepay_channel_secret', trim($channelSecret));
         $this->repo->set('linepay_sandbox', $sandbox === '1' ? '1' : '0');
+    }
+
+    public function getMenuLayout(): string {
+        $value = $this->repo->get('menu_layout', 'grid');
+        return $value === 'list' ? 'list' : 'grid';
+    }
+
+    public function setMenuLayout(string $layout): void {
+        if ($layout !== 'list' && $layout !== 'grid') {
+            throw new ServiceException('顯示方式必須為 list 或 grid');
+        }
+        $this->repo->set('menu_layout', $layout);
     }
 }

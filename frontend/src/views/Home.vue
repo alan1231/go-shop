@@ -19,11 +19,11 @@
         </div>
       </div>
 
-      <div class="px-container-margin py-6 flex flex-col gap-3">
+      <div class="px-container-margin py-6" :class="layout === 'grid' ? 'grid grid-cols-2 gap-3' : 'flex flex-col gap-3'">
         <div v-if="loading" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">載入中...</div>
         <div v-else-if="!visibleProducts.length" class="py-16 text-center font-body-md text-body-md text-on-surface-variant">此分類暫無餐點</div>
         <template v-else>
-          <ProductCard v-for="p in visibleProducts" :key="p.id" :product="p" />
+          <ProductCard v-for="p in visibleProducts" :key="p.id" :product="p" :mode="layout" />
         </template>
       </div>
     </main>
@@ -60,6 +60,7 @@ const toastStore = useToastStore()
 const site = useSiteStore()
 
 const activeCategory = ref('')
+const layout = ref('grid')
 const hasMarquee = computed(() => site.marqueeText !== '')
 const categories = computed(() => catalog.categories)
 const loading = computed(() => catalog.loading)
@@ -86,6 +87,10 @@ function goOrder() {
 }
 
 onMounted(async () => {
+  const settingsRes = await api.settings()
+  if (settingsRes.success && settingsRes.data?.menu_layout === 'list') {
+    layout.value = 'list'
+  }
   await catalog.init()
   const removed = orderStore.pruneInvalid(catalog.allProducts)
   if (removed > 0) {
