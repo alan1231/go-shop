@@ -88,6 +88,7 @@ export default {
       todayOnly: true,
       lastUpdate: '',
       es: null,
+      pollTimer: null,
       knownIds: [],
       msg: '',
       msgType: 'success',
@@ -98,10 +99,14 @@ export default {
       return this.orders.filter((o) => o.status === 'pending')
     },
     cookingOrders() {
-      return this.orders.filter((o) => o.status === 'paid' || o.status === 'shipped')
+      return this.orders
+        .filter((o) => o.status === 'paid' || o.status === 'shipped')
+        .sort((a, b) => this.ts(a) - this.ts(b))
     },
     completedOrders() {
-      return this.orders.filter((o) => o.status === 'completed')
+      return this.orders
+        .filter((o) => o.status === 'completed')
+        .sort((a, b) => new Date(String(b.updated_at).replace(' ', 'T') + 'Z').getTime() - new Date(String(a.updated_at).replace(' ', 'T') + 'Z').getTime())
     },
     cancelledOrders() {
       return this.orders.filter((o) => o.status === 'cancelled')
@@ -109,9 +114,11 @@ export default {
   },
   created() {
     this.connectStream()
+    this.load()
   },
   beforeUnmount() {
     if (this.es) this.es.close()
+    this.clearFallbackPoll()
   },
   watch: {
     todayOnly() {
@@ -136,9 +143,15 @@ export default {
       const t = new Date(String(o.created_at).replace(' ', 'T')).getTime()
       return Date.now() - t < 90 * 1000
     },
+    ts(o) {
+      return new Date(String(o.paid_at || o.created_at).replace(' ', 'T') + 'Z').getTime()
+    },
     timeOf(s) {
       if (!s) return ''
-      return String(s).slice(11, 16)
+      const d = new Date(String(s).replace(' ', 'T') + 'Z')
+      if (isNaN(d.getTime())) return ''
+      const p = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
     },
     connectStream() {
       if (this.es) {
@@ -157,10 +170,23 @@ export default {
       this.es = new EventSource('/api/admin/orders/stream?' + params.toString())
       this.es.addEventListener('orders', (e) => {
         try {
+          this.clearFallbackPoll()
           this.applyOrders(JSON.parse(e.data))
         } catch (_) {}
       })
-      this.es.onerror = () => {}
+      this.es.onerror = () => {
+        this.startFallbackPoll()
+      }
+    },
+    startFallbackPoll() {
+      if (this.pollTimer) return
+      this.pollTimer = setInterval(() => this.load(), 5000)
+    },
+    clearFallbackPoll() {
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer)
+        this.pollTimer = null
+      }
     },
     applyOrders(data) {
       this.loading = false

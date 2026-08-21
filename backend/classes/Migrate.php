@@ -114,6 +114,11 @@ class Migrate {
         $alterIfMissing('orders', 'payment_method', 'ALTER TABLE orders ADD COLUMN payment_method VARCHAR(20) DEFAULT \'\'');
         $alterIfMissing('orders', 'table_number', 'ALTER TABLE orders ADD COLUMN table_number INT DEFAULT NULL');
         $alterIfMissing('orders', 'order_type', "ALTER TABLE orders ADD COLUMN order_type VARCHAR(20) DEFAULT 'dine_in'");
+        $alterIfMissing('orders', 'updated_at', 'ALTER TABLE orders ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+        if (!$this->hasColumn('orders', 'paid_at')) {
+            $this->pdo->exec('ALTER TABLE orders ADD COLUMN paid_at DATETIME DEFAULT NULL');
+            $this->pdo->exec("UPDATE orders SET paid_at = created_at WHERE status IN ('paid', 'shipped', 'completed')");
+        }
         $alterIfMissing('admin_users', 'token', 'ALTER TABLE admin_users ADD COLUMN token VARCHAR(64) DEFAULT NULL');
         $alterIfMissing('admin_users', 'role', "ALTER TABLE admin_users ADD COLUMN role VARCHAR(50) DEFAULT NULL");
 

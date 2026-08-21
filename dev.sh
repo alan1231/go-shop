@@ -37,9 +37,11 @@ stop_all() {
     done <"$PIDS"
     rm -f "$PIDS"
   fi
-  for p in 8080 8081 5173 5174; do
+  for p in 8080 8081 9080 5173 5174; do
     lsof -tiTCP:"$p" -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null
   done
+  /usr/sbin/httpd -f "$ROOT/backend/apache-dev.conf" -k stop 2>/dev/null
+  /opt/homebrew/sbin/php-fpm -y "$ROOT/backend/php-fpm-dev.conf" --stop 2>/dev/null
   info "已停止 backend / frontend / frontend-admin"
 }
 
@@ -57,10 +59,18 @@ case "${1:-start}" in
   start)
     info "啟動中..."
     deps_check
-    start_svc backend 8080 php -S localhost:8080 index.php
-    if port_free 8081; then
-      ( cd "$ROOT/backend" && nohup php -S localhost:8081 index.php >>"$LOG" 2>&1 & echo "$!" >>"$PIDS" )
-      info "  [backend-sse] 已啟動 (port 8081, KDS 推播專用)"
+    # PHP-FPM + Apache（取代 php -S，SSE 才會正常 flush）
+    if port_free 9080; then
+      ( cd "$ROOT/backend" && nohup /opt/homebrew/sbin/php-fpm -y php-fpm-dev.conf >>"$LOG" 2>&1 & echo "$!" >>"$PIDS" )
+      info "  [php-fpm] 已啟動 (port 9080)"
+    else
+      info "  [php-fpm] 已在執行 (port 9080)"
+    fi
+    if port_free 8080; then
+      ( cd "$ROOT/backend" && nohup /usr/sbin/httpd -f apache-dev.conf -k start >>"$LOG" 2>&1 & echo "$!" >>"$PIDS" )
+      info "  [backend] Apache 已啟動 (port 8080/8081, KDS SSE 推播)"
+    else
+      info "  [backend] Apache 已在執行 (port 8080)"
     fi
     start_svc frontend 5173 npm run dev
     start_svc frontend-admin 5174 npm run dev

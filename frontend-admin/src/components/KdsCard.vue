@@ -27,6 +27,7 @@
         <button v-if="advanceLabel" type="button" class="btn btn-primary kds-btn" @click="$emit('advance', order)">{{ advanceLabel }}</button>
         <button v-if="order.status === 'pending'" type="button" class="btn btn-default kds-btn" @click="$emit('cancel', order)">取消</button>
         <button v-if="editable" type="button" class="btn kds-btn kds-btn-edit" @click="$emit('edit', order)"><i class="fas fa-edit"></i> 修改訂單</button>
+        <span v-if="order.status === 'completed'" class="kds-done-time"><i class="fas fa-check"></i> 完成 {{ timeOf(order.updated_at) }}</span>
         <button type="button" class="kds-icon-btn" title="明細" @click="$emit('open', order.id)"><i class="fas fa-eye"></i></button>
       </div>
   </div>
@@ -56,7 +57,10 @@ export default {
     },
     timeOf(s) {
       if (!s) return ''
-      return String(s).slice(11, 16)
+      const d = new Date(String(s).replace(' ', 'T') + 'Z')
+      if (isNaN(d.getTime())) return ''
+      const p = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
     },
     payLabel(o) {
       if (!o) return ''
@@ -97,6 +101,7 @@ export default {
 .kds-no-items { color: #bbb; font-size: 12px; }
 .kds-remark { font-size: 12px; color: #8e6d00; background: #fff8e1; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; }
 .kds-card-bottom { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.kds-done-time { font-size: 12px; color: #2e7d32; background: #e8f5e9; border-radius: 6px; padding: 4px 8px; display: inline-flex; align-items: center; gap: 4px; }
 .kds-pay { font-size: 11px; color: #999; }
 .kds-total { font-weight: 700; color: #e53935; font-size: 15px; }
   .kds-card-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; }

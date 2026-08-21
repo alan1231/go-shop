@@ -9,7 +9,7 @@ use PDO;
 class OrderRepository {
     private PDO $pdo;
 
-    private const ORDER_COLS = 'o.id, o.user_id, o.total_amount, o.status, o.remark, o.member_remark, o.receiver_name, o.receiver_phone, o.receiver_address, o.linepay_transaction_id, o.payment_method, o.table_number, o.order_type, o.created_at';
+    private const ORDER_COLS = 'o.id, o.user_id, o.total_amount, o.status, o.remark, o.member_remark, o.receiver_name, o.receiver_phone, o.receiver_address, o.linepay_transaction_id, o.payment_method, o.table_number, o.order_type, o.created_at, o.updated_at, o.paid_at';
 
     public function __construct(?PDO $pdo = null) {
         $this->pdo = $pdo ?? Database::connect();
@@ -131,7 +131,11 @@ class OrderRepository {
     }
 
     public function updateStatus(int $id, string $status): void {
-        $stmt = $this->pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
+        if ($status === 'paid') {
+            $stmt = $this->pdo->prepare('UPDATE orders SET status = ?, paid_at = NOW() WHERE id = ?');
+        } else {
+            $stmt = $this->pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
+        }
         $stmt->execute([$status, $id]);
     }
 

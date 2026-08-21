@@ -10,6 +10,17 @@ uploads.rar
 uploads/*
 !uploads/.gitkeep
 .env
+storage/
+backend/apache-dev.conf
+backend/php-fpm-dev.conf
+backend/.apache.pid
+backend/.apache-mutex
+backend/.apache-error.log
+backend/.apache-access.log
+backend/.php-fpm.pid
+backend/.php-fpm.log
+.dev.pids
+.dev.log
 backend/vendor/
 .phpunit.result.cache
 *.log
