@@ -51,11 +51,13 @@ $router->get('/api/admin/stats', [AdminDashboardController::class, 'index']);
 
 $router->get('/api/admin/products', [AdminProductController::class, 'index']);
 $router->post('/api/admin/products', [AdminProductController::class, 'create']);
+$router->post('/api/admin/products/order', [AdminProductController::class, 'reorderProducts']);
 $router->get('/api/admin/products/{id}', [AdminProductController::class, 'show']);
 $router->post('/api/admin/products/{id}', [AdminProductController::class, 'update']);
 $router->post('/api/admin/products/{id}/delete', [AdminProductController::class, 'delete']);
 $router->get('/api/admin/categories', [AdminProductController::class, 'categories']);
 $router->post('/api/admin/categories/move', [AdminProductController::class, 'moveCategory']);
+$router->post('/api/admin/categories/order', [AdminProductController::class, 'reorderCategories']);
 
 $router->post('/api/admin/orders', [AdminOrderController::class, 'create']);
 $router->get('/api/admin/orders', [AdminOrderController::class, 'index']);

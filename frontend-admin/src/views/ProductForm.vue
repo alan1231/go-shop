@@ -43,9 +43,23 @@
         </div>
         <div class="form-group">
           <label>菜單圖片</label>
-          <div style="display:flex;align-items:center;gap:16px;">
-            <input type="file" accept="image/*" @change="onFile" />
-            <img v-if="preview" :src="preview" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />
+          <div
+            class="dropzone"
+            :class="{ 'drag-over': dragOver }"
+            @dragover.prevent="dragOver = true"
+            @dragleave.prevent="dragOver = false"
+            @drop.prevent="onDrop"
+            @click="$refs.fileInput.click()"
+          >
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>拖曳圖片到此處，或點擊選擇</span>
+            <input ref="fileInput" type="file" accept="image/*" style="display:none;" @change="onFile" />
+          </div>
+          <div v-if="preview" class="preview-wrap">
+            <img :src="preview" class="img-preview" />
+            <button v-if="file" type="button" class="btn btn-default img-clear" @click="clearImage">
+              <i class="fas fa-times"></i> 取消圖片
+            </button>
           </div>
         </div>
         <button class="btn btn-primary" style="width:100%;" :disabled="loading">
@@ -67,6 +81,8 @@ export default {
       form: { name: '', description: '', category: '', price: 0, list_price: '', status: 'active' },
       file: null,
       preview: '',
+      originalPreview: '',
+      dragOver: false,
       categories: [],
       msg: '',
       msgType: 'success',
@@ -89,6 +105,7 @@ export default {
           status: p.status,
         }
         this.preview = p.image
+        this.originalPreview = p.image
       }
     }
   },
@@ -96,6 +113,22 @@ export default {
     onFile(e) {
       this.file = e.target.files[0] || null
       if (this.file) this.preview = URL.createObjectURL(this.file)
+    },
+    onDrop(e) {
+      this.dragOver = false
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]
+      if (!f) return
+      if (!f.type || !f.type.startsWith('image/')) {
+        this.msgType = 'error'
+        this.msg = '請選擇圖片檔案'
+        return
+      }
+      this.file = f
+      this.preview = URL.createObjectURL(f)
+    },
+    clearImage() {
+      this.file = null
+      this.preview = this.originalPreview
     },
     async submit() {
       this.loading = true
@@ -128,3 +161,16 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.dropzone {
+  border: 2px dashed #d0d5dd; border-radius: 10px; padding: 22px; text-align: center;
+  color: #999; cursor: pointer; background: #fafafa; transition: all 0.15s; user-select: none;
+}
+.dropzone:hover { border-color: #4CAF50; color: #4CAF50; }
+.dropzone.drag-over { border-color: #4CAF50; background: #f1f8f1; color: #4CAF50; }
+.dropzone i { font-size: 28px; display: block; margin-bottom: 6px; }
+.img-preview { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+.preview-wrap { margin-top: 12px; display: flex; align-items: center; gap: 12px; }
+.img-clear { padding: 6px 14px; font-size: 13px; }
+</style>

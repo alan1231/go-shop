@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Registry;
 use App\Response;
+use App\ServiceException;
 use App\Support;
 
 class AdminProductController extends BaseController {
@@ -62,6 +63,36 @@ class AdminProductController extends BaseController {
         $name = trim((string)($in['name'] ?? ''));
         $direction = (string)($in['direction'] ?? '');
         Response::success(Registry::get('productSvc')->moveCategory($name, $direction), '分類順序已更新');
+    }
+
+    public static function reorderCategories(): void {
+        self::requireAdmin();
+        $in = json_decode((string)file_get_contents('php://input'), true) ?: [];
+        $order = $in['order'] ?? [];
+        if (!is_array($order)) {
+            Response::fail('排序資料格式錯誤', 400);
+        }
+        try {
+            $order = Registry::get('productSvc')->reorderCategories($order);
+        } catch (ServiceException $e) {
+            Response::fail($e->getMessage(), $e->getCode());
+        }
+        Response::success($order, '分類順序已更新');
+    }
+
+    public static function reorderProducts(): void {
+        self::requireAdmin();
+        $in = json_decode((string)file_get_contents('php://input'), true) ?: [];
+        $order = $in['order'] ?? [];
+        if (!is_array($order)) {
+            Response::fail('排序資料格式錯誤', 400);
+        }
+        try {
+            $order = Registry::get('productSvc')->reorderProducts($order);
+        } catch (ServiceException $e) {
+            Response::fail($e->getMessage(), $e->getCode());
+        }
+        Response::success(['order' => $order], '商品順序已更新');
     }
 
     private static function productInputFromForm(): array {

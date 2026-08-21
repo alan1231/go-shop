@@ -27,7 +27,7 @@ class ProductRepository {
 
     public function search(string $keyword = '', string $category = '', int $limit = 100, int $offset = 0): array {
         [$sql, $args] = $this->buildFilterSql($keyword, $category, 'SELECT ' . self::COLS . ' FROM products');
-        $sql .= ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+        $sql .= ' ORDER BY sort_order, id LIMIT ? OFFSET ?';
         $args[] = $limit;
         $args[] = $offset;
         $stmt = $this->pdo->prepare($sql);
@@ -95,6 +95,13 @@ class ProductRepository {
         $stmt->execute([$rows[$pos]['sort_order'], $rows[$target]['name']]);
     }
 
+    public function reorderCategories(array $names): void {
+        $stmt = $this->pdo->prepare('UPDATE product_categories SET sort_order = ? WHERE name = ?');
+        foreach ($names as $idx => $name) {
+            $stmt->execute([$idx + 1, trim((string)$name)]);
+        }
+    }
+
     public function getById(int $id): ?array {
         $stmt = $this->pdo->prepare('SELECT ' . self::COLS . ' FROM products WHERE id = ?');
         $stmt->execute([$id]);
@@ -107,10 +114,11 @@ class ProductRepository {
     }
 
     public function create(string $name, ?string $image, string $description, ?string $category, float $price, ?float $listPrice, string $status): int {
+        $sortOrder = (int)$this->pdo->query('SELECT COALESCE(MAX(sort_order), 0) FROM products')->fetchColumn() + 1;
         $stmt = $this->pdo->prepare(
-            'INSERT INTO products (name, image, description, category, price, list_price, status) VALUES (?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO products (name, image, description, category, price, list_price, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$name, Support::nullIfEmpty($image), $description, Support::nullIfEmpty($category), $price, $listPrice, $status]);
+        $stmt->execute([$name, Support::nullIfEmpty($image), $description, Support::nullIfEmpty($category), $price, $listPrice, $status, $sortOrder]);
         return (int)$this->pdo->lastInsertId();
     }
 
@@ -130,13 +138,20 @@ class ProductRepository {
         return (int)$stmt->fetchColumn() > 0;
     }
 
+    public function reorderProducts(array $ids): void {
+        $stmt = $this->pdo->prepare('UPDATE products SET sort_order = ? WHERE id = ?');
+        foreach ($ids as $idx => $id) {
+            $stmt->execute([$idx + 1, (int)$id]);
+        }
+    }
+
     public function findActive(string $keyword = '', string $category = '', int $limit = 100, int $offset = 0): array {
         [$sql, $args] = $this->buildFilterSql(
             $keyword,
             $category,
             "SELECT id, name, image, description, category, price, list_price, status, created_at FROM products WHERE status = 'active'"
         );
-        $sql .= ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+        $sql .= ' ORDER BY sort_order, id LIMIT ? OFFSET ?';
         $args[] = $limit;
         $args[] = $offset;
         $stmt = $this->pdo->prepare($sql);

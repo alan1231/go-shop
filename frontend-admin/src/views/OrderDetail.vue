@@ -25,7 +25,7 @@
             <span>用餐方式</span>
             <b>{{ orderTypeLabel(order.order_type) }}<span v-if="order.order_type === 'dine_in' && order.table_number"> · {{ order.table_number }} 號桌</span></b>
           </div>
-          <div class="info-row"><span>付款方式</span><b>{{ payLabel(order.payment_method) }}</b></div>
+          <div class="info-row"><span>付款方式</span>            <b>{{ payLabel(order) }}</b></div>
 <div class="info-row"><span>訂單時間</span><b>{{ formatDate(order.created_at) }}</b></div>
       </div>
 
@@ -130,8 +130,11 @@ export default {
     fmt(n) {
       return 'NT$ ' + Number(n).toLocaleString()
     },
-    payLabel(m) {
-      return { linepay: 'LINE Pay', cod: '貨到付款', cash: '現金' }[m] || '—'
+    payLabel(o) {
+      if (!o) return ''
+      if (o.status === 'pending') return '待付款'
+      if (o.status === 'cancelled') return '已取消'
+      return '已收款'
     },
     orderTypeLabel(t) {
       return { dine_in: '內用', takeout: '外帶' }[t] || '—'

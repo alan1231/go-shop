@@ -110,6 +110,12 @@ export const api = {
       body: JSON.stringify({ name, direction }),
     })
   },
+  reorderCategories(order) {
+    return request('/admin/categories/order', {
+      method: 'POST',
+      body: JSON.stringify({ order }),
+    })
+  },
   createProduct(form) {
     return requestForm('/admin/products', form)
   },
@@ -118,6 +124,12 @@ export const api = {
   },
   deleteProduct(id) {
     return request(`/admin/products/${id}/delete`, { method: 'POST' })
+  },
+  reorderProducts(order) {
+    return request('/admin/products/order', {
+      method: 'POST',
+      body: JSON.stringify({ order }),
+    })
   },
 
   orders(params = {}) {

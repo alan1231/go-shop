@@ -19,15 +19,16 @@
     <p v-if="order.remark" class="kds-remark"><i class="fas fa-sticky-note"></i> {{ order.remark }}</p>
 
     <div class="kds-card-bottom">
-      <span class="kds-pay">{{ payLabel(order.payment_method) }}</span>
+      <span class="kds-pay">{{ payLabel(order) }}</span>
       <span class="kds-total">{{ money(order.total_amount) }}</span>
     </div>
 
-    <div class="kds-card-actions">
-      <button v-if="advanceLabel" type="button" class="btn btn-primary kds-btn" @click="$emit('advance', order)">{{ advanceLabel }}</button>
-      <button v-if="order.status === 'pending'" type="button" class="btn btn-default kds-btn" @click="$emit('cancel', order)">取消</button>
-      <button type="button" class="kds-icon-btn" title="明細" @click="$emit('open', order.id)"><i class="fas fa-eye"></i></button>
-    </div>
+      <div class="kds-card-actions">
+        <button v-if="advanceLabel" type="button" class="btn btn-primary kds-btn" @click="$emit('advance', order)">{{ advanceLabel }}</button>
+        <button v-if="order.status === 'pending'" type="button" class="btn btn-default kds-btn" @click="$emit('cancel', order)">取消</button>
+        <button v-if="editable" type="button" class="btn kds-btn kds-btn-edit" @click="$emit('edit', order)"><i class="fas fa-edit"></i> 修改訂單</button>
+        <button type="button" class="kds-icon-btn" title="明細" @click="$emit('open', order.id)"><i class="fas fa-eye"></i></button>
+      </div>
   </div>
 </template>
 
@@ -38,12 +39,15 @@ export default {
     order: { type: Object, required: true },
     isNew: { type: Boolean, default: false },
   },
-  emits: ['advance', 'cancel', 'open'],
+  emits: ['advance', 'cancel', 'open', 'edit'],
   computed: {
     advanceLabel() {
       if (this.order.status === 'pending') return '收單出餐'
       if (this.order.status === 'paid' || this.order.status === 'shipped') return '出餐完成'
       return ''
+    },
+    editable() {
+      return this.order && !['completed', 'cancelled'].includes(this.order.status)
     },
   },
   methods: {
@@ -54,8 +58,11 @@ export default {
       if (!s) return ''
       return String(s).slice(11, 16)
     },
-    payLabel(m) {
-      return { linepay: 'LINE Pay', cod: '貨到付款', cash: '現金' }[m] || '—'
+    payLabel(o) {
+      if (!o) return ''
+      if (o.status === 'pending') return '待付款'
+      if (o.status === 'cancelled') return '已取消'
+      return '已收款'
     },
   },
 }
@@ -90,8 +97,10 @@ export default {
 .kds-card-bottom { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .kds-pay { font-size: 11px; color: #999; }
 .kds-total { font-weight: 700; color: #e53935; font-size: 15px; }
-.kds-card-actions { display: flex; gap: 6px; align-items: center; }
-.kds-btn { padding: 6px 14px; font-size: 13px; }
+  .kds-card-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .kds-btn { padding: 6px 14px; font-size: 13px; }
+  .kds-btn-edit { background: #e3f2fd; border: 1px solid #1e88e5; color: #1565c0; }
+  .kds-btn-edit:hover { background: #1e88e5; color: #fff; }
 .kds-icon-btn { width: 30px; height: 30px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; color: #666; cursor: pointer; margin-left: auto; }
 .kds-icon-btn:hover { color: #4CAF50; border-color: #4CAF50; }
 </style>

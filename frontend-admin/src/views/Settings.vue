@@ -45,6 +45,19 @@
     </div>
 
     <div class="card" style="max-width:640px;">
+      <h3><i class="fas fa-scroll"></i> 跑馬燈</h3>
+      <form @submit.prevent="submitMarquee">
+        <div class="form-group">
+          <label>跑馬燈內容</label>
+          <textarea v-model="marqueeContent" placeholder="輸入要顯示的跑馬燈文字" style="min-height:80px;"></textarea>
+        </div>
+        <button class="btn btn-primary" :disabled="loadingMarquee">
+          <i class="fas fa-save"></i> {{ loadingMarquee ? '儲存中...' : '儲存' }}
+        </button>
+      </form>
+    </div>
+
+    <div class="card" style="max-width:640px;">
       <h3><i class="fas fa-credit-card"></i> 三方支付設定（LINE Pay）</h3>
       <form @submit.prevent="submitLinePay">
         <div class="form-group">
@@ -77,11 +90,13 @@ export default {
       tableCount: 0,
       menuLayout: 'grid',
       linepay: { channel_id: '', channel_secret: '', sandbox: false },
+      marqueeContent: '',
       msg: '',
       msgType: 'success',
       loadingTable: false,
       loadingMenuLayout: false,
       loadingLinePay: false,
+      loadingMarquee: false,
     }
   },
   async created() {
@@ -95,6 +110,8 @@ export default {
         sandbox: res.data.linepay?.sandbox === '1',
       }
     }
+    const mRes = await api.marquee()
+    if (mRes.success && mRes.data) this.marqueeContent = mRes.data.content || ''
   },
   methods: {
     notify(res) {
@@ -124,6 +141,13 @@ export default {
       this.msg = ''
       const res = await api.updateMenuLayout(this.menuLayout)
       this.loadingMenuLayout = false
+      this.notify(res)
+    },
+    async submitMarquee() {
+      this.loadingMarquee = true
+      this.msg = ''
+      const res = await api.updateMarquee(this.marqueeContent)
+      this.loadingMarquee = false
       this.notify(res)
     },
   },

@@ -49,6 +49,36 @@ class ProductService {
         return $this->repo->getAllCategories();
     }
 
+    public function reorderCategories(array $names): array {
+        $clean = [];
+        foreach ($names as $n) {
+            $n = trim((string)$n);
+            if ($n !== '') {
+                $clean[] = $n;
+            }
+        }
+        if (count($clean) === 0) {
+            throw new ServiceException('排序資料不能為空');
+        }
+        $this->repo->reorderCategories($clean);
+        return $this->repo->getAllCategories();
+    }
+
+    public function reorderProducts(array $ids): array {
+        $clean = [];
+        foreach ($ids as $id) {
+            $id = (int)$id;
+            if ($id > 0) {
+                $clean[] = $id;
+            }
+        }
+        if (count($clean) === 0) {
+            throw new ServiceException('排序資料不能為空');
+        }
+        $this->repo->reorderProducts($clean);
+        return $clean;
+    }
+
     public function getById(int $id): ?array {
         return $this->repo->getById($id);
     }

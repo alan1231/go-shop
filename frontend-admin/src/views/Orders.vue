@@ -10,6 +10,9 @@
         <button class="btn btn-default" :class="{ 'kds-toggle-active': showCancelled }" @click="showCancelled = !showCancelled">
           <i class="fas fa-ban"></i> 已取消 ({{ countBy('cancelled') }})
         </button>
+        <button class="btn btn-default" :class="{ 'kds-toggle-active': todayOnly }" @click="todayOnly = !todayOnly">
+          <i class="fas fa-calendar-day"></i> 僅今日
+        </button>
         <button class="btn btn-primary" @click="showAdd = true">
           <i class="fas fa-plus-circle"></i> 新增訂單
         </button>
@@ -29,7 +32,7 @@
           <span class="kds-count">{{ pendingOrders.length }}</span>
         </div>
         <div v-if="!pendingOrders.length" class="kds-empty">沒有訂單</div>
-        <KdsCard v-for="o in pendingOrders" :key="o.id" :order="o" :is-new="isNew(o)" @advance="advance" @cancel="cancel" @open="goDetail" />
+        <KdsCard v-for="o in pendingOrders" :key="o.id" :order="o" :is-new="isNew(o)" @advance="advance" @cancel="cancel" @open="goDetail" @edit="onEdit" />
       </div>
 
       <div class="kds-col kds-col-cooking">
@@ -38,7 +41,7 @@
           <span class="kds-count">{{ cookingOrders.length }}</span>
         </div>
         <div v-if="!cookingOrders.length" class="kds-empty">沒有訂單</div>
-        <KdsCard v-for="o in cookingOrders" :key="o.id" :order="o" :is-new="isNew(o)" @advance="advance" @cancel="cancel" @open="goDetail" />
+        <KdsCard v-for="o in cookingOrders" :key="o.id" :order="o" :is-new="isNew(o)" @advance="advance" @cancel="cancel" @open="goDetail" @edit="onEdit" />
       </div>
 
       <div class="kds-col kds-col-completed">
@@ -47,7 +50,7 @@
           <span class="kds-count">{{ completedOrders.length }}</span>
         </div>
         <div v-if="!completedOrders.length" class="kds-empty">沒有訂單</div>
-        <KdsCard v-for="o in completedOrders" :key="o.id" :order="o" :is-new="isNew(o)" @advance="advance" @cancel="cancel" @open="goDetail" />
+        <KdsCard v-for="o in completedOrders" :key="o.id" :order="o" :is-new="isNew(o)" @advance="advance" @cancel="cancel" @open="goDetail" @edit="onEdit" />
       </div>
 
       <div v-if="showCancelled" class="kds-col kds-col-cancelled">
@@ -56,11 +59,12 @@
           <span class="kds-count">{{ cancelledOrders.length }}</span>
         </div>
         <div v-if="!cancelledOrders.length" class="kds-empty">沒有訂單</div>
-        <KdsCard v-for="o in cancelledOrders" :key="o.id" :order="o" :is-new="isNew(o)" @advance="advance" @cancel="cancel" @open="goDetail" />
+        <KdsCard v-for="o in cancelledOrders" :key="o.id" :order="o" :is-new="isNew(o)" @advance="advance" @cancel="cancel" @open="goDetail" @edit="onEdit" />
       </div>
     </div>
 
     <KdsAddOrder v-if="showAdd" @close="showAdd = false" @created="onCreated" />
+    <OrderEdit v-if="showEdit" :order="editOrder" @close="showEdit = false" @saved="onOrderSaved" />
   </div>
 </template>
 
@@ -68,16 +72,20 @@
 import { api } from '../api/index.js'
 import KdsCard from '../components/KdsCard.vue'
 import KdsAddOrder from '../components/KdsAddOrder.vue'
+import OrderEdit from '../components/OrderEdit.vue'
 
 export default {
   name: 'KdsOrdersView',
-  components: { KdsCard, KdsAddOrder },
+  components: { KdsCard, KdsAddOrder, OrderEdit },
   data() {
     return {
       orders: [],
       loading: true,
       showAdd: false,
       showCancelled: false,
+      showEdit: false,
+      editOrder: null,
+      todayOnly: true,
       lastUpdate: '',
       timer: null,
       knownIds: [],
@@ -110,6 +118,13 @@ export default {
     fmt(n) {
       return 'NT$ ' + Number(n).toLocaleString()
     },
+    todayStr() {
+      const d = new Date()
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    },
     countBy(status) {
       return this.orders.filter((o) => o.status === status).length
     },
@@ -123,7 +138,13 @@ export default {
     },
     async load() {
       this.loading = true
-      const res = await api.orders({ per_page: 300, with_items: true })
+      const params = { per_page: 300, with_items: true }
+      if (this.todayOnly) {
+        const t = this.todayStr()
+        params.start = t
+        params.end = t
+      }
+      const res = await api.orders(params)
       this.loading = false
       if (res.success) {
         const ids = (res.data.items || []).map((o) => o.id)
@@ -170,6 +191,15 @@ export default {
     },
     onCreated({ orderId, checkout }) {
       this.toast(`訂單 #${orderId} 已建立${checkout ? '並現金結帳' : ''}`, 'success')
+      this.load()
+    },
+    onEdit(order) {
+      this.editOrder = order
+      this.showEdit = true
+    },
+    onOrderSaved(message) {
+      this.showEdit = false
+      this.toast(message || '訂單已更新', 'success')
       this.load()
     },
     toast(msg, type) {

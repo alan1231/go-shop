@@ -44,6 +44,7 @@ class Migrate {
                 price DECIMAL(10,2) NOT NULL,
                 list_price DECIMAL(10,2) DEFAULT NULL,
                 status VARCHAR(50) DEFAULT \'active\',
+                sort_order INT NOT NULL DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
             'CREATE TABLE IF NOT EXISTS product_categories (
@@ -103,6 +104,7 @@ class Migrate {
         $alterIfMissing('users', 'address', 'ALTER TABLE users ADD COLUMN address VARCHAR(255) DEFAULT NULL');
         $alterIfMissing('users', 'avatar', 'ALTER TABLE users ADD COLUMN avatar VARCHAR(500) DEFAULT NULL');
         $alterIfMissing('products', 'category', 'ALTER TABLE products ADD COLUMN category VARCHAR(100) DEFAULT NULL');
+        $alterIfMissing('products', 'sort_order', 'ALTER TABLE products ADD COLUMN sort_order INT NOT NULL DEFAULT 0');
         $alterIfMissing('orders', 'remark', 'ALTER TABLE orders ADD COLUMN remark TEXT DEFAULT NULL');
         $alterIfMissing('orders', 'member_remark', 'ALTER TABLE orders ADD COLUMN member_remark TEXT DEFAULT NULL');
         $alterIfMissing('orders', 'receiver_name', 'ALTER TABLE orders ADD COLUMN receiver_name VARCHAR(100) DEFAULT NULL');
@@ -119,6 +121,7 @@ class Migrate {
         $this->seedDefaultAdmin();
         $this->seedDefaultSettings();
         $this->seedExistingCategories();
+        $this->seedProductSortOrder();
         $this->ensureOrdersUserIdNullable();
     }
 
@@ -164,6 +167,10 @@ class Migrate {
             . 'AND category NOT IN (SELECT name FROM product_categories) '
             . 'GROUP BY category'
         );
+    }
+
+    private function seedProductSortOrder(): void {
+        $this->pdo->exec('UPDATE products SET sort_order = id WHERE sort_order = 0');
     }
 
     private function ensureOrdersUserIdNullable(): void {
