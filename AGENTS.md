@@ -121,6 +121,7 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 - 歷史訂單：側邊欄「訂單歷程」`/orders/history`（`OrderHistory.vue`），依狀態篩選＋日期範圍＋分頁；`GET /api/admin/orders` 支援 `start/end`（Y-m-d），回應含 `income`（依目前篩選條件的 `SUM(total_amount)`）。
 - 修改訂單：`OrderDetail.vue` 對 pending/paid/shipped 顯示「修改訂單」按鈕，開啟 `components/OrderEdit.vue` 彈窗改明細（增刪/調量），送出 `POST /api/admin/orders/{id}/items`，後端 `OrderService::updateItems` 以 transaction 重建 `order_items` 並重算 `total_amount`；completed/cancelled 不可修改。
 - 三方支付設定：後台「系統設定」`/settings`（`Settings.vue`，側邊欄「系統設定」）可填 LINE Pay Channel ID/Secret/Sandbox，存 `settings` 表（`linepay_channel_id`/`linepay_channel_secret`/`linepay_sandbox`），API `POST /api/admin/settings/linepay`；`bootstrap.php` 啟動時從 DB 讀取並 fallback 到 `.env`（含 IsConfigured 判定），不需改 `.env`。
+- 廚房印表機：下單成功後 `OrderService::createOrder` 呼叫 `PrintService::printReceipt` 經 TCP 把 ESC/POS 出餐單送到 `127.0.0.1:9100`。`PrintService` 連線失敗時**靜默忽略**，不影響下單流程。收單端為 `mock-printer/`（Go）：TCP `9100` 收單、`http://localhost:8090` 即時預覽看板（WebSocket）；可用 `.env` 的 `PRINTER_HOST` / `PRINTER_PORT` 調整收單位址。
 
 ## 資料庫規則
 
@@ -146,6 +147,7 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 7. **Config 路徑**：`Config.php` 在 `backend/classes/` 內，專案根目錄要用 `dirname(__DIR__, 2)`（跳兩層），否則 UPLOADS_DIR / PUBLIC_DIST / ADMIN_DIST 會錯指到 `backend/` 下。
 8. **啟動方式**：`php -S localhost:8080 index.php` 一定要帶 router script `index.php`，否則 `/uploads/` 與 `/api` 不會經過路由。
 9. **namespace 內引用 PHP 內建類別**：所有 class 都有 `namespace App\...`，在類別內用 `PDO`、`Exception`、`Throwable` 必須 `use PDO;` / `use Exception;` 或寫 `\Throwable`，否則會被解析成 `App\PDO` 等不存在的類別。
+10. **Go 印表機預覽看板埠**：`mock-printer/` 的 TCP 收單在 `9100`（PHP `PrintService` 送印處），HTTP 即時預覽看板原寫在 `:8080` 會與 PHP 後端撞埠，已改為 `:8090`；不要改回 8080。
 
 ## 程式碼慣例
 
@@ -164,7 +166,7 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 ## 常用指令
 
 - 安裝後端依賴（第一次 clone 後）：`cd backend && composer install`
-- 一鍵啟動（MySQL 需自行開啟）：`./dev.sh`（backend :8080 + frontend :5173 + frontend-admin :5174）；停止 `./dev.sh stop`；狀態 `./dev.sh status`；看log `./dev.sh logs`（記錄在專案根目錄 `.dev.log`）
+- 一鍵啟動（Windows）：`dev.bat` 一次開啟 MySQL(:3306) + Go 印表機(`mock-printer/`，TCP 9100 / 預覽 :8090) + PHP 後端(:8080) + 前台(:5173) + 後台(:5174)；MySQL 若已執行則跳過，重啟時清理 8080/5173/5174/9100/8090。Laragon 只作為 PHP+MySQL 二進位來源，不需開 Laragon 介面，Apache 也用不到（開發用 `php -S` 即可）。
 - 啟動 PHP server：`cd backend && php -S localhost:8080 index.php`（http://localhost:8080）
 - 啟動前台 dev server：`cd frontend && npm run dev`（http://localhost:5173/）
 - 啟動後台 dev server：`cd frontend-admin && npm run dev`（http://localhost:5174/admin/）
