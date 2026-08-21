@@ -88,7 +88,6 @@ export default {
       todayOnly: true,
       lastUpdate: '',
       es: null,
-      pollTimer: null,
       knownIds: [],
       msg: '',
       msgType: 'success',
@@ -118,7 +117,6 @@ export default {
   },
   beforeUnmount() {
     if (this.es) this.es.close()
-    this.clearFallbackPoll()
   },
   watch: {
     todayOnly() {
@@ -170,23 +168,10 @@ export default {
       this.es = new EventSource('/api/admin/orders/stream?' + params.toString())
       this.es.addEventListener('orders', (e) => {
         try {
-          this.clearFallbackPoll()
           this.applyOrders(JSON.parse(e.data))
         } catch (_) {}
       })
-      this.es.onerror = () => {
-        this.startFallbackPoll()
-      }
-    },
-    startFallbackPoll() {
-      if (this.pollTimer) return
-      this.pollTimer = setInterval(() => this.load(), 5000)
-    },
-    clearFallbackPoll() {
-      if (this.pollTimer) {
-        clearInterval(this.pollTimer)
-        this.pollTimer = null
-      }
+      this.es.onerror = () => {}
     },
     applyOrders(data) {
       this.loading = false

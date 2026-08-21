@@ -92,8 +92,17 @@ class Migrate {
         }
 
         $alterIfMissing = function (string $table, string $column, string $ddl): void {
-            if (!$this->hasColumn($table, $column)) {
+            if ($this->hasColumn($table, $column)) {
+                return;
+            }
+            try {
                 $this->pdo->exec($ddl);
+            } catch (\PDOException $e) {
+                $errno = (int)($e->errorInfo[1] ?? 0);
+                if ($errno === 1060 || $errno === 1061) {
+                    return;
+                }
+                throw $e;
             }
         };
 
@@ -116,7 +125,13 @@ class Migrate {
         $alterIfMissing('orders', 'order_type', "ALTER TABLE orders ADD COLUMN order_type VARCHAR(20) DEFAULT 'dine_in'");
         $alterIfMissing('orders', 'updated_at', 'ALTER TABLE orders ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
         if (!$this->hasColumn('orders', 'paid_at')) {
-            $this->pdo->exec('ALTER TABLE orders ADD COLUMN paid_at DATETIME DEFAULT NULL');
+            try {
+                $this->pdo->exec('ALTER TABLE orders ADD COLUMN paid_at DATETIME DEFAULT NULL');
+            } catch (\PDOException $e) {
+                if ((int)($e->errorInfo[1] ?? 0) !== 1060) {
+                    throw $e;
+                }
+            }
             $this->pdo->exec("UPDATE orders SET paid_at = created_at WHERE status IN ('paid', 'shipped', 'completed')");
         }
         $alterIfMissing('admin_users', 'token', 'ALTER TABLE admin_users ADD COLUMN token VARCHAR(64) DEFAULT NULL');
@@ -145,7 +160,13 @@ class Migrate {
             "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'users' AND index_name = 'idx_provider'"
         );
         if ((int)$stmt->fetchColumn() === 0) {
-            $this->pdo->exec('CREATE UNIQUE INDEX idx_provider ON users (provider, provider_id)');
+            try {
+                $this->pdo->exec('CREATE UNIQUE INDEX idx_provider ON users (provider, provider_id)');
+            } catch (\PDOException $e) {
+                if ((int)($e->errorInfo[1] ?? 0) !== 1061) {
+                    throw $e;
+                }
+            }
         }
     }
 
