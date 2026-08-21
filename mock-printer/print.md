@@ -1,0 +1,10 @@
+// 測試下單 
+$client = New-Object System.Net.Sockets.TcpClient("127.0.0.1", 9100)
+$stream = $client.GetStream()
+$writer = New-Object System.IO.StreamWriter($stream)
+$writer.WriteLine("=== 廚房出餐單 (PowerShell 測試) ===")
+$writer.WriteLine("桌號: A01")
+$writer.WriteLine("品項: 牛肉麵 x 1 (不加蔥)")
+$writer.WriteLine("===================================")
+$writer.Flush()
+$client.Close()
