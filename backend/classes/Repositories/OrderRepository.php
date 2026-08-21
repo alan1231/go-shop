@@ -75,11 +75,17 @@ class OrderRepository {
     public function sumTotal(string $status = '', string $start = '', string $end = ''): float {
         $sql = 'SELECT COALESCE(SUM(total_amount), 0) FROM orders';
         $args = [];
+        $hasWhere = false;
         if ($status !== '' && Support::validStatus($status)) {
             $sql .= ' WHERE status = ?';
             $args[] = $status;
+            $hasWhere = true;
+        } elseif ($status !== 'cancelled') {
+            $sql .= ' WHERE status != ?';
+            $args[] = 'cancelled';
+            $hasWhere = true;
         }
-        $this->appendDateRange($sql, $args, $start, $end, $status === '');
+        $this->appendDateRange($sql, $args, $start, $end, !$hasWhere);
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($args);
         return (float)$stmt->fetchColumn();
