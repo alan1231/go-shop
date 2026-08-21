@@ -216,9 +216,15 @@ export default {
 .kds-header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .kds-last-update { font-size: 12px; color: #888; }
 .kds-toggle-active { border: 1px solid #f44336; color: #f44336; }
-.kds-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
-.kds-board-4 { grid-template-columns: repeat(4, 1fr); }
-.kds-col { background: #eef0f3; border-radius: 10px; padding: 12px; min-height: 220px; }
+.kds-board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.kds-board-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.kds-col { background: #eef0f3; border-radius: 10px; padding: 12px; min-height: 220px; min-width: 0; }
+@media (max-width: 1200px) {
+  .kds-board, .kds-board-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .kds-board, .kds-board-4 { grid-template-columns: minmax(0, 1fr); }
+}
 .kds-col-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; padding: 0 4px 10px; color: #333; }
 .kds-count { background: #fff; min-width: 24px; height: 24px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; padding: 0 8px; }
 .kds-empty { text-align: center; color: #aaa; font-size: 13px; padding: 30px 0; }

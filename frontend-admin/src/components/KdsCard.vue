@@ -72,6 +72,8 @@ export default {
 .kds-card {
   background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 12px; border-left: 4px solid #bbb;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  display: flex; flex-direction: column;
+  min-width: 0;
 }
 .kds-card-pending { border-left-color: #f9a825; }
 .kds-card-paid { border-left-color: #1e88e5; }
@@ -97,8 +99,8 @@ export default {
 .kds-card-bottom { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .kds-pay { font-size: 11px; color: #999; }
 .kds-total { font-weight: 700; color: #e53935; font-size: 15px; }
-  .kds-card-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .kds-btn { padding: 6px 14px; font-size: 13px; }
+  .kds-card-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; }
+  .kds-btn { padding: 0 14px; height: 30px; font-size: 13px; }
   .kds-btn-edit { background: #e3f2fd; border: 1px solid #1e88e5; color: #1565c0; }
   .kds-btn-edit:hover { background: #1e88e5; color: #fff; }
 .kds-icon-btn { width: 30px; height: 30px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; color: #666; cursor: pointer; margin-left: auto; }
