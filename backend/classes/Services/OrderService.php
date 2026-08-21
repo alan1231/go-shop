@@ -18,12 +18,14 @@ class OrderService {
     private OrderRepository $repo;
     private ProductRepository $productRepo;
     private LinePayGateway $linePay;
+    private ?PrintService $printSvc;
 
-    public function __construct(PDO $pdo, OrderRepository $repo, ProductRepository $productRepo, LinePayGateway $linePay) {
+    public function __construct(PDO $pdo, OrderRepository $repo, ProductRepository $productRepo, LinePayGateway $linePay, ?PrintService $printSvc = null) {
         $this->pdo = $pdo;
         $this->repo = $repo;
         $this->productRepo = $productRepo;
         $this->linePay = $linePay;
+        $this->printSvc = $printSvc;
     }
 
     public function getAll(string $status, int $page, int $perPage, bool $withItems = false, string $start = '', string $end = ''): array {
@@ -104,6 +106,7 @@ class OrderService {
                 $this->repo->createItem($orderId, (int)$l['product']['id'], (float)$l['product']['price'], $l['quantity']);
             }
             $this->repo->commit();
+            $this->printTicket($orderId);
             return $orderId;
         } catch (\Throwable $e) {
             $this->repo->rollBack();
@@ -266,6 +269,21 @@ class OrderService {
         }
         $this->repo->updatePaymentMethod($id, 'cash');
         $this->repo->updateStatus($id, 'paid');
+    }
+
+    private function printTicket(int $id): void {
+        if ($this->printSvc === null) {
+            return;
+        }
+        try {
+            $order = $this->repo->findById($id);
+            if ($order === null) {
+                return;
+            }
+            $this->printSvc->printReceipt($order, $this->repo->getItems($id));
+        } catch (\Throwable $e) {
+            // 印表機失敗不影響訂單流程
+        }
     }
 
     private function requireUserOrder(int $id, int $userId): array {

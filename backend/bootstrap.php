@@ -18,6 +18,7 @@ use App\Services\AuthService;
 use App\Services\DashboardService;
 use App\Services\MarqueeService;
 use App\Services\OrderService;
+use App\Services\PrintService;
 use App\Services\ProductService;
 use App\Services\SettingsService;
 use LinePay\LinePayClient;
@@ -47,6 +48,7 @@ Registry::set('linePayGateway', new LinePayGateway(new LinePayClient(new LinePay
     $lp['channel_secret'],
     $lp['sandbox'] === '1'
 ))));
-Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo'), Registry::get('linePayGateway')));
+Registry::set('printSvc', new PrintService());
+Registry::set('orderSvc', new OrderService($pdo, Registry::get('orderRepo'), Registry::get('productRepo'), Registry::get('linePayGateway'), Registry::get('printSvc')));
 Registry::set('marqueeSvc', new MarqueeService(Registry::get('marqueeRepo')));
 Registry::set('dashboardSvc', new DashboardService(Registry::get('productRepo'), Registry::get('orderRepo'), Registry::get('userRepo')));

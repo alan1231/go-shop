@@ -6,6 +6,7 @@ use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\ServiceException;
 use App\Services\OrderService;
+use App\Services\PrintService;
 use LinePay\LinePayClient;
 use LinePay\LinePayConfig;
 use LinePay\LinePayGateway;
@@ -68,7 +69,8 @@ final class OrderServiceTest extends TestCase {
             $this->pdo,
             new OrderRepository($this->pdo),
             new ProductRepository($this->pdo),
-            new LinePayGateway(new LinePayClient(new LinePayConfig('', '', true)))
+            new LinePayGateway(new LinePayClient(new LinePayConfig('', '', true))),
+            null
         );
     }
 
@@ -245,5 +247,30 @@ final class OrderServiceTest extends TestCase {
         $order = $this->orderSvc->getWithItems($orderId);
         $this->assertSame('paid', $order['status']);
         $this->assertSame('cash', $order['payment_method']);
+    }
+
+    public function testCreateOrderPrintsTicket(): void {
+        $printer = new FakePrintService();
+        $svc = new OrderService(
+            $this->pdo,
+            new OrderRepository($this->pdo),
+            new ProductRepository($this->pdo),
+            new LinePayGateway(new LinePayClient(new LinePayConfig('', '', true))),
+            $printer
+        );
+        $a = $this->product('active', 80.0);
+        $svc->createOrder(1, [
+            ['product_id' => $a, 'quantity' => 2],
+        ], $this->receiver(), '少辣');
+        $this->assertTrue($printer->called);
+    }
+}
+
+final class FakePrintService extends PrintService {
+    public bool $called = false;
+
+    public function printReceipt(array $order, array $items): bool {
+        $this->called = true;
+        return true;
     }
 }
