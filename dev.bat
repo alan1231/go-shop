@@ -7,7 +7,7 @@ set MYSQLD_EXE=C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe
 set MYSQLD_CNF=C:\laragon\bin\mysql\mysql-8.4.3-winx64\my.ini
 
 REM Kill old dev processes on ports (note: MySQL on 3306 is left running on purpose)
-powershell -NoProfile -Command "Get-NetTCPConnection -State Listen -LocalPort 8080,5173,5174 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
+powershell -NoProfile -Command "Get-NetTCPConnection -State Listen -LocalPort 8080,5173,5174,9100,8090 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
 timeout /t 2 /nobreak >nul
 
 REM Start MySQL only if not already listening on 3306
@@ -20,6 +20,9 @@ if errorlevel 1 (
     echo MySQL already running, skip.
 )
 
+REM Start Go printer mock (TCP 9100 receives print jobs, HTTP dashboard on 8090)
+start "Go Printer" cmd /k "cd /d %~dp0 && go run ./mock-printer"
+
 REM Start PHP backend
 start "PHP Backend" cmd /k "cd /d %~dp0backend && %PHP_EXE% -S localhost:8080 index.php"
 
@@ -31,9 +34,10 @@ start "Admin" cmd /k "cd /d %~dp0frontend-admin && npm run dev -- --port 5174 --
 
 echo Dev environment starting...
 echo - MySQL:       http://localhost:3306 (data at C:\laragon\data\mysql-8.4)
+echo - Go Printer:  TCP 9100 (receipt) / Dashboard http://localhost:8090
 echo - PHP backend: http://localhost:8080
 echo - Frontend:    http://localhost:5173/
 echo - Admin:       http://localhost:5174/admin/
 echo -
-echo Four windows opened. Do not close them.
+echo Five windows opened. Do not close them.
 pause

@@ -27,12 +27,12 @@ func main() {
 
 	fmt.Println("==================================================")
 	fmt.Println(">>> Mock Server (TCP 9100) 已啟動")
-	fmt.Println(">>> Web Dashboard (HTTP 8080) 已啟動")
-	fmt.Println(">>> 請開啟瀏覽器造訪: http://127.0.0.1:8080")
+	fmt.Println(">>> Web Dashboard (HTTP 8090) 已啟動")
+	fmt.Println(">>> 請開啟瀏覽器造訪: http://127.0.0.1:8090")
 	fmt.Println("==================================================")
 
-	// 啟動 Web 服務 (Port 8080)
-	err := http.ListenAndServe(":8080", nil)
+	// 啟動 Web 服務 (Port 8090，避免與 PHP 後端 8080 衝突)
+	err := http.ListenAndServe(":8090", nil)
 	if err != nil {
 		fmt.Println("Web Server 啟動失敗:", err)
 	}
