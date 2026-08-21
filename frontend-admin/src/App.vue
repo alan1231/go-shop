@@ -7,8 +7,6 @@
         <router-link to="/orders"><i class="fas fa-shopping-cart"></i>出單看板</router-link>
         <router-link to="/orders/history"><i class="fas fa-history"></i>訂單歷程</router-link>
         <router-link to="/products"><i class="fas fa-utensils"></i>菜單管理</router-link>
-        <router-link to="/products/add"><i class="fas fa-plus-circle"></i>新增菜單</router-link>
-        <router-link to="/accounts"><i class="fas fa-user-cog"></i>後台帳號</router-link>
         <router-link to="/settings"><i class="fas fa-cog"></i>系統設定</router-link>
         <router-link to="/account" class="nav-account"><i class="fas fa-user-shield"></i>帳號設定</router-link>
       </nav>

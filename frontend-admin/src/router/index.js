@@ -8,7 +8,6 @@ import OrderHistory from '../views/OrderHistory.vue'
 import OrderDetail from '../views/OrderDetail.vue'
 import Settings from '../views/Settings.vue'
 import PointOrder from '../views/PointOrder.vue'
-import Accounts from '../views/Accounts.vue'
 import Account from '../views/Account.vue'
 
 const routes = [
@@ -22,7 +21,6 @@ const routes = [
   { path: '/orders/:id', name: 'order', component: OrderDetail, meta: { title: '訂單明細', requiresAuth: true } },
   { path: '/settings', name: 'settings', component: Settings, meta: { title: '系統設定', requiresAuth: true } },
   { path: '/point-order', name: 'point-order', component: PointOrder, meta: { title: '新增訂單', requiresAuth: true } },
-  { path: '/accounts', name: 'accounts', component: Accounts, meta: { title: '後台帳號', requiresAuth: true } },
   { path: '/account', name: 'account', component: Account, meta: { title: '帳號設定', requiresAuth: true } },
 ]
 
