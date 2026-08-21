@@ -113,7 +113,8 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 
 ### 後台出單看板（KDS）
 
-- 後台訂單頁 `/admin/orders` 為 KDS 三欄看板（待付款／製作中／已完成，可切換顯示已取消），每 10 秒輪詢 `GET /api/admin/orders?per_page=300&with_items=1`，一次帶回 headers＋items。
+- 後台訂單頁 `/admin/orders` 為 KDS 三欄看板（待付款／製作中／已完成，可切換顯示已取消），使用 **SSE** 即時推播：前端 `Orders.vue` 開 `EventSource('/api/admin/orders/stream?token=...')`（EventSource 無法設 header，故 token 走 query 參數），監聽 `event: orders` 事件，一次帶回 headers＋items。手動「刷新」鈕仍走 `GET /api/admin/orders?per_page=300&with_items=1` 作為兜底。
+- SSE 由 `AdminOrderController::stream()` 實作：設好 `text/event-stream` 頭、關輸出緩衝、連線中斷即結束；以 `App\Signal`（檔案信號 `storage/signal/orders.sig`）作為跨請求通知。下單／改狀態／改備註／改明細／現金結帳時，`OrderService` 會呼叫 `Signal::bump()`；`stream()` 偵測到信號變更才查 DB `getAll(..., with_items=true, per_page=300)` 並推送，無變更時只發 `: ping` 保活（每 ~10 秒），sleep 200ms 輕量等待，避免每秒全量查詢。
 - 卡片用 `frontend-admin/src/components/KdsCard.vue`：狀態左色條、一鍵推進（pending→paid、paid/shipped→completed）、取消、看明細跳 `/orders/:id`。
 - 新增訂單不改頁：`frontend-admin/src/components/KdsAddOrder.vue` 同頁卡片式彈窗（搜尋＋分類 chips＋可點選商品、內用/外帶＋桌號、僅建立／現金結帳），送出 `POST /api/admin/orders`。
 - 後端：`OrderRepository::findAllWithItems()` 用批次查詢 items 後合併（避免 N+1）；OrderService 內用 `$orderId > 0` 區分「有商品的下單」與「空單直接建單」。
@@ -166,8 +167,8 @@ pending(待付款) → paid(已付款) → shipped(出貨中) → completed(已�
 ## 常用指令
 
 - 安裝後端依賴（第一次 clone 後）：`cd backend && composer install`
-- 一鍵啟動（Windows）：`dev.bat` 一次開啟 MySQL(:3306) + Go 印表機(`mock-printer/`，TCP 9100 / 預覽 :8090) + PHP 後端(:8080) + 前台(:5173) + 後台(:5174)；MySQL 若已執行則跳過，重啟時清理 8080/5173/5174/9100/8090。Laragon 只作為 PHP+MySQL 二進位來源，不需開 Laragon 介面，Apache 也用不到（開發用 `php -S` 即可）。
-- 啟動 PHP server：`cd backend && php -S localhost:8080 index.php`（http://localhost:8080）
+- 一鍵啟動（Windows）：`dev.bat` 一次開啟 MySQL(:3306) + Go 印表機(`mock-printer/`，TCP 9100 / 預覽 :8090) + PHP 後端(:8080) + **PHP SSE(:8081，KDS 推播專用)** + 前台(:5173) + 後台(:5174)；MySQL 若已執行則跳過，重啟時清理 8080/8081/5173/5174/9100/8090。Laragon 只作為 PHP+MySQL 二進位來源，不需開 Laragon 介面，Apache 也用不到（開發用 `php -S` 即可）。
+- 啟動 PHP server：`cd backend && php -S localhost:8080 index.php`（http://localhost:8080）。KDS 的 SSE 推播在開發環境另開 `php -S localhost:8081 index.php` 專用（見 `dev.bat`），由 `frontend-admin/vite.config.js` 把 `/api/admin/orders/stream` 代理到 8081；正式環境由主伺服器（Apache/php-fpm）直接在同一後端提供，不需另開埠。
 - 啟動前台 dev server：`cd frontend && npm run dev`（http://localhost:5173/）
 - 啟動後台 dev server：`cd frontend-admin && npm run dev`（http://localhost:5174/admin/）
 - PHP 檢查：`cd backend && composer lint`（或 `find backend -name '*.php' -exec php -l {} \;`）

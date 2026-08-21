@@ -87,7 +87,7 @@ export default {
       editOrder: null,
       todayOnly: true,
       lastUpdate: '',
-      timer: null,
+      es: null,
       knownIds: [],
       msg: '',
       msgType: 'success',
@@ -108,11 +108,15 @@ export default {
     },
   },
   created() {
-    this.load()
-    this.timer = setInterval(this.load, 10000)
+    this.connectStream()
   },
   beforeUnmount() {
-    if (this.timer) clearInterval(this.timer)
+    if (this.es) this.es.close()
+  },
+  watch: {
+    todayOnly() {
+      this.connectStream()
+    },
   },
   methods: {
     fmt(n) {
@@ -135,6 +139,41 @@ export default {
     timeOf(s) {
       if (!s) return ''
       return String(s).slice(11, 16)
+    },
+    connectStream() {
+      if (this.es) {
+        this.es.close()
+        this.es = null
+      }
+      const params = new URLSearchParams()
+      if (this.todayOnly) {
+        const t = this.todayStr()
+        params.set('start', t)
+        params.set('end', t)
+      }
+      const token = localStorage.getItem('admin_token')
+      if (token) params.set('token', token)
+      this.loading = true
+      this.es = new EventSource('/api/admin/orders/stream?' + params.toString())
+      this.es.addEventListener('orders', (e) => {
+        try {
+          this.applyOrders(JSON.parse(e.data))
+        } catch (_) {}
+      })
+      this.es.onerror = () => {}
+    },
+    applyOrders(data) {
+      this.loading = false
+      const items = (data && data.items) || []
+      const ids = items.map((o) => o.id)
+      const fresh = items.filter((o) => o.status === 'pending' && !this.knownIds.includes(o.id))
+      this.orders = items
+      const had = this.knownIds.length > 0
+      this.knownIds = ids
+      if (fresh.length && had) {
+        this.toast(`新訂單 #${fresh.map((o) => o.id).join('、')} 進入待付款`, 'success')
+      }
+      this.lastUpdate = new Date().toLocaleTimeString()
     },
     async load() {
       this.loading = true

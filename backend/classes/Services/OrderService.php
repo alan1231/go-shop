@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\ServiceException;
+use App\Signal;
 use App\Support;
 use LinePay\LinePayException;
 use LinePay\LinePayGateway;
@@ -107,6 +108,7 @@ class OrderService {
             }
             $this->repo->commit();
             $this->printTicket($orderId);
+            Signal::bump();
             return $orderId;
         } catch (\Throwable $e) {
             $this->repo->rollBack();
@@ -126,6 +128,7 @@ class OrderService {
             throw new ServiceException('訂單已完成，狀態不可再變更');
         }
         $this->repo->updateStatus($id, $status);
+        Signal::bump();
     }
 
     public function updateRemark(int $id, string $remark): void {
@@ -134,6 +137,7 @@ class OrderService {
             throw new ServiceException('訂單不存在');
         }
         $this->repo->updateRemark($id, trim($remark));
+        Signal::bump();
     }
 
     public function updateItems(int $id, array $items): void {
@@ -170,6 +174,7 @@ class OrderService {
             }
             $this->repo->updateTotal($id, $total);
             $this->repo->commit();
+            Signal::bump();
         } catch (\Throwable $e) {
             $this->repo->rollBack();
             throw $e;
@@ -269,6 +274,7 @@ class OrderService {
         }
         $this->repo->updatePaymentMethod($id, 'cash');
         $this->repo->updateStatus($id, 'paid');
+        Signal::bump();
     }
 
     private function printTicket(int $id): void {

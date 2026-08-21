@@ -60,6 +60,7 @@ $router->post('/api/admin/categories/move', [AdminProductController::class, 'mov
 $router->post('/api/admin/categories/order', [AdminProductController::class, 'reorderCategories']);
 
 $router->post('/api/admin/orders', [AdminOrderController::class, 'create']);
+$router->get('/api/admin/orders/stream', [AdminOrderController::class, 'stream']);
 $router->get('/api/admin/orders', [AdminOrderController::class, 'index']);
 $router->get('/api/admin/orders/{id}', [AdminOrderController::class, 'show']);
 $router->post('/api/admin/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);

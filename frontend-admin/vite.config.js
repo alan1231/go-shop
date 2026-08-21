@@ -8,6 +8,10 @@ export default defineConfig({
     host: true,
     port: 5174,
     proxy: {
+      '/api/admin/orders/stream': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,

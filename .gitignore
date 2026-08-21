@@ -14,3 +14,4 @@ backend/vendor/
 .phpunit.result.cache
 *.log
 .dev.pids
+storage/

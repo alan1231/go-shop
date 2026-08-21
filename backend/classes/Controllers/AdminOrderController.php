@@ -27,6 +27,63 @@ class AdminOrderController extends BaseController {
         Response::success($order, 'ok');
     }
 
+    public static function stream(): void {
+        $token = (string)($_GET['token'] ?? '');
+        $admin = Registry::get('authSvc')->findByToken($token);
+        if ($admin === null) {
+            Response::fail('請先登入', 401);
+            return;
+        }
+
+        header('Content-Type: text/event-stream; charset=utf-8');
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Connection: keep-alive');
+        header('X-Accel-Buffering: no');
+        header('Access-Control-Allow-Origin: *');
+        set_time_limit(0);
+        if (function_exists('ini_set')) {
+            @ini_set('output_buffering', '0');
+            @ini_set('zlib.output_compression', '0');
+        }
+        while (ob_get_level() > 0) {
+            ob_end_flush();
+        }
+        ob_implicit_flush(1);
+
+        $start = (string)($_GET['start'] ?? '');
+        $end = (string)($_GET['end'] ?? '');
+        $lastSig = null;
+        $beat = 0;
+
+        echo ": connected\n\n";
+        @ob_flush();
+        flush();
+
+        while (true) {
+            if (connection_aborted()) {
+                break;
+            }
+            $sig = \App\Signal::get();
+            if ($sig !== $lastSig) {
+                $lastSig = $sig;
+                $data = Registry::get('orderSvc')->getAll('', 1, 300, true, $start, $end);
+                echo "event: orders\n";
+                echo 'data: ' . json_encode($data, JSON_UNESCAPED_UNICODE) . "\n\n";
+                @ob_flush();
+                flush();
+                $beat = 0;
+                continue;
+            }
+            if (++$beat >= 50) {
+                echo ": ping\n\n";
+                @ob_flush();
+                flush();
+                $beat = 0;
+            }
+            usleep(200000);
+        }
+    }
+
     public static function updateStatus(int $id): void {
         self::requireAdmin();
         $body = Support::jsonBody();
