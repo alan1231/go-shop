@@ -85,7 +85,20 @@ const STATUS_COLORS = { pending: '#9e9e9e', paid: '#2196F3', shipped: '#FF9800',
 export default {
   name: 'DashboardView',
   data() {
-    return { stats: null, recentOrders: [], loading: true, charts: [] }
+    return { 
+      stats: { 
+        totalOrders: 0, 
+        totalProducts: 0, 
+        revenue: 0, 
+        recentOrders: [], 
+        statusCounts: {}, 
+        dailyStats: [], 
+        topProducts: [] 
+      }, 
+      recentOrders: [], 
+      loading: true, 
+      charts: [] 
+    }
   },
   async created() {
     const res = await api.stats()
